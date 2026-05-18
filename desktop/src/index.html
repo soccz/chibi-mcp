@@ -6,10 +6,162 @@
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <!-- Top: tteoki character stage -->
+    <!-- tteoki character stage. SVG is inlined here for v0.1.x to bypass
+         CSP/fetch issues in packaged Tauri builds. main.js manipulates
+         #eyes, #mouth, #mouth-inner, #syrup-layer, #knife. -->
     <div id="stage" data-mood="calm" data-connected="false">
-        <!-- Character SVG is loaded into this placeholder by main.js (loadCharacter). -->
-        <div id="tteoki-placeholder"></div>
+        <svg id="tteoki" viewBox="0 0 700 220" preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <linearGradient id="bodyVertical" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stop-color="#FFFFFF" />
+                    <stop offset="18%"  stop-color="#FFFAEB" />
+                    <stop offset="48%"  stop-color="#FBE6B0" />
+                    <stop offset="78%"  stop-color="#DFBA75" />
+                    <stop offset="100%" stop-color="#9F7935" />
+                </linearGradient>
+                <linearGradient id="bodyHorizontal" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stop-color="#704F22" stop-opacity="0.42" />
+                    <stop offset="10%"  stop-color="#704F22" stop-opacity="0.10" />
+                    <stop offset="50%"  stop-color="#FFFFFF" stop-opacity="0" />
+                    <stop offset="90%"  stop-color="#704F22" stop-opacity="0.10" />
+                    <stop offset="100%" stop-color="#704F22" stop-opacity="0.42" />
+                </linearGradient>
+                <radialGradient id="topHighlight" cx="50%" cy="0%" r="65%">
+                    <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0.98" />
+                    <stop offset="35%"  stop-color="#FFFFFF" stop-opacity="0.55" />
+                    <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+                </radialGradient>
+                <radialGradient id="hotSpot" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="1" />
+                    <stop offset="40%"  stop-color="#FFFFFF" stop-opacity="0.5" />
+                    <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+                </radialGradient>
+                <radialGradient id="leftCapHighlight" cx="40%" cy="35%" r="40%">
+                    <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0.9" />
+                    <stop offset="60%"  stop-color="#FFFFFF" stop-opacity="0.2" />
+                    <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+                </radialGradient>
+                <radialGradient id="rightCapHighlight" cx="60%" cy="35%" r="40%">
+                    <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0.9" />
+                    <stop offset="60%"  stop-color="#FFFFFF" stop-opacity="0.2" />
+                    <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+                </radialGradient>
+                <linearGradient id="bottomShadow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stop-color="#5C3D1F" stop-opacity="0" />
+                    <stop offset="65%"  stop-color="#5C3D1F" stop-opacity="0" />
+                    <stop offset="100%" stop-color="#5C3D1F" stop-opacity="0.40" />
+                </linearGradient>
+                <radialGradient id="eyeFill" cx="40%" cy="35%" r="70%">
+                    <stop offset="0%"   stop-color="#5C3D1F" />
+                    <stop offset="45%"  stop-color="#1F1410" />
+                    <stop offset="100%" stop-color="#000000" />
+                </radialGradient>
+                <radialGradient id="cheekBlush" cx="50%" cy="50%" r="55%">
+                    <stop offset="0%"   stop-color="#FF7A95" stop-opacity="0.95" />
+                    <stop offset="45%"  stop-color="#FFA0B5" stop-opacity="0.65" />
+                    <stop offset="100%" stop-color="#FFB1B8" stop-opacity="0" />
+                </radialGradient>
+                <linearGradient id="syrupMain" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stop-color="#F8B870" />
+                    <stop offset="25%"  stop-color="#E69643" />
+                    <stop offset="60%"  stop-color="#B8651D" />
+                    <stop offset="100%" stop-color="#5A2C0A" />
+                </linearGradient>
+                <radialGradient id="syrupShine" cx="35%" cy="25%" r="32%">
+                    <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="1" />
+                    <stop offset="40%"  stop-color="#FFE0B2" stop-opacity="0.55" />
+                    <stop offset="100%" stop-color="#FFE0B2" stop-opacity="0" />
+                </radialGradient>
+                <filter id="bodyDropShadow" x="-15%" y="-15%" width="130%" height="160%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="9"/>
+                    <feOffset dx="0" dy="12" result="offset"/>
+                    <feComponentTransfer><feFuncA type="linear" slope="0.32"/></feComponentTransfer>
+                    <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="syrupShadow" x="-30%" y="-10%" width="160%" height="130%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="3.5"/>
+                    <feOffset dx="2" dy="4"/>
+                    <feComponentTransfer><feFuncA type="linear" slope="0.4"/></feComponentTransfer>
+                    <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <clipPath id="bodyClip">
+                    <rect x="60" y="60" width="580" height="90" rx="45" ry="45" />
+                </clipPath>
+            </defs>
+
+            <g id="body-group" filter="url(#bodyDropShadow)">
+                <rect id="body" x="60" y="60" width="580" height="90" rx="45" ry="45" fill="url(#bodyVertical)" />
+                <rect x="60" y="60" width="580" height="90" rx="45" ry="45" fill="url(#bodyHorizontal)" />
+                <g clip-path="url(#bodyClip)">
+                    <ellipse cx="350" cy="58" rx="290" ry="36" fill="url(#topHighlight)" />
+                    <ellipse cx="350" cy="71" rx="250" ry="5" fill="#FFFFFF" opacity="0.65" />
+                    <ellipse cx="220" cy="72" rx="14" ry="4" fill="url(#hotSpot)" />
+                    <ellipse cx="420" cy="72" rx="14" ry="4" fill="url(#hotSpot)" />
+                    <ellipse cx="90"  cy="85" rx="22" ry="22" fill="url(#leftCapHighlight)" />
+                    <ellipse cx="610" cy="85" rx="22" ry="22" fill="url(#rightCapHighlight)" />
+                    <rect x="60" y="100" width="580" height="55" fill="url(#bottomShadow)" />
+                    <g opacity="0.08">
+                        <line x1="70" y1="95" x2="630" y2="95" stroke="#5C3D1F" stroke-width="1" />
+                        <line x1="80" y1="115" x2="620" y2="115" stroke="#5C3D1F" stroke-width="1" />
+                        <line x1="100" y1="130" x2="600" y2="130" stroke="#5C3D1F" stroke-width="0.8" />
+                    </g>
+                </g>
+            </g>
+
+            <g>
+                <ellipse cx="130" cy="78" rx="3" ry="1.8" fill="#FFFFFF" opacity="0.9" />
+                <ellipse cx="155" cy="86" rx="2.2" ry="1.3" fill="#FFFFFF" opacity="0.6" />
+                <ellipse cx="180" cy="80" rx="2.5" ry="1.5" fill="#FFFFFF" opacity="0.8" />
+                <ellipse cx="305" cy="84" rx="2.5" ry="1.5" fill="#FFFFFF" opacity="0.75" />
+                <ellipse cx="340" cy="78" rx="2.8" ry="1.6" fill="#FFFFFF" opacity="0.85" />
+                <ellipse cx="375" cy="84" rx="2.2" ry="1.3" fill="#FFFFFF" opacity="0.6" />
+                <ellipse cx="395" cy="78" rx="2.5" ry="1.5" fill="#FFFFFF" opacity="0.8" />
+                <ellipse cx="430" cy="86" rx="2" ry="1.2" fill="#FFFFFF" opacity="0.55" />
+            </g>
+
+            <ellipse cx="475" cy="120" rx="30" ry="16" fill="url(#cheekBlush)" />
+            <ellipse cx="598" cy="120" rx="28" ry="15" fill="url(#cheekBlush)" />
+
+            <ellipse cx="500" cy="100" rx="12" ry="14" fill="#5C3D1F" opacity="0.08" />
+            <ellipse cx="568" cy="100" rx="12" ry="14" fill="#5C3D1F" opacity="0.08" />
+
+            <g id="eyes">
+                <ellipse cx="500" cy="98" rx="9.5" ry="11.5" fill="url(#eyeFill)" />
+                <ellipse cx="504" cy="92" rx="4" ry="4.5" fill="#FFFFFF" opacity="0.98" />
+                <ellipse cx="496" cy="103" rx="1.8" ry="2" fill="#FFFFFF" opacity="0.5" />
+                <ellipse cx="568" cy="98" rx="9.5" ry="11.5" fill="url(#eyeFill)" />
+                <ellipse cx="572" cy="92" rx="4" ry="4.5" fill="#FFFFFF" opacity="0.98" />
+                <ellipse cx="564" cy="103" rx="1.8" ry="2" fill="#FFFFFF" opacity="0.5" />
+            </g>
+
+            <path id="mouth"
+                  d="M 512 120 Q 534 130 556 120"
+                  stroke="#2A1A0F" stroke-width="4.5" fill="none"
+                  stroke-linecap="round" />
+            <path id="mouth-inner"
+                  d="M 518 122 Q 534 130 550 122"
+                  stroke="#7B4A28" stroke-width="1.8" fill="none"
+                  stroke-linecap="round" opacity="0.7" />
+            <ellipse cx="534" cy="127" rx="6" ry="1.5" fill="#A04A2C" opacity="0.5" />
+
+            <g filter="url(#syrupShadow)">
+                <path d="M 195 68 Q 200 60 220 60 Q 248 60 265 64 Q 280 68 283 73 Q 280 80 268 81 Q 245 83 220 82 Q 205 81 198 77 Z" fill="url(#syrupMain)" />
+                <ellipse cx="223" cy="66" rx="20" ry="3.5" fill="url(#syrupShine)" />
+                <ellipse cx="248" cy="68" rx="6" ry="1.5" fill="#FFFFFF" opacity="0.55" />
+                <path d="M 234 80 Q 232 100 230 122 Q 228 138 232 154 Q 240 168 248 154 Q 250 138 246 122 Q 242 100 240 80 Z" fill="url(#syrupMain)" />
+                <ellipse cx="234" cy="115" rx="2.8" ry="22" fill="url(#syrupShine)" />
+                <ellipse cx="237" cy="100" rx="1.5" ry="8" fill="#FFFFFF" opacity="0.7" />
+                <path d="M 239 188 Q 234 192 234 199 Q 235 205 239 207 Q 243 205 244 199 Q 244 192 239 188 Z" fill="url(#syrupMain)" />
+                <ellipse cx="237" cy="195" rx="1.5" ry="3" fill="url(#syrupShine)" />
+            </g>
+
+            <g id="syrup-layer"></g>
+
+            <g id="knife" class="hidden">
+                <rect x="-3" y="-30" width="6" height="55" fill="#C0C0C0" stroke="#666" stroke-width="1"/>
+                <rect x="-5" y="22" width="10" height="18" fill="#8B4513" rx="2"/>
+            </g>
+        </svg>
 
         <!-- Speech bubble -->
         <div id="speech" class="hidden"></div>

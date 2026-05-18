@@ -12,7 +12,7 @@
 // To swap to a new character (e.g., an illustrator's PNG/SVG), set
 // CHARACTER_ID below or store user preference later.
 
-const CHARACTER_ID = "garaetteok";
+const _CHARACTER_ID = "garaetteok";  // reserved for v0.2 dynamic loader
 const WS_URL = "ws://127.0.0.1:9876";
 // Exponential backoff: 2s → 4s → 8s → 16s → 30s (cap).
 // Prevents tight reconnect loop when server is intentionally offline.
@@ -305,25 +305,10 @@ function handleMessage(msg) {
 }
 
 // === BOOT ===
-async function loadCharacter(id) {
-    const resp = await fetch(`characters/${id}/base.svg`);
-    if (!resp.ok) throw new Error(`failed to load character ${id}`);
-    const svgText = await resp.text();
-    const placeholder = document.getElementById("tteoki-placeholder");
-    if (!placeholder) return;
-    // Replace placeholder with loaded SVG
-    placeholder.outerHTML = svgText;
-    // After injection, set common ids so the face/body groups are addressable
-    const tteoki = document.querySelector("svg");
-    if (tteoki) tteoki.id = "tteoki";
-}
-
-window.addEventListener("DOMContentLoaded", async () => {
-    try {
-        await loadCharacter(CHARACTER_ID);
-    } catch (e) {
-        console.error(e);
-    }
+// v0.1.x: the SVG is inlined directly in index.html, so we don't need to
+// fetch anything at startup. Future versions (v0.2+) may swap to async
+// character loading once the bundling story is solid.
+window.addEventListener("DOMContentLoaded", () => {
     applyMood("calm");
     updateHud({ mood: "calm", counters: { slices_today: 0, calls_since_slice: 0, slice_interval: 10 } });
     setConnected(false);
