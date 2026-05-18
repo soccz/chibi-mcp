@@ -9,24 +9,68 @@ on:
   workflow_dispatch:
 
 jobs:
-  server-test:
-    name: server pytest
+  python-lint-test:
+    name: python (ruff + pytest)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install + test
+      - name: Install + ruff + pytest
         working-directory: server
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+          ruff check .
           pytest -v
+
+  js-lint:
+    name: frontend (eslint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install + lint
+        working-directory: desktop
+        run: |
+          npm install
+          npm run lint
+
+  rust-lint:
+    name: rust (fmt + clippy)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl wget file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+      - name: cargo fmt --check
+        working-directory: desktop/src-tauri
+        run: cargo fmt -- --check
+      - name: cargo clippy
+        working-directory: desktop/src-tauri
+        run: cargo clippy --all-targets -- -D warnings
 
   desktop-build:
     name: desktop (${{ matrix.os }})
-    needs: server-test
+    needs: [python-lint-test, js-lint, rust-lint]
     strategy:
       fail-fast: false
       matrix:
@@ -72,7 +116,6 @@ jobs:
       - name: Build (debug — fast smoke)
         working-directory: desktop
         run: npm run tauri -- build --debug
-        continue-on-error: false
 
       - name: Upload artifacts
         if: success() && (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/'))

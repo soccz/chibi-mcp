@@ -6,9 +6,13 @@
   "scripts": {
     "tauri": "tauri",
     "dev": "tauri dev",
-    "build": "tauri build"
+    "build": "tauri build",
+    "lint": "eslint src/main.js",
+    "lint:fix": "eslint src/main.js --fix"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.1.0"
+    "@tauri-apps/cli": "^2.1.0",
+    "eslint": "^9.15.0",
+    "globals": "^15.13.0"
   }
 }

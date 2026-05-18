@@ -81,10 +81,8 @@ def main() -> int:
     log.info("chibi-mcp starting (stdio MCP + ws://%s:%d)",
              os.environ.get("CHIBI_WS_HOST", DEFAULT_WS_HOST),
              int(os.environ.get("CHIBI_WS_PORT", DEFAULT_WS_PORT)))
-    try:
+    with suppress(KeyboardInterrupt):
         asyncio.run(_run_concurrent())
-    except KeyboardInterrupt:
-        pass
     log.info("chibi-mcp stopped")
     return 0
 

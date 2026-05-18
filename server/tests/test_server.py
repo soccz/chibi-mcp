@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from chibi_mcp.server import _sanitize_say, MAX_SAY_LEN
+from chibi_mcp.server import MAX_SAY_LEN, _sanitize_say
 
 
 def test_sanitize_short_text_passthrough():

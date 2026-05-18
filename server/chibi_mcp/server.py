@@ -20,6 +20,27 @@ mcp = FastMCP("chibi-mcp")
 MAX_SAY_LEN = 200
 SAY_CONTROL_CHARS = "".join(chr(c) for c in range(32) if c not in (9, 10))  # keep tab+LF
 
+# Holds references to fire-and-forget asyncio tasks so they aren't garbage
+# collected mid-flight. (RUF006 — Python may drop tasks that have no strong
+# reference, silently dropping the WebSocket broadcast.)
+_PENDING_TASKS: set[asyncio.Task] = set()
+
+
+def _fire_and_forget(coro) -> bool:
+    """Schedule `coro` on the running loop, keep a hard reference until done.
+
+    Returns True if scheduled, False if there's no running loop in the current
+    thread (which means MCP is being called synchronously without an event loop).
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return False
+    task = loop.create_task(coro)
+    _PENDING_TASKS.add(task)
+    task.add_done_callback(_PENDING_TASKS.discard)
+    return True
+
 
 def _sanitize_say(text: str) -> str:
     if not isinstance(text, str):
@@ -39,11 +60,8 @@ def _record_call_and_maybe_slice(force_slice: bool = False) -> dict:
     result = state.record_call(force_slice=force_slice)
     if result["sliced"]:
         broadcaster = get_broadcaster()
-        try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(broadcaster.broadcast({"type": "slice"}))
-        except RuntimeError:
-            # No loop in current thread — best-effort, skip broadcast
+        scheduled = _fire_and_forget(broadcaster.broadcast({"type": "slice"}))
+        if not scheduled:
             log.debug("slice event skipped (no running loop)")
     return result
 
@@ -78,12 +96,7 @@ def pet_say(text: str) -> dict:
     counter = _record_call_and_maybe_slice()
 
     broadcaster = get_broadcaster()
-    try:
-        loop = asyncio.get_running_loop()
-        loop.create_task(broadcaster.broadcast({"type": "say", "text": safe}))
-        broadcasted = True
-    except RuntimeError:
-        broadcasted = False
+    broadcasted = _fire_and_forget(broadcaster.broadcast({"type": "say", "text": safe}))
 
     return {
         "spoken": safe,

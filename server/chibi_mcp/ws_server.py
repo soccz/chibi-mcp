@@ -6,17 +6,19 @@ Protocol (JSON messages, server → client):
     {"type": "slice"}                  # fires when N-call milestone hits
 
 The desktop app connects to ws://localhost:9876 and listens for events.
+
+Uses the websockets >= 14 asyncio API (`websockets.asyncio.server`).
 """
 
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
-from typing import Set
 
-import websockets
-from websockets.legacy.server import WebSocketServerProtocol
+from websockets.asyncio.server import ServerConnection, serve
+from websockets.exceptions import ConnectionClosed
 
 from .state import get_state
 
@@ -31,15 +33,15 @@ class TteokiBroadcaster:
     """Holds connected desktop clients and broadcasts events."""
 
     def __init__(self) -> None:
-        self._clients: Set[WebSocketServerProtocol] = set()
+        self._clients: set[ServerConnection] = set()
         self._lock = asyncio.Lock()
 
-    async def register(self, ws: WebSocketServerProtocol) -> None:
+    async def register(self, ws: ServerConnection) -> None:
         async with self._lock:
             self._clients.add(ws)
         log.info("ws client connected (%d total)", len(self._clients))
 
-    async def unregister(self, ws: WebSocketServerProtocol) -> None:
+    async def unregister(self, ws: ServerConnection) -> None:
         async with self._lock:
             self._clients.discard(ws)
         log.info("ws client disconnected (%d total)", len(self._clients))
@@ -58,11 +60,9 @@ class TteokiBroadcaster:
                 log.debug("broadcast send failed: %s", r)
 
     @staticmethod
-    async def _send_safe(ws: WebSocketServerProtocol, payload: str) -> None:
-        try:
+    async def _send_safe(ws: ServerConnection, payload: str) -> None:
+        with contextlib.suppress(ConnectionClosed):
             await ws.send(payload)
-        except websockets.ConnectionClosed:
-            pass
 
 
 _BROADCASTER: TteokiBroadcaster | None = None
@@ -75,7 +75,13 @@ def get_broadcaster() -> TteokiBroadcaster:
     return _BROADCASTER
 
 
-async def _handle_client(ws: WebSocketServerProtocol) -> None:
+def reset_broadcaster_for_tests() -> None:
+    """Test helper — DO NOT call from runtime code."""
+    global _BROADCASTER
+    _BROADCASTER = None
+
+
+async def _handle_client(ws: ServerConnection) -> None:
     broadcaster = get_broadcaster()
     await broadcaster.register(ws)
 
@@ -87,7 +93,7 @@ async def _handle_client(ws: WebSocketServerProtocol) -> None:
         async for _raw in ws:
             # Desktop app may send pings or settings updates later; ignore for v0.1
             pass
-    except websockets.ConnectionClosed:
+    except ConnectionClosed:
         pass
     finally:
         await broadcaster.unregister(ws)
@@ -108,9 +114,11 @@ async def _state_push_loop() -> None:
 async def run_ws_server(host: str = DEFAULT_WS_HOST, port: int = DEFAULT_WS_PORT) -> None:
     """Run WebSocket server + periodic state push concurrently."""
     push_task = asyncio.create_task(_state_push_loop())
-    async with websockets.serve(_handle_client, host, port):
+    async with serve(_handle_client, host, port):
         log.info("ws server listening on ws://%s:%d", host, port)
         try:
             await asyncio.Future()  # run forever
         finally:
             push_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await push_task

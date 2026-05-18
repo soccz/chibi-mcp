@@ -125,12 +125,9 @@ function el(tag, attrs) {
     return n;
 }
 
-// === LENGTH GROWTH ===
-// Body length grows linearly with session seconds, capped.
-const BODY_BASE_WIDTH = 580;
-const BODY_MAX_WIDTH = 580;  // current MVP: window is fixed; growth visualization
-                              // happens via internal scale rather than width change
-                              // (window resizing pets is fidgety on Linux)
+// === LENGTH GROWTH (deferred to v0.2) ===
+// Body length will grow linearly with session seconds. For v0.1 the window is
+// fixed-size so the visual growth is handled by the slice cycle alone.
 
 // === SLICE ANIMATION ===
 const board = () => document.getElementById("board");
@@ -255,7 +252,7 @@ function connect() {
     reconnectScheduled = false;
     try {
         ws = new WebSocket(WS_URL);
-    } catch (e) {
+    } catch {
         scheduleReconnect();
         return;
     }

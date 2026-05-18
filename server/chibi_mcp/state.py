@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from threading import Lock
 
 from .system_info import SystemSnapshot, read_snapshot
 
 
-class Mood(str, Enum):
+class Mood(StrEnum):
     CALM = "calm"          # 평온 — default
     PANTING = "panting"    # 헐떡 — CPU 80%+
     DROWSY = "drowsy"      # 졸림 — battery < 20% unplugged
