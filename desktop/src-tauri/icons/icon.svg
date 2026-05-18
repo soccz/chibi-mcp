@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" preserveAspectRatio="xMidYMid meet">
+    <defs>
+        <radialGradient id="iconBody" cx="40%" cy="30%" r="70%">
+            <stop offset="0%"   stop-color="#FFFFFF" />
+            <stop offset="35%"  stop-color="#FFF6DA" />
+            <stop offset="75%"  stop-color="#E5C078" />
+            <stop offset="100%" stop-color="#A07433" />
+        </radialGradient>
+        <radialGradient id="iconCheek" cx="50%" cy="50%" r="55%">
+            <stop offset="0%"   stop-color="#FF7A95" stop-opacity="0.95" />
+            <stop offset="100%" stop-color="#FFB1B8" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="iconEye" cx="40%" cy="35%" r="70%">
+            <stop offset="0%"   stop-color="#5C3D1F" />
+            <stop offset="100%" stop-color="#000000" />
+        </radialGradient>
+        <linearGradient id="iconSyrup" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#E69643" />
+            <stop offset="100%" stop-color="#7A3E0F" />
+        </linearGradient>
+        <filter id="iconShadow" x="-10%" y="-10%" width="120%" height="125%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+            <feOffset dx="0" dy="6"/>
+            <feComponentTransfer><feFuncA type="linear" slope="0.3"/></feComponentTransfer>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+    </defs>
+
+    <!-- Rounded square background (icon-style) -->
+    <rect x="0" y="0" width="256" height="256" rx="56" fill="#FFE5EC" />
+
+    <!-- Body (a chubby mochi-like circle since icon is square) -->
+    <g filter="url(#iconShadow)">
+        <circle cx="128" cy="138" r="78" fill="url(#iconBody)" />
+        <!-- Top highlight -->
+        <ellipse cx="128" cy="78" rx="55" ry="14" fill="#FFFFFF" opacity="0.75" />
+        <ellipse cx="128" cy="92" rx="38" ry="5" fill="#FFFFFF" opacity="0.5" />
+    </g>
+
+    <!-- Cheeks -->
+    <ellipse cx="80"  cy="155" rx="18" ry="10" fill="url(#iconCheek)" />
+    <ellipse cx="176" cy="155" rx="18" ry="10" fill="url(#iconCheek)" />
+
+    <!-- Eyes -->
+    <ellipse cx="103" cy="138" rx="10" ry="13" fill="url(#iconEye)" />
+    <ellipse cx="106" cy="131" rx="4" ry="5" fill="#FFFFFF" opacity="0.95" />
+    <ellipse cx="153" cy="138" rx="10" ry="13" fill="url(#iconEye)" />
+    <ellipse cx="156" cy="131" rx="4" ry="5" fill="#FFFFFF" opacity="0.95" />
+
+    <!-- Mouth -->
+    <path d="M 112 168 Q 128 180 144 168"
+          stroke="#2A1A0F" stroke-width="5" fill="none" stroke-linecap="round"/>
+
+    <!-- Syrup drip on top-right -->
+    <ellipse cx="178" cy="80" rx="12" ry="3" fill="url(#iconSyrup)" opacity="0.85" />
+    <path d="M 174 82 Q 173 96 178 110 Q 184 116 184 100 Q 183 86 178 82 Z"
+          fill="url(#iconSyrup)" />
+</svg>
