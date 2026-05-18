@@ -113,21 +113,51 @@ jobs:
         working-directory: desktop
         run: npm install
 
-      - name: Build (debug — fast smoke)
+      - name: Build
         working-directory: desktop
-        run: npm run tauri -- build --debug
+        shell: bash
+        run: |
+          # Tag builds produce real installers (release + bundle).
+          # All other builds stay debug for fast smoke testing.
+          if [[ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ]]; then
+            npm run tauri -- build
+          else
+            npm run tauri -- build --debug
+          fi
 
-      - name: Upload artifacts
-        if: success() && (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/'))
+      - name: Upload installer artifacts (tag builds only)
+        if: success() && startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: chibi-mcp-${{ matrix.target }}
           path: |
-            desktop/src-tauri/target/debug/bundle/**/*
+            desktop/src-tauri/target/release/bundle/**/*
+
+  pypi-publish:
+    name: Publish to PyPI
+    needs: [python-lint-test]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # OIDC for PyPI Trusted Publishing (no token required)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist + wheel
+        working-directory: server
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: Upload to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: server/dist
 
   release:
     name: GitHub Release
-    needs: desktop-build
+    needs: [desktop-build, pypi-publish]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
@@ -148,3 +178,15 @@ jobs:
             artifacts/**/*.msi
           draft: true
           generate_release_notes: true
+          body: |
+            ## Install
+
+            ```bash
+            # Python MCP server
+            pip install chibi-mcp
+
+            # Register with Claude Code
+            claude mcp add chibi -- chibi-mcp
+            ```
+
+            Then download the desktop installer below for your OS.

@@ -1,18 +1,34 @@
 [project]
 name = "chibi-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server for tteoki — a Korean rice cake desktop character that visualizes Claude Code session state"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "soccz" }]
-keywords = ["mcp", "claude-code", "desktop-pet", "korean", "tteoki"]
+keywords = ["mcp", "claude-code", "desktop-pet", "korean", "tteoki", "garaetteok"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Monitoring",
+]
 
 dependencies = [
     "fastmcp>=3.2.0",
     "psutil>=5.9.0",
-    "websockets>=12.0",
+    "websockets>=14.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/soccz/chibi-mcp"
+Repository = "https://github.com/soccz/chibi-mcp"
+Issues = "https://github.com/soccz/chibi-mcp/issues"
+"Release Notes" = "https://github.com/soccz/chibi-mcp/releases"
 
 [project.optional-dependencies]
 dev = [
