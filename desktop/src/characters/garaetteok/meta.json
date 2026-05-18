@@ -1,0 +1,23 @@
+{
+  "id": "garaetteok",
+  "name_ko": "가래떡",
+  "name_en": "garaetteok",
+  "type": "base",
+  "shape": "horizontal-cylinder",
+  "viewBox": "0 0 700 220",
+  "body_rect": {
+    "x": 60, "y": 60,
+    "min_width": 580,
+    "max_width": 580,
+    "height": 90,
+    "rx": 45
+  },
+  "face_anchor": {
+    "left_eye":  { "cx": 500, "cy": 98 },
+    "right_eye": { "cx": 568, "cy": 98 },
+    "mouth_center": { "cx": 534, "cy": 122 }
+  },
+  "syrup_origin": { "cx": 235, "cy": 70 },
+  "license": "MIT (in-house SVG, v0.1 placeholder)",
+  "next_revision": "다음 명절 즈음 한국 인디 작가 의뢰"
+}

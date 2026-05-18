@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>tteoki — design preview</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0e6d6 0%, #d4c4a0 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, system-ui, "Pretendard", sans-serif;
+            color: #2C2C2C;
+            padding: 40px 20px;
+            gap: 40px;
+        }
+        h1 { margin: 0; font-size: 22px; }
+        .sub { font-size: 13px; opacity: 0.7; margin-top: -28px; }
+        .stage {
+            background: rgba(255, 255, 255, 0.55);
+            padding: 28px 40px;
+            border-radius: 24px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            width: min(820px, 95%);
+        }
+        .stage h2 { margin: 0 0 16px; font-size: 14px; font-weight: 600; opacity: 0.65; }
+        .tteoki-frame {
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            display: block;
+        }
+        .compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: min(900px, 98%);
+        }
+        @media (max-width: 720px) {
+            .compare { grid-template-columns: 1fr; }
+        }
+        .legend {
+            font-size: 12px;
+            opacity: 0.6;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>tteoki — 디자인 미리보기</h1>
+    <p class="sub">이모지 풍 SVG (그라데이션·하이라이트·입체감)</p>
+
+    <div class="compare">
+        <div class="stage">
+            <h2>새 버전 — 이모지 풍 (그라데이션·입체감·볼륨)</h2>
+            <object class="tteoki-frame" data="tteoki-emoji.svg" type="image/svg+xml"></object>
+            <p class="legend">조청 흐름 + 표면 광택 + 볼륨감 + 홍조</p>
+        </div>
+
+        <div class="stage">
+            <h2>이전 버전 — 단순 선 합성 (사용자 거부)</h2>
+            <svg class="tteoki-frame" viewBox="0 0 700 100" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <linearGradient id="bodyGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#FFFDF5"/>
+                        <stop offset="100%" stop-color="#FFEFC4"/>
+                    </linearGradient>
+                </defs>
+                <rect x="20" y="30" width="660" height="40" rx="20" fill="url(#bodyGradient)" stroke="#3A2E1F" stroke-width="2"/>
+                <circle cx="640" cy="48" r="3.5" fill="#2C2C2C"/>
+                <circle cx="660" cy="48" r="3.5" fill="#2C2C2C"/>
+                <path d="M 640 58 Q 650 62 660 58" stroke="#2C2C2C" stroke-width="2" fill="none"/>
+                <ellipse cx="200" cy="70" rx="5" ry="7" fill="#B8651D"/>
+            </svg>
+            <p class="legend">outline 강함 + 볼륨감 없음 + 평면적</p>
+        </div>
+    </div>
+
+    <p class="legend" style="max-width:580px;text-align:center;">
+        새 버전이 마음에 들면 그대로 진행. <br>
+        부족하면 본인이 AI 도구로 7종 mood 이미지를 만들어주세요 — <br>
+        그동안 저는 이미지 교체 슬롯 구조를 만들어 두겠습니다.
+    </p>
+</body>
+</html>

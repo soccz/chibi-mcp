@@ -1,0 +1,213 @@
+/* tteoki — chibi-mcp pet window styles. */
+
+:root {
+    --body-color: #FFFDF5;
+    --body-shadow: #FFEFC4;
+    --outline: #3A2E1F;
+    --syrup: #B8651D;
+    --text: #2C2C2C;
+    --hud-bg: rgba(255, 255, 255, 0.78);
+    --hud-text: #3A2E1F;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;          /* tauri.conf.json transparent: true */
+    overflow: hidden;
+    font-family: 'Pretendard', -apple-system, system-ui, sans-serif;
+    /* Allow window dragging from anywhere except interactive elements */
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: grab;
+}
+
+body:active { cursor: grabbing; }
+
+#stage {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+#tteoki, #tteoki-placeholder {
+    width: 100%;
+    height: 160px;
+    overflow: visible;
+    pointer-events: none;
+    animation: breathe 2.4s ease-in-out infinite;
+    transform-origin: center;
+    display: block;
+}
+
+/* === Idle breathing === */
+@keyframes breathe {
+    0%, 100% { transform: scale(1.000); }
+    50%      { transform: scale(1.025); }
+}
+
+/* === Mood-based body color tints === */
+#stage[data-mood="panting"]    #body { fill: #FFE4DC; }
+#stage[data-mood="drowsy"]     #body { fill: #E8DEF5; }
+#stage[data-mood="lonely"]     #body { fill: #DDDDE2; }
+#stage[data-mood="happy"]      #body { fill: #FFF4B8; }
+#stage[data-mood="surprised"]  #body { fill: #FFFFFF; }
+#stage[data-mood="joyful"]     #body { fill: url(#bodyGradient); }
+
+/* === Wobble for panting === */
+#stage[data-mood="panting"] #tteoki { animation: wobble 0.6s linear infinite; }
+@keyframes wobble {
+    0%   { transform: skewX(0deg); }
+    25%  { transform: skewX(-2.5deg); }
+    75%  { transform: skewX(2.5deg); }
+    100% { transform: skewX(0deg); }
+}
+
+/* === Droop for drowsy === */
+#stage[data-mood="drowsy"] #tteoki { animation: droop 2.4s ease-in-out infinite; }
+@keyframes droop {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(6px); }
+}
+
+/* === Bounce for happy (one-shot via class) === */
+#tteoki.bounce { animation: bounce 0.55s ease-out 1; }
+@keyframes bounce {
+    0%   { transform: translateY(0); }
+    35%  { transform: translateY(-18px); }
+    100% { transform: translateY(0); }
+}
+
+/* === Splat for surprised/error === */
+#tteoki.splat { animation: splat 0.4s ease-out 1; }
+@keyframes splat {
+    0%   { transform: scaleY(1)   scaleX(1); }
+    35%  { transform: scaleY(0.7) scaleX(1.1); }
+    100% { transform: scaleY(1)   scaleX(1); }
+}
+
+/* === Syrup drip === */
+.syrup-drip {
+    fill: var(--syrup);
+    animation: drip 1.6s linear forwards;
+    transform-origin: center;
+}
+@keyframes drip {
+    0%   { transform: translateY(0)  scaleY(0.6); opacity: 1; }
+    30%  { transform: translateY(4)  scaleY(1.4); opacity: 1; }
+    70%  { transform: translateY(20) scaleY(1.2); opacity: 0.7; }
+    100% { transform: translateY(40) scaleY(0.8); opacity: 0; }
+}
+
+/* === Knife animation on slice === */
+#knife {
+    transform-origin: 50% 100%;
+    transition: opacity 0.1s ease-out;
+}
+#knife.hidden { opacity: 0; }
+#knife.slice-anim {
+    opacity: 1;
+    animation: knife-fall 0.55s ease-in 1;
+}
+@keyframes knife-fall {
+    0%   { transform: translate(var(--knife-x, 350px), -60px) rotate(0deg); }
+    60%  { transform: translate(var(--knife-x, 350px),  30px) rotate(0deg); }
+    100% { transform: translate(var(--knife-x, 350px),  30px) rotate(0deg); opacity: 0; }
+}
+
+/* === Speech bubble === */
+#speech {
+    position: absolute;
+    top: 0;
+    right: 30px;
+    background: var(--hud-bg);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 14px;
+    border: 1.5px solid var(--outline);
+    font-size: 13px;
+    font-weight: 500;
+    max-width: 220px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+}
+#speech::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    right: 22px;
+    border: 7px solid transparent;
+    border-top-color: var(--hud-bg);
+}
+#speech.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+#speech.hidden { display: none; }
+
+/* === HUD === */
+#hud {
+    position: absolute;
+    bottom: 4px;
+    left: 24px;
+    background: var(--hud-bg);
+    color: var(--hud-text);
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(58, 46, 31, 0.15);
+}
+.hud-sep { opacity: 0.4; margin: 0 4px; }
+
+#stage[data-connected="false"] #hud {
+    background: rgba(255, 200, 200, 0.7);
+}
+#stage[data-connected="false"] #hud-mood::before {
+    content: "✗ ";
+    color: #b22;
+}
+
+/* === Cutting board (bottom area for sliced pieces) === */
+#board {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    pointer-events: none;
+}
+
+.slice-piece {
+    position: absolute;
+    bottom: 8px;
+    width: 28px;
+    height: 18px;
+    border-radius: 9px;
+    background: linear-gradient(180deg, #FFFDF5, #FFEFC4);
+    border: 1.5px solid var(--outline);
+    transform: translateY(-100px) scale(0.6);
+    opacity: 0;
+    animation: piece-drop 0.5s ease-out forwards, piece-fade 5s ease-in 4.5s forwards;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+@keyframes piece-drop {
+    0%   { transform: translateY(-100px) scale(0.6) rotate(-15deg); opacity: 0; }
+    70%  { transform: translateY(4px)    scale(1.0) rotate(2deg);   opacity: 1; }
+    100% { transform: translateY(0)      scale(1.0) rotate(0deg);   opacity: 1; }
+}
+@keyframes piece-fade {
+    to { opacity: 0; transform: translateY(0) scale(0.85); }
+}

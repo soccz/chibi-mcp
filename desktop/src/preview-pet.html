@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>tteoki — pet preview</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e8eef5 0%, #f7f2e8 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: -apple-system, system-ui, "Pretendard", sans-serif;
+            padding: 40px 20px;
+            gap: 24px;
+        }
+        h1 { margin: 0; font-size: 18px; }
+        .note { font-size: 12px; opacity: 0.65; max-width: 540px; text-align: center; line-height: 1.6; }
+        .frame {
+            width: 720px;
+            max-width: 95vw;
+            height: 220px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            border: 1px dashed rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        .frame iframe { width: 100%; height: 100%; border: 0; background: transparent; }
+        code { background: #f0e6d6; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <h1>tteoki — Live preview</h1>
+    <p class="note">
+        ↓ 이 영역이 Tauri 펫 윈도우(720×220)와 동일합니다. 실제 데스크탑에서는 투명 배경 + always-on-top으로 떠 있을 거예요.<br>
+        MCP 서버가 ws://127.0.0.1:9876에 떠 있으면 자동 연결, HUD는 <code>calm</code>으로 시작합니다. offline이면 빨간 표시.
+    </p>
+    <div class="frame">
+        <iframe src="index.html"></iframe>
+    </div>
+    <p class="note">
+        모드 변화 보려면: 별도 터미널에서 <code>cd server &amp;&amp; source venv/bin/activate &amp;&amp; python -c "from chibi_mcp.state import get_state; import asyncio, json, websockets; ..."</code>
+    </p>
+</body>
+</html>

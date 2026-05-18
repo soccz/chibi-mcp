@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>tteoki</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <!-- Top: tteoki character stage -->
+    <div id="stage" data-mood="calm" data-connected="false">
+        <!-- Character SVG is loaded into this placeholder by main.js (loadCharacter). -->
+        <div id="tteoki-placeholder"></div>
+
+        <!-- Speech bubble -->
+        <div id="speech" class="hidden"></div>
+
+        <!-- HUD pill -->
+        <div id="hud">
+            <span id="hud-mood">calm</span>
+            <span class="hud-sep">·</span>
+            <span id="hud-slices">0도막</span>
+            <span class="hud-sep">·</span>
+            <span id="hud-calls">0/10</span>
+        </div>
+    </div>
+
+    <!-- Cutting board (sliced pieces stack here) -->
+    <div id="board"></div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
