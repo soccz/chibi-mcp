@@ -70,6 +70,15 @@ See [`SPEC.md`](SPEC.md), [`CHARACTER_DESIGN.md`](CHARACTER_DESIGN.md), [`STYLE_
 - chibi · kawaii 디자인 — [chibi.pics](https://www.chibi.pics/blog/what-is-chibi-why-its-style-is-so-popular)
 - 한국 2025 마스코트 트렌드 — [캐릿](https://www.careet.net/1853)
 
+## Disclaimer
+
+chibi-mcp is an independent open-source project. It implements the standard
+[Model Context Protocol](https://modelcontextprotocol.io/) and is **not affiliated with or endorsed by Anthropic**.
+"Claude" and "Claude Code" are trademarks of Anthropic.
+
+The desktop app reads local system metrics (CPU/RAM/battery) via psutil and
+communicates only with `localhost`. No data leaves your machine.
+
 ## License
 
 MIT

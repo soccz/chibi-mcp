@@ -50,14 +50,18 @@ class TteokiState:
     # CPU spike detection
     last_cpu: float = 0.0
 
-    def record_call(self) -> dict:
-        """Increment call counters. Returns a dict signaling if a slice fired."""
+    def record_call(self, force_slice: bool = False) -> dict:
+        """Increment call counters. Returns a dict signaling if a slice fired.
+
+        When `force_slice` is True, the slice milestone is triggered regardless
+        of how many calls have accumulated. Used by the manual `slice_now` tool.
+        """
         with self._lock:
             self.call_count += 1
             self.calls_since_slice += 1
             self.last_call_at = time.time()
             sliced = False
-            if self.calls_since_slice >= self.slice_interval:
+            if force_slice or self.calls_since_slice >= self.slice_interval:
                 self.calls_since_slice = 0
                 self.slices_today += 1
                 sliced = True

@@ -58,6 +58,29 @@ def test_call_count_keeps_growing_across_slices():
     assert state.call_count == 5
 
 
+# ---- force_slice (manual slice_now path) ----
+
+
+def test_force_slice_fires_immediately():
+    state = TteokiState(slice_interval=100)
+    r = state.record_call(force_slice=True)
+    assert r["sliced"] is True
+    assert state.slices_today == 1
+    assert state.calls_since_slice == 0
+
+
+def test_force_slice_does_not_affect_natural_counter():
+    state = TteokiState(slice_interval=3)
+    state.record_call()
+    state.record_call()              # calls_since_slice = 2
+    state.record_call(force_slice=True)  # forced — resets, +1 slice
+    assert state.slices_today == 1
+    # next 3 normal calls should slice again
+    sliced = [state.record_call()["sliced"] for _ in range(3)]
+    assert sliced == [False, False, True]
+    assert state.slices_today == 2
+
+
 # ---- mood derivation ----
 
 

@@ -30,10 +30,17 @@ def read_snapshot(interval: float = 0.0) -> SystemSnapshot:
 
     interval=0.0 returns the cached value since last call (non-blocking).
     interval>0 measures CPU over that window (blocking).
+
+    Battery is best-effort: psutil.sensors_battery() can raise
+    NotImplementedError on some Linux/VM/server environments. Treat any
+    failure as "no battery" rather than crashing the server.
     """
     cpu = psutil.cpu_percent(interval=interval)
     ram = psutil.virtual_memory().percent
-    bat = psutil.sensors_battery()
+    try:
+        bat = psutil.sensors_battery()
+    except (NotImplementedError, AttributeError, OSError):
+        bat = None
     if bat is None:
         return SystemSnapshot(cpu_percent=cpu, ram_percent=ram, battery_percent=None, battery_plugged=None)
     return SystemSnapshot(

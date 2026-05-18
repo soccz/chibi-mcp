@@ -14,7 +14,11 @@
 
 const CHARACTER_ID = "garaetteok";
 const WS_URL = "ws://127.0.0.1:9876";
-const RECONNECT_DELAY_MS = 2000;
+// Exponential backoff: 2s → 4s → 8s → 16s → 30s (cap).
+// Prevents tight reconnect loop when server is intentionally offline.
+const RECONNECT_INITIAL_MS = 2000;
+const RECONNECT_MAX_MS = 30000;
+const RECONNECT_BACKOFF = 2.0;
 
 // === MOOD → face geometry ===
 // All coords align to characters/garaetteok/meta.json face_anchor.
@@ -242,9 +246,10 @@ function flash(elem, cls, ms) {
     setTimeout(() => elem.classList.remove(cls), ms);
 }
 
-// === WebSocket connection ===
+// === WebSocket connection (with exponential backoff) ===
 let ws = null;
 let reconnectScheduled = false;
+let reconnectDelay = RECONNECT_INITIAL_MS;
 
 function connect() {
     reconnectScheduled = false;
@@ -256,6 +261,7 @@ function connect() {
     }
     ws.onopen = () => {
         setConnected(true);
+        reconnectDelay = RECONNECT_INITIAL_MS;  // reset backoff on success
     };
     ws.onclose = () => {
         setConnected(false);
@@ -277,7 +283,9 @@ function connect() {
 function scheduleReconnect() {
     if (reconnectScheduled) return;
     reconnectScheduled = true;
-    setTimeout(connect, RECONNECT_DELAY_MS);
+    const delay = Math.min(reconnectDelay, RECONNECT_MAX_MS);
+    setTimeout(connect, delay);
+    reconnectDelay = Math.min(reconnectDelay * RECONNECT_BACKOFF, RECONNECT_MAX_MS);
 }
 
 function setConnected(ok) {
