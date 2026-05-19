@@ -1,6 +1,6 @@
 [package]
 name = "chibi-mcp-desktop"
-version = "0.1.2"
+version = "0.1.3"
 description = "tteoki — Korean rice cake desktop character"
 authors = ["soccz"]
 license = "MIT"

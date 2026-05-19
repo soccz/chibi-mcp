@@ -100,6 +100,12 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Add macOS universal targets
+        if: matrix.target == 'macos'
+        run: |
+          rustup target add aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -118,9 +124,14 @@ jobs:
         shell: bash
         run: |
           # Tag builds produce real installers (release + bundle).
+          # macOS gets a universal binary (Intel + Apple Silicon).
           # All other builds stay debug for fast smoke testing.
           if [[ "${{ startsWith(github.ref, 'refs/tags/v') }}" == "true" ]]; then
-            npm run tauri -- build
+            if [[ "${{ matrix.target }}" == "macos" ]]; then
+              npm run tauri -- build --target universal-apple-darwin
+            else
+              npm run tauri -- build
+            fi
           else
             npm run tauri -- build --debug
           fi
@@ -132,6 +143,7 @@ jobs:
           name: chibi-mcp-${{ matrix.target }}
           path: |
             desktop/src-tauri/target/release/bundle/**/*
+            desktop/src-tauri/target/universal-apple-darwin/release/bundle/**/*
 
   pypi-publish:
     name: Publish to PyPI
