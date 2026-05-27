@@ -179,6 +179,16 @@
     <!-- Cutting board (sliced pieces stack here) -->
     <div id="board"></div>
 
+    <!-- Right-click context menu -->
+    <div id="ctx-menu" class="hidden">
+        <div class="ctx-label">크기</div>
+        <button data-action="size-small">작게</button>
+        <button data-action="size-normal">보통</button>
+        <button data-action="size-large">크게</button>
+        <div class="ctx-divider"></div>
+        <button data-action="quit">종료</button>
+    </div>
+
     <script type="module" src="main.js"></script>
 </body>
 </html>

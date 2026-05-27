@@ -1,6 +1,6 @@
 [project]
 name = "chibi-mcp"
-version = "0.1.4"
+version = "0.1.5"
 description = "MCP server for tteoki — a Korean rice cake desktop character that visualizes Claude Code session state"
 readme = "README.md"
 requires-python = ">=3.12"

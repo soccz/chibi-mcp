@@ -211,3 +211,48 @@ body:active { cursor: grabbing; }
 @keyframes piece-fade {
     to { opacity: 0; transform: translateY(0) scale(0.85); }
 }
+
+/* === Context menu (right-click) === */
+#ctx-menu {
+    position: fixed;
+    background: rgba(40, 40, 40, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 10px;
+    padding: 5px;
+    min-width: 140px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    z-index: 9999;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+#ctx-menu.hidden { display: none; }
+#ctx-menu button {
+    display: block;
+    width: 100%;
+    padding: 7px 14px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: #f0f0f0;
+    letter-spacing: 0.1px;
+}
+#ctx-menu button:hover { background: rgba(255, 255, 255, 0.12); }
+#ctx-menu button[data-action="quit"] { color: #FF6B6B; }
+#ctx-menu button[data-action="quit"]:hover { background: rgba(255, 80, 80, 0.18); }
+.ctx-label {
+    padding: 5px 14px 2px;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.ctx-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 4px 8px;
+}

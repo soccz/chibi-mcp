@@ -304,13 +304,61 @@ function handleMessage(msg) {
     }
 }
 
+// === CONTEXT MENU (right-click: quit + resize) ===
+const SIZES = {
+    "size-small":  { w: 360, h: 110 },
+    "size-normal": { w: 720, h: 220 },
+    "size-large":  { w: 1080, h: 330 },
+};
+
+function setupContextMenu() {
+    const menu = document.getElementById("ctx-menu");
+    if (!menu) return;
+
+    document.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        menu.classList.remove("hidden");
+        const x = Math.min(e.clientX, window.innerWidth - 160);
+        const y = Math.min(e.clientY, window.innerHeight - 140);
+        menu.style.left = `${x}px`;
+        menu.style.top = `${y}px`;
+    });
+
+    document.addEventListener("click", () => {
+        menu.classList.add("hidden");
+    });
+
+    menu.addEventListener("click", async (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        const action = btn.dataset.action;
+
+        if (action === "quit") {
+            try {
+                const { getCurrentWindow } = window.__TAURI__.window;
+                await getCurrentWindow().close();
+            } catch {
+                window.close();
+            }
+        } else if (SIZES[action]) {
+            const { w, h } = SIZES[action];
+            try {
+                const { getCurrentWindow } = window.__TAURI__.window;
+                const { LogicalSize } = window.__TAURI__.window;
+                await getCurrentWindow().setSize(new LogicalSize(w, h));
+            } catch {
+                window.resizeTo(w, h);
+            }
+        }
+        menu.classList.add("hidden");
+    });
+}
+
 // === BOOT ===
-// v0.1.x: the SVG is inlined directly in index.html, so we don't need to
-// fetch anything at startup. Future versions (v0.2+) may swap to async
-// character loading once the bundling story is solid.
 window.addEventListener("DOMContentLoaded", () => {
     applyMood("calm");
     updateHud({ mood: "calm", counters: { slices_today: 0, calls_since_slice: 0, slice_interval: 10 } });
     setConnected(false);
+    setupContextMenu();
     connect();
 });
