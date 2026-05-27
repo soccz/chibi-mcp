@@ -18,9 +18,9 @@ pub fn run() {
 
 #[cfg(target_os = "macos")]
 fn force_transparent_macos(win: &tauri::WebviewWindow) {
+    use cocoa::appkit::NSColor;
     use cocoa::appkit::NSWindow;
     use cocoa::base::{id, nil};
-    use cocoa::appkit::NSColor;
 
     if let Ok(ns_win) = win.ns_window() {
         let ns_win = ns_win as id;
