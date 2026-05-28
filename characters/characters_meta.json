@@ -5,203 +5,232 @@
       "name_ko": "흰떡",
       "category": "tteok",
       "rarity": 2,
-      "image": "characters/white_tteok.png"
+      "image": "characters/white_tteok.png",
+      "tier": "free"
     },
     {
       "id": "garaetteok_short",
       "name_ko": "가래떡(짧)",
       "category": "tteok",
       "rarity": 2,
-      "image": "characters/garaetteok_short.png"
+      "image": "characters/garaetteok_short.png",
+      "tier": "free"
     },
     {
       "id": "mozzarella",
       "name_ko": "모짜렐라",
       "category": "cheese",
       "rarity": 3,
-      "image": "characters/mozzarella.png"
+      "image": "characters/mozzarella.png",
+      "tier": "pro"
     },
     {
       "id": "strawberry",
       "name_ko": "딸기",
       "category": "fruit",
       "rarity": 3,
-      "image": "characters/strawberry.png"
+      "image": "characters/strawberry.png",
+      "tier": "pro"
     },
     {
       "id": "peach",
       "name_ko": "복숭아",
       "category": "fruit",
       "rarity": 3,
-      "image": "characters/peach.png"
+      "image": "characters/peach.png",
+      "tier": "pro"
     },
     {
       "id": "baekseolgi",
       "name_ko": "백설기",
       "category": "tteok",
       "rarity": 2,
-      "image": "characters/baekseolgi.png"
+      "image": "characters/baekseolgi.png",
+      "tier": "free"
     },
     {
       "id": "songpyeon",
       "name_ko": "송편",
       "category": "tteok",
       "rarity": 3,
-      "image": "characters/songpyeon.png"
+      "image": "characters/songpyeon.png",
+      "tier": "pro"
     },
     {
       "id": "green_grape",
       "name_ko": "청포도",
       "category": "fruit",
       "rarity": 2,
-      "image": "characters/green_grape.png"
+      "image": "characters/green_grape.png",
+      "tier": "free"
     },
     {
       "id": "mochi",
       "name_ko": "모찌",
       "category": "tteok",
       "rarity": 2,
-      "image": "characters/mochi.png"
+      "image": "characters/mochi.png",
+      "tier": "free"
     },
     {
       "id": "duteobtteok",
       "name_ko": "두텁떡",
       "category": "tteok",
       "rarity": 4,
-      "image": "characters/duteobtteok.png"
+      "image": "characters/duteobtteok.png",
+      "tier": "pro"
     },
     {
       "id": "rainbow_tteok",
       "name_ko": "무지개떡",
       "category": "tteok",
       "rarity": 5,
-      "image": "characters/rainbow_tteok.png"
+      "image": "characters/rainbow_tteok.png",
+      "tier": "pro"
     },
     {
       "id": "injeolmi",
       "name_ko": "인절미",
       "category": "tteok",
       "rarity": 3,
-      "image": "characters/injeolmi.png"
+      "image": "characters/injeolmi.png",
+      "tier": "pro"
     },
     {
       "id": "ssuk_songpyeon",
       "name_ko": "쑥송편",
       "category": "tteok",
       "rarity": 3,
-      "image": "characters/ssuk_songpyeon.png"
+      "image": "characters/ssuk_songpyeon.png",
+      "tier": "pro"
     },
     {
       "id": "melon",
       "name_ko": "멜론",
       "category": "fruit",
       "rarity": 2,
-      "image": "characters/melon.png"
+      "image": "characters/melon.png",
+      "tier": "free"
     },
     {
       "id": "siru_tteok",
       "name_ko": "시루떡",
       "category": "tteok",
       "rarity": 4,
-      "image": "characters/siru_tteok.png"
+      "image": "characters/siru_tteok.png",
+      "tier": "pro"
     },
     {
       "id": "rainbow_mochi",
       "name_ko": "무지개모찌",
       "category": "tteok",
       "rarity": 5,
-      "image": "characters/rainbow_mochi.png"
+      "image": "characters/rainbow_mochi.png",
+      "tier": "pro"
     },
     {
       "id": "kong_tteok",
       "name_ko": "콩고물떡",
       "category": "tteok",
       "rarity": 3,
-      "image": "characters/kong_tteok.png"
+      "image": "characters/kong_tteok.png",
+      "tier": "pro"
     },
     {
       "id": "ssuk_songpyeon_v2",
       "name_ko": "쑥송편(꿀)",
       "category": "tteok",
       "rarity": 3,
-      "image": "characters/ssuk_songpyeon_v2.png"
+      "image": "characters/ssuk_songpyeon_v2.png",
+      "tier": "pro"
     },
     {
       "id": "jeolpyeon",
       "name_ko": "절편",
       "category": "tteok",
       "rarity": 4,
-      "image": "characters/jeolpyeon.png"
+      "image": "characters/jeolpyeon.png",
+      "tier": "pro"
     },
     {
       "id": "camembert",
       "name_ko": "카망베르",
       "category": "cheese",
       "rarity": 4,
-      "image": "characters/camembert.png"
+      "image": "characters/camembert.png",
+      "tier": "pro"
     },
     {
       "id": "blue_cheese",
       "name_ko": "블루치즈",
       "category": "cheese",
       "rarity": 4,
-      "image": "characters/blue_cheese.png"
+      "image": "characters/blue_cheese.png",
+      "tier": "pro"
     },
     {
       "id": "garaetteok_long",
       "name_ko": "가래떡(긴)",
       "category": "tteok",
       "rarity": 3,
-      "image": "characters/garaetteok_long.png"
+      "image": "characters/garaetteok_long.png",
+      "tier": "pro"
     },
     {
       "id": "cheddar",
       "name_ko": "체다",
       "category": "cheese",
       "rarity": 2,
-      "image": "characters/cheddar.png"
+      "image": "characters/cheddar.png",
+      "tier": "free"
     },
     {
       "id": "mandu_bok",
       "name_ko": "복주머니만두",
       "category": "mandu",
       "rarity": 3,
-      "image": "characters/mandu_bok.png"
+      "image": "characters/mandu_bok.png",
+      "tier": "pro"
     },
     {
       "id": "mandu",
       "name_ko": "만두",
       "category": "mandu",
       "rarity": 3,
-      "image": "characters/mandu.png"
+      "image": "characters/mandu.png",
+      "tier": "pro"
     },
     {
       "id": "garaetteok_injeolmi",
       "name_ko": "인절미가래떡",
       "category": "tteok",
       "rarity": 3,
-      "image": "characters/garaetteok_injeolmi.png"
+      "image": "characters/garaetteok_injeolmi.png",
+      "tier": "pro"
     },
     {
       "id": "parmesan",
       "name_ko": "파마산",
       "category": "cheese",
       "rarity": 2,
-      "image": "characters/parmesan.png"
+      "image": "characters/parmesan.png",
+      "tier": "pro"
     },
     {
       "id": "toast",
       "name_ko": "토스트",
       "category": "etc",
       "rarity": 2,
-      "image": "characters/toast.png"
+      "image": "characters/toast.png",
+      "tier": "free"
     },
     {
       "id": "bok_jumeoni",
       "name_ko": "복주머니",
       "category": "tteok",
       "rarity": 4,
-      "image": "characters/bok_jumeoni.png"
+      "image": "characters/bok_jumeoni.png",
+      "tier": "pro"
     }
   ]
 }

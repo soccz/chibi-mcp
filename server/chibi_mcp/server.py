@@ -120,6 +120,68 @@ def slice_now() -> dict:
 
 
 @mcp.tool()
+def get_license_status() -> dict:
+    """Return the user's license tier (free / pro) and any details.
+
+    The plugin and the Claude skill should use this before showing
+    Pro-only characters or pulls.
+    """
+    from .license import verify_license
+
+    s = verify_license()
+    return {
+        "tier": s.tier,
+        "email": s.email,
+        "expires": s.expires.isoformat() if s.expires else None,
+        "reason": s.reason,
+    }
+
+
+@mcp.tool()
+def get_catalog() -> dict:
+    """Return the character catalog filtered by the user's license tier.
+
+    Free users see 8 starter characters; Pro users see all 29.
+    Loads metadata from `$CHIBI_ASSET_DIR/meta.json` (the plugin's bundled
+    assets directory). Falls back to an embedded path if the env var is
+    not set (e.g. running outside the plugin).
+    """
+    import json
+    import os
+    from pathlib import Path
+
+    from .license import filter_catalog_by_tier, verify_license
+
+    asset_dir = os.environ.get("CHIBI_ASSET_DIR")
+    if not asset_dir:
+        # Fallback: walk up from this file to <repo>/assets/meta.json
+        here = Path(__file__).resolve()
+        for parent in here.parents:
+            candidate = parent / "assets" / "meta.json"
+            if candidate.exists():
+                asset_dir = str(candidate.parent)
+                break
+
+    if not asset_dir:
+        return {"error": "asset directory not found", "characters": []}
+
+    meta_path = Path(asset_dir) / "meta.json"
+    if not meta_path.exists():
+        return {"error": f"meta.json missing at {meta_path}", "characters": []}
+
+    catalog = json.loads(meta_path.read_text(encoding="utf-8"))
+    status = verify_license()
+    filtered = filter_catalog_by_tier(catalog, status)
+    return {
+        "tier": status.tier,
+        "total_in_tier": len(filtered.get("characters", [])),
+        "total_full": len(catalog.get("characters", [])),
+        "characters": filtered.get("characters", []),
+        "asset_dir": asset_dir,
+    }
+
+
+@mcp.tool()
 def set_slice_interval(n: int) -> dict:
     """Change how often (every N Claude tool calls) tteoki gets sliced.
 
