@@ -1,28 +1,30 @@
 # chibi-mcp
 
-> tteoki — Korean rice cake desktop pet for Claude Code, shipped as a Claude Code plugin.
+> 치비 (chibi) — Korean rice cake desktop pet for Claude Code, shipped as a Claude Code plugin.
 >
-> Gacha-collect 29 squishy characters (떡·과일·치즈·만두). They react to your coding session and get sliced every N tool calls.
+> Gacha-collect squishy characters (떡·과일·치즈·만두). They react to your coding session and get sliced every N tool calls.
 >
 > **100% free, MIT, no telemetry, OS-agnostic** — runs wherever Claude Code runs.
 
-## Install (one line)
+## Install (two lines)
 
 ```bash
-claude plugin install github.com/soccz/chibi-mcp
+pipx install chibi-mcp                                # 1. server binary on PATH
+```
+
+Then inside Claude Code:
+
+```
+/plugin marketplace add soccz/chibi-mcp
+/plugin install chibi@chibi-mcp
 ```
 
 (First time only — Claude Code prompts you to enable the plugin's MCP server. Type `y`.)
 
-Pre-req: `chibi-mcp` Python package on your PATH. The simplest install:
-
-```bash
-pipx install chibi-mcp     # macOS/Linux/Windows
-```
-
 That's it. Now ask Claude:
 
-> "내 가래떡 보여줘"
+> `/chibi`
+> "내 치비 보여줘"
 > "뽑기 한 번"
 > "보관함 열어"
 
@@ -52,7 +54,8 @@ That's it. Now ask Claude:
 chibi-mcp/
 ├── .claude-plugin/plugin.json   # plugin manifest
 ├── .mcp.json                    # stdio MCP server spec
-├── skills/tteoki/SKILL.md       # behaviour guide for Claude
+├── skills/chibi/SKILL.md        # behaviour guide for Claude
+├── commands/chibi.md            # /chibi slash command
 ├── assets/                      # 29 PNG + meta.json
 ├── server/                      # Python MCP server (PyPI: chibi-mcp)
 └── server-rs/                   # (optional) Rust rewrite, same protocol

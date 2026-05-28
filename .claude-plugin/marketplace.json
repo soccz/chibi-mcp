@@ -1,0 +1,14 @@
+{
+  "name": "chibi-mcp",
+  "owner": {
+    "name": "soccz",
+    "url": "https://github.com/soccz"
+  },
+  "plugins": [
+    {
+      "name": "chibi",
+      "source": ".",
+      "description": "치비 — Korean rice cake desktop pet for Claude Code. Gacha-collect squishy characters; they react to your session and get sliced every N tool calls."
+    }
+  ]
+}
