@@ -34,3 +34,10 @@ Thumbs.db
 # Generated assets
 *.log
 *.pid
+
+# Character source images (large, kept locally only)
+characters/img*.png
+characters/img*_nobg.png
+
+# server-rs Rust build artifacts
+server-rs/target/

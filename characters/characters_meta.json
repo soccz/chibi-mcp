@@ -1,0 +1,207 @@
+{
+  "characters": [
+    {
+      "id": "white_tteok",
+      "name_ko": "흰떡",
+      "category": "tteok",
+      "rarity": 2,
+      "image": "characters/white_tteok.png"
+    },
+    {
+      "id": "garaetteok_short",
+      "name_ko": "가래떡(짧)",
+      "category": "tteok",
+      "rarity": 2,
+      "image": "characters/garaetteok_short.png"
+    },
+    {
+      "id": "mozzarella",
+      "name_ko": "모짜렐라",
+      "category": "cheese",
+      "rarity": 3,
+      "image": "characters/mozzarella.png"
+    },
+    {
+      "id": "strawberry",
+      "name_ko": "딸기",
+      "category": "fruit",
+      "rarity": 3,
+      "image": "characters/strawberry.png"
+    },
+    {
+      "id": "peach",
+      "name_ko": "복숭아",
+      "category": "fruit",
+      "rarity": 3,
+      "image": "characters/peach.png"
+    },
+    {
+      "id": "baekseolgi",
+      "name_ko": "백설기",
+      "category": "tteok",
+      "rarity": 2,
+      "image": "characters/baekseolgi.png"
+    },
+    {
+      "id": "songpyeon",
+      "name_ko": "송편",
+      "category": "tteok",
+      "rarity": 3,
+      "image": "characters/songpyeon.png"
+    },
+    {
+      "id": "green_grape",
+      "name_ko": "청포도",
+      "category": "fruit",
+      "rarity": 2,
+      "image": "characters/green_grape.png"
+    },
+    {
+      "id": "mochi",
+      "name_ko": "모찌",
+      "category": "tteok",
+      "rarity": 2,
+      "image": "characters/mochi.png"
+    },
+    {
+      "id": "duteobtteok",
+      "name_ko": "두텁떡",
+      "category": "tteok",
+      "rarity": 4,
+      "image": "characters/duteobtteok.png"
+    },
+    {
+      "id": "rainbow_tteok",
+      "name_ko": "무지개떡",
+      "category": "tteok",
+      "rarity": 5,
+      "image": "characters/rainbow_tteok.png"
+    },
+    {
+      "id": "injeolmi",
+      "name_ko": "인절미",
+      "category": "tteok",
+      "rarity": 3,
+      "image": "characters/injeolmi.png"
+    },
+    {
+      "id": "ssuk_songpyeon",
+      "name_ko": "쑥송편",
+      "category": "tteok",
+      "rarity": 3,
+      "image": "characters/ssuk_songpyeon.png"
+    },
+    {
+      "id": "melon",
+      "name_ko": "멜론",
+      "category": "fruit",
+      "rarity": 2,
+      "image": "characters/melon.png"
+    },
+    {
+      "id": "siru_tteok",
+      "name_ko": "시루떡",
+      "category": "tteok",
+      "rarity": 4,
+      "image": "characters/siru_tteok.png"
+    },
+    {
+      "id": "rainbow_mochi",
+      "name_ko": "무지개모찌",
+      "category": "tteok",
+      "rarity": 5,
+      "image": "characters/rainbow_mochi.png"
+    },
+    {
+      "id": "kong_tteok",
+      "name_ko": "콩고물떡",
+      "category": "tteok",
+      "rarity": 3,
+      "image": "characters/kong_tteok.png"
+    },
+    {
+      "id": "ssuk_songpyeon_v2",
+      "name_ko": "쑥송편(꿀)",
+      "category": "tteok",
+      "rarity": 3,
+      "image": "characters/ssuk_songpyeon_v2.png"
+    },
+    {
+      "id": "jeolpyeon",
+      "name_ko": "절편",
+      "category": "tteok",
+      "rarity": 4,
+      "image": "characters/jeolpyeon.png"
+    },
+    {
+      "id": "camembert",
+      "name_ko": "카망베르",
+      "category": "cheese",
+      "rarity": 4,
+      "image": "characters/camembert.png"
+    },
+    {
+      "id": "blue_cheese",
+      "name_ko": "블루치즈",
+      "category": "cheese",
+      "rarity": 4,
+      "image": "characters/blue_cheese.png"
+    },
+    {
+      "id": "garaetteok_long",
+      "name_ko": "가래떡(긴)",
+      "category": "tteok",
+      "rarity": 3,
+      "image": "characters/garaetteok_long.png"
+    },
+    {
+      "id": "cheddar",
+      "name_ko": "체다",
+      "category": "cheese",
+      "rarity": 2,
+      "image": "characters/cheddar.png"
+    },
+    {
+      "id": "mandu_bok",
+      "name_ko": "복주머니만두",
+      "category": "mandu",
+      "rarity": 3,
+      "image": "characters/mandu_bok.png"
+    },
+    {
+      "id": "mandu",
+      "name_ko": "만두",
+      "category": "mandu",
+      "rarity": 3,
+      "image": "characters/mandu.png"
+    },
+    {
+      "id": "garaetteok_injeolmi",
+      "name_ko": "인절미가래떡",
+      "category": "tteok",
+      "rarity": 3,
+      "image": "characters/garaetteok_injeolmi.png"
+    },
+    {
+      "id": "parmesan",
+      "name_ko": "파마산",
+      "category": "cheese",
+      "rarity": 2,
+      "image": "characters/parmesan.png"
+    },
+    {
+      "id": "toast",
+      "name_ko": "토스트",
+      "category": "etc",
+      "rarity": 2,
+      "image": "characters/toast.png"
+    },
+    {
+      "id": "bok_jumeoni",
+      "name_ko": "복주머니",
+      "category": "tteok",
+      "rarity": 4,
+      "image": "characters/bok_jumeoni.png"
+    }
+  ]
+}
