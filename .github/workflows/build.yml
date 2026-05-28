@@ -211,17 +211,27 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build Python release package
+        working-directory: server
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            server/dist/*.whl
+            server/dist/*.tar.gz
             artifacts/**/*.dmg
             artifacts/**/*.deb
             artifacts/**/*.exe
             artifacts/**/*.AppImage
             artifacts/**/*.msi
             artifacts/**/*.vsix
-          draft: true
+          draft: false
           generate_release_notes: true
           body: |
             ## Install from GitHub

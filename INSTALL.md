@@ -148,11 +148,11 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push a tag:
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.1.1
+git push origin v1.1.1
 ```
 
-3. GitHub Actions builds Python checks, desktop artifacts, and the VS Code `.vsix`.
-4. Review and publish the draft GitHub Release.
+3. GitHub Actions builds Python checks, Python wheel/sdist, desktop artifacts, and the VS Code `.vsix`.
+4. GitHub Actions publishes the GitHub Release and attaches the build artifacts.
 
 PyPI publishing is optional. Set the repository variable `PUBLISH_PYPI=true` only after PyPI Trusted Publishing is configured for this repo.

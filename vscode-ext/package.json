@@ -2,7 +2,7 @@
   "name": "chibi-mcp",
   "displayName": "tteoki (chibi-mcp)",
   "description": "Korean rice cake desktop pet for VS Code. Gacha-collect 29 squishy characters that react to your coding session.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publisher": "soccz",
   "license": "MIT",
   "engines": {
