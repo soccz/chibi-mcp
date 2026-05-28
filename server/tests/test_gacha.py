@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -104,7 +103,7 @@ def test_ticket_grant_every_10_slices():
     for _ in range(20):
         r = s.record_call()
         grants += r["ticket_grants"]
-    # 20 calls × interval=1 = 20 slices.
+    # 20 calls x interval=1 = 20 slices.
     # At call_count=100? No — only 20 calls, so 0 call-based grants.
     # But 10-slice milestone: hits at 10 slices and 20 slices = 2 grants
     assert grants == 2
