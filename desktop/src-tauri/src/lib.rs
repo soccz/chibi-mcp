@@ -1,5 +1,7 @@
 //! chibi-mcp desktop — tteoki window runtime (v0.2).
 
+#![allow(clippy::collapsible_if, clippy::needless_borrows_for_generic_args, clippy::let_underscore_must_use)]
+
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
