@@ -17,7 +17,6 @@ import {
     renameCharacter,
     setActive,
     activeCharacter,
-    characterById,
     consumeTicket,
     grantTicket,
     drawGacha,
@@ -275,7 +274,7 @@ function tryGacha() {
     runGacha({ firstFree: false });
 }
 
-function runGacha({ firstFree }) {
+function runGacha({ firstFree: _firstFree }) {
     const ch = drawGacha(catalog);
     const dup = ownsCharacter(inventory, ch.id);
     if (!dup) addCharacter(inventory, ch);
@@ -399,5 +398,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     document.getElementById("hud-tickets").textContent = `🎟 ${inventory.tickets}`;
+
+    // Bridge tray events from Rust side (lib.rs dispatches them via .eval)
+    window.addEventListener("tray:gacha", () => tryGacha());
+    window.addEventListener("tray:collection", () => openCollection());
+
     connect();
 });
