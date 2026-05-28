@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "chibi",
-      "source": ".",
+      "source": "./",
       "description": "치비 — Korean rice cake desktop pet for Claude Code. Gacha-collect squishy characters; they react to your session and get sliced every N tool calls."
     }
   ]
