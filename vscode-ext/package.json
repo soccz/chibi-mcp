@@ -1,0 +1,71 @@
+{
+  "name": "chibi-mcp",
+  "displayName": "tteoki (chibi-mcp)",
+  "description": "Korean rice cake desktop pet for VS Code. Gacha-collect 29 squishy characters that react to your coding session.",
+  "version": "0.2.1",
+  "publisher": "soccz",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other", "Visualization"],
+  "keywords": ["pet", "desktop pet", "kawaii", "tteoki", "gacha", "korean", "asmr"],
+  "icon": "resources/garaetteok_long.png",
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "chibiMcpContainer",
+          "title": "tteoki",
+          "icon": "$(symbol-color)"
+        }
+      ]
+    },
+    "views": {
+      "chibiMcpContainer": [
+        {
+          "type": "webview",
+          "id": "chibiMcp.petView",
+          "name": "tteoki",
+          "icon": "$(symbol-color)",
+          "contextualTitle": "tteoki"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "chibiMcp.gacha",
+        "title": "tteoki: 뽑기"
+      },
+      {
+        "command": "chibiMcp.collection",
+        "title": "tteoki: 보관함"
+      },
+      {
+        "command": "chibiMcp.reset",
+        "title": "tteoki: 보관함 초기화"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "typescript": "^5.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soccz/chibi-mcp.git"
+  }
+}
