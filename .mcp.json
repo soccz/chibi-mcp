@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "chibi": {
+      "command": "chibi-mcp",
+      "env": {
+        "CHIBI_ASSET_DIR": "${CLAUDE_PLUGIN_ROOT}/assets"
+      }
+    }
+  }
+}

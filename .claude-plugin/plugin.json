@@ -1,0 +1,20 @@
+{
+  "name": "chibi-mcp",
+  "description": "tteoki — Korean rice cake desktop pet for Claude Code. Gacha-collect 29 squishy characters (떡·과일·치즈·만두). They react to your session and get sliced every N tool calls.",
+  "version": "0.3.0",
+  "author": {
+    "name": "soccz",
+    "url": "https://github.com/soccz"
+  },
+  "homepage": "https://github.com/soccz/chibi-mcp",
+  "license": "MIT",
+  "keywords": [
+    "tteoki",
+    "garaetteok",
+    "korean",
+    "squishy",
+    "gacha",
+    "pet",
+    "asmr"
+  ]
+}

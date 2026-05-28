@@ -1,84 +1,73 @@
 # chibi-mcp
 
-> tteoki — Korean rice cake desktop character that visualizes your Claude Code session.
+> tteoki — Korean rice cake desktop pet for Claude Code, shipped as a Claude Code plugin.
+>
+> Gacha-collect 29 squishy characters (떡·과일·치즈·만두). They react to your coding session and get sliced every N tool calls.
+>
+> **100% free, MIT, no telemetry, OS-agnostic** — runs wherever Claude Code runs.
 
-A small **MCP server + cross-platform desktop pet**. tteoki sits in the corner of your screen as a 가래떡 (Korean rice cake stick) and reacts to your system state and Claude tool calls. Every 10 Claude calls, it gets sliced into a piece on the cutting board. Syrup (조청) drips faster when your CPU spikes.
-
-**Free, MIT, no telemetry.**
-
-## Quick start
+## Install (one line)
 
 ```bash
-# 1. Install the MCP server
-pip install chibi-mcp     # (PyPI release pending)
-
-# 2. Register with Claude Code
-claude mcp add chibi -- chibi-mcp
-
-# 3. Download the desktop app from Releases and launch it
+claude plugin install github.com/soccz/chibi-mcp
 ```
 
-The desktop app connects to `ws://127.0.0.1:9876` and shows tteoki.
+(First time only — Claude Code prompts you to enable the plugin's MCP server. Type `y`.)
 
-## Features (v0.1)
+Pre-req: `chibi-mcp` Python package on your PATH. The simplest install:
 
-- 🍡 Emoji-style garaetteok character (Korean rice cake stick)
-- 😌 7 moods (calm / happy / panting / drowsy / lonely / surprised / joyful) driven by CPU·RAM·battery·idle time
-- 🍯 Syrup drip animation, cadence based on CPU load
-- 🔪 Slice motion every N Claude tool calls (default 10) — pieces stack on a cutting board
-- 💬 `pet_say()` MCP tool for speech bubbles
-- 🆓 100% free, MIT licensed
-- 🇰🇷 Korean rice cake (떡) series planned — illustrator commissions after first traction
+```bash
+pipx install chibi-mcp     # macOS/Linux/Windows
+```
+
+That's it. Now ask Claude:
+
+> "내 가래떡 보여줘"
+> "뽑기 한 번"
+> "보관함 열어"
+
+## What you get
+
+- 🍡 **29 hand-curated characters** across 5 rarity tiers (떡 17, 과일 4, 치즈 5, 만두 2, 기타 1)
+- 🎟 **Gacha pulls** — weighted by rarity (1% / 5% / 24% / 70%)
+- 📦 **Collection** — see what you've got, switch active character, rename them
+- ⏱ **Slice cycle** — every N Claude tool calls (default 10), your pet gets sliced
+- 🎭 **Mood** driven by CPU·RAM·battery·idle (panting / drowsy / lonely / happy / surprised / joyful / calm)
 
 ## MCP tools
 
 | Tool | Description |
 |---|---|
-| `get_pet_state` | Returns mood, system metrics, counters, session time |
-| `pet_say(text)` | Make tteoki say something in a speech bubble |
-| `slice_now` | Manually trigger a slice |
-| `set_slice_interval(n)` | Change auto-slice cadence (default 10) |
+| `get_pet_state` | mood + system metrics + counters + active character |
+| `pet_say(text)` | Speech bubble (text sanitized to 200 chars) |
+| `slice_now` | Force a slice event |
+| `set_slice_interval(n)` | Change slice cadence (default 10) |
 
-## Architecture
+## Layout (for contributors)
 
 ```
-[Claude Code / Codex]
-       │ MCP stdio
-       ▼
-[chibi-mcp server]  ←──── psutil ──── CPU / RAM / battery
-       │
-       │ ws://127.0.0.1:9876
-       ▼
-[chibi-mcp desktop]  (Tauri, transparent always-on-top)
-       │
-       └─ renders tteoki SVG with mood / slice / drip
+chibi-mcp/
+├── .claude-plugin/plugin.json   # plugin manifest
+├── .mcp.json                    # stdio MCP server spec
+├── skills/tteoki/SKILL.md       # behaviour guide for Claude
+├── assets/                      # 29 PNG + meta.json
+├── server/                      # Python MCP server (PyPI: chibi-mcp)
+└── server-rs/                   # (optional) Rust rewrite, same protocol
 ```
 
-## Repo layout
+## Deprecated paths
 
-- `server/` — Python MCP server (FastMCP), tests
-- `desktop/` — Tauri 2.x app (Rust shell + HTML/CSS/JS frontend)
-- `desktop/src/characters/<id>/` — character art slot (swap files to change look)
-- `.github/workflows/build.yml` — CI: server tests + Tauri builds for macOS/Windows/Linux
+The earlier v0.1/v0.2 lineage included:
 
-See [`SPEC.md`](SPEC.md), [`CHARACTER_DESIGN.md`](CHARACTER_DESIGN.md), [`STYLE_GUIDE.md`](STYLE_GUIDE.md), [`PROCESS.md`](PROCESS.md) for project decisions and rationale.
+- **Tauri desktop app** (`desktop/`) — required macOS code signing and per-platform builds. Removed in v0.3 in favor of the plugin model.
+- **VS Code extension** (`vscode-ext/`) — folder retained for reference but not actively published. The plugin already covers the inline-chat use case.
 
-## Sources & inspirations
+Both folders are kept in the repo for archival reasons; they are not part of v0.3 install.
 
-- 한국 아티잔 키캡 group buy / raffle 모델 — [SMKX](https://www.klc-smkx.com/), [Artisan Keycap History](https://artisancollector.com/artisan-keycap-history/)
-- 슬라임 ASMR (시청각 만족감·인스타그래머블) — [TikTok #slimeasmr](https://www.tiktok.com/tag/slimeasmr)
-- chibi · kawaii 디자인 — [chibi.pics](https://www.chibi.pics/blog/what-is-chibi-why-its-style-is-so-popular)
-- 한국 2025 마스코트 트렌드 — [캐릿](https://www.careet.net/1853)
+## Not affiliated with Anthropic
 
-## Disclaimer
-
-chibi-mcp is an independent open-source project. It implements the standard
-[Model Context Protocol](https://modelcontextprotocol.io/) and is **not affiliated with or endorsed by Anthropic**.
-"Claude" and "Claude Code" are trademarks of Anthropic.
-
-The desktop app reads local system metrics (CPU/RAM/battery) via psutil and
-communicates only with `localhost`. No data leaves your machine.
+chibi-mcp is an independent open-source project. The `claude` CLI and the MCP protocol it implements are tools by Anthropic; this project is not endorsed by them.
 
 ## License
 
-MIT
+MIT.
