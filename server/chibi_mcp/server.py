@@ -253,10 +253,15 @@ def open_pet_window(character_id: str | None = None) -> dict:
 
     _kill_existing_window()
 
+    # Capture stderr to a log file so import/tk errors are debuggable.
+    log_path = Path.home() / ".chibi-mcp" / "window.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_fh = log_path.open("ab")
+
     popen_kwargs: dict = {
         "stdin": subprocess.DEVNULL,
-        "stdout": subprocess.DEVNULL,
-        "stderr": subprocess.DEVNULL,
+        "stdout": log_fh,
+        "stderr": log_fh,
     }
     if sys.platform == "win32":
         popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
@@ -282,6 +287,30 @@ def open_pet_window(character_id: str | None = None) -> dict:
         **popen_kwargs,
     )
 
+    # Tk import failures, missing display, etc. show up in the first 500ms.
+    # If the subprocess is already dead by then, surface the tail of its log.
+    import time as _time
+
+    _time.sleep(0.5)
+    exit_code = proc.poll()
+    if exit_code is not None:
+        log_fh.close()
+        try:
+            tail = log_path.read_text(encoding="utf-8", errors="replace")[-2000:]
+        except OSError:
+            tail = "(no log)"
+        return {
+            "opened": False,
+            "reason": f"window subprocess died (exit {exit_code})",
+            "log_tail": tail,
+            "log_path": str(log_path),
+            "hint": (
+                "macOS: ensure pipx is using a Python with tkinter "
+                "(python.org installer or `brew install python-tk@3.12`). "
+                "Check with: python3 -c 'import tkinter'"
+            ),
+        }
+
     _WINDOW_PID_FILE.parent.mkdir(parents=True, exist_ok=True)
     _WINDOW_PID_FILE.write_text(str(proc.pid))
 
@@ -293,6 +322,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
         "rarity": ch.get("rarity"),
         "mood": mood,
         "image": str(image_path),
+        "log_path": str(log_path),
     }
 
 
