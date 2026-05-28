@@ -90,10 +90,19 @@ def filter_catalog_by_tier(catalog: dict, status: LicenseStatus) -> dict:
     """Return a shallow-copied catalog with only entries the user owns access to.
 
     `catalog` is the raw meta.json structure: { "characters": [ {id, name_ko, ...,
-    tier: "free"|"pro"} ] }.
+    tier: "free"|"pro"|"upcoming"} ] }.
+
+    - free tier: only "free" characters
+    - pro tier: free + pro characters (NOT upcoming — those aren't released yet)
+    - upcoming: never returned to clients; they're catalog placeholders
     """
     if status.is_pro:
-        return catalog
+        return {
+            **catalog,
+            "characters": [
+                c for c in catalog["characters"] if c.get("tier") in ("free", "pro")
+            ],
+        }
     return {
         **catalog,
         "characters": [c for c in catalog["characters"] if c.get("tier") == "free"],

@@ -28,11 +28,14 @@ That's it. Now ask Claude:
 
 ## What you get
 
-- 🍡 **29 hand-curated characters** across 5 rarity tiers (떡 17, 과일 4, 치즈 5, 만두 2, 기타 1)
+- 🍡 **8 starter characters** released now (white_tteok, garaetteok_short, baekseolgi, mochi, green_grape, melon, cheddar, toast — all ★★)
+- 🔒 **21 more characters coming later** including the ★★★★★ rainbow series, all 떡 varieties, cheeses, fruits, mandu. Catalog shows them as "???" placeholders until release.
 - 🎟 **Gacha pulls** — weighted by rarity (1% / 5% / 24% / 70%)
 - 📦 **Collection** — see what you've got, switch active character, rename them
 - ⏱ **Slice cycle** — every N Claude tool calls (default 10), your pet gets sliced
 - 🎭 **Mood** driven by CPU·RAM·battery·idle (panting / drowsy / lonely / happy / surprised / joyful / calm)
+
+> v0.4 is the open-source freemium baseline. The remaining 21 characters will be released alongside a Pro tier later; pricing and release date TBD.
 
 ## MCP tools
 

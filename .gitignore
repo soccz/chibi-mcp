@@ -41,3 +41,7 @@ characters/img*_nobg.png
 
 # server-rs Rust build artifacts
 server-rs/target/
+
+# Pro tier source assets — local only, not part of the public repo.
+# Move/symlink here to test the full 29-character set locally.
+characters/
