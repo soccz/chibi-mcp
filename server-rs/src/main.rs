@@ -14,11 +14,11 @@ use parking_lot::Mutex;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::schemars::JsonSchema;
 use rmcp::{
-    ErrorData as McpError, ServerHandler, ServiceExt,
     handler::server::tool::ToolRouter,
     model::{CallToolResult, Content, ServerCapabilities, ServerInfo},
     tool, tool_handler, tool_router,
     transport::stdio,
+    ErrorData as McpError, ServerHandler, ServiceExt,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -91,9 +91,7 @@ impl ChibiMcp {
     )]
     async fn pet_say(
         &self,
-        Parameters(args): Parameters<
-            SayArgs,
-        >,
+        Parameters(args): Parameters<SayArgs>,
     ) -> Result<CallToolResult, McpError> {
         let state = GLOBAL_STATE.get().expect("state init");
         let broadcaster = GLOBAL_BROADCASTER.get().expect("ws init");
@@ -114,7 +112,9 @@ impl ChibiMcp {
         )]))
     }
 
-    #[tool(description = "Manually trigger a slice (resets the lengthen cycle, fires a slice event).")]
+    #[tool(
+        description = "Manually trigger a slice (resets the lengthen cycle, fires a slice event)."
+    )]
     async fn slice_now(&self) -> Result<CallToolResult, McpError> {
         let state = GLOBAL_STATE.get().expect("state init");
         let broadcaster = GLOBAL_BROADCASTER.get().expect("ws init");
@@ -137,9 +137,7 @@ impl ChibiMcp {
     )]
     async fn set_slice_interval(
         &self,
-        Parameters(args): Parameters<
-            SliceIntervalArgs,
-        >,
+        Parameters(args): Parameters<SliceIntervalArgs>,
     ) -> Result<CallToolResult, McpError> {
         let state = GLOBAL_STATE.get().expect("state init");
         let (prev, new) = state.set_slice_interval(args.n);
@@ -155,7 +153,8 @@ impl ServerHandler for ChibiMcp {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             instructions: Some(
-                "tteoki — Korean rice cake desktop pet. v0.2 Rust server with WebSocket broadcast.".into(),
+                "tteoki — Korean rice cake desktop pet. v0.2 Rust server with WebSocket broadcast."
+                    .into(),
             ),
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             ..Default::default()

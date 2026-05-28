@@ -45,6 +45,16 @@ BOB_TICK_MS = 30
 
 SOUND_DIR = Path.home() / ".chibi-mcp" / "sounds"
 
+MOOD_LABELS: dict[str, tuple[str, str]] = {
+    "calm": ("말랑", "😌"),
+    "happy": ("신남", "😊"),
+    "joyful": ("반짝", "🤩"),
+    "panting": ("헐떡", "😅"),
+    "drowsy": ("졸림", "😴"),
+    "lonely": ("시무룩", "🥺"),
+    "surprised": ("깜짝", "😮"),
+}
+
 
 # ── Mood → Pillow filter ─────────────────────────────────────────────────────
 
@@ -279,7 +289,7 @@ class PetWindow:
 
         # Total window: canvas + name label + mood label
         total_w = max(CANVAS_SIZE, self._img_w + 24)
-        canvas_h = self._img_h + 20
+        canvas_h = self._img_h + 28
 
         self.canvas = tk.Canvas(
             self.root,
@@ -291,6 +301,18 @@ class PetWindow:
         )
         self.canvas.pack()
         self._canvas_center = (total_w // 2, canvas_h // 2)
+
+        shadow_w = min(total_w - 52, max(80, self._img_w - 16))
+        shadow_y = min(canvas_h - 14, self._canvas_center[1] + self._img_h // 2 - 8)
+        self.canvas.create_oval(
+            self._canvas_center[0] - shadow_w // 2,
+            shadow_y - 5,
+            self._canvas_center[0] + shadow_w // 2,
+            shadow_y + 5,
+            fill="#000000",
+            outline="",
+            stipple="gray50",
+        )
 
         self._photo = ImageTk.PhotoImage(_apply_mood_filter(self.base_image, mood))
         self._image_id = self.canvas.create_image(
@@ -321,6 +343,16 @@ class PetWindow:
             font=("Helvetica", 10),
         )
         self.mood_label.pack(pady=(2, 6))
+        self._update_mood_label(mood)
+
+        self.progress_label = tk.Label(
+            self.root,
+            text="",
+            bg=bg,
+            fg=meta_fg,
+            font=("Helvetica", 9),
+        )
+        self.progress_label.pack(pady=(0, 8))
 
         # Speech bubble
         self.bubble = tk.Label(
@@ -338,7 +370,7 @@ class PetWindow:
         self._bubble_hide_after: str | None = None
 
         # Bind drag + clicks on canvas and labels
-        for w in (self.canvas, self.name_label, self.mood_label):
+        for w in (self.canvas, self.name_label, self.mood_label, self.progress_label):
             w.bind("<Button-1>", self._start_drag)
             w.bind("<B1-Motion>", self._do_drag)
             w.bind("<Button-3>", lambda _e: self.shutdown())  # right-click close
@@ -368,11 +400,25 @@ class PetWindow:
         self.current_mood = mood
 
     def _update_mood_label(self, mood: str) -> None:
-        emoji = {
-            "calm": "😌", "happy": "😊", "joyful": "🤩", "panting": "😅",
-            "drowsy": "😴", "lonely": "🥺", "surprised": "😮",
-        }.get(mood, "•")
-        self.mood_label.configure(text=f"기분: {mood} {emoji}")
+        label, emoji = MOOD_LABELS.get(mood, (mood, "•"))
+        self.mood_label.configure(text=f"{label} {emoji}")
+
+    def _update_progress_label(self, payload: dict) -> None:
+        counters = payload.get("counters") or {}
+        calls = counters.get("calls_since_slice")
+        interval = counters.get("slice_interval")
+        slices = counters.get("slices_today")
+        gacha = payload.get("gacha") or {}
+        tickets = gacha.get("tickets")
+
+        parts: list[str] = []
+        if calls is not None and interval:
+            parts.append(f"{calls}/{interval}")
+        if slices is not None:
+            parts.append(f"{slices}도막")
+        if tickets is not None:
+            parts.append(f"티켓 {tickets}")
+        self.progress_label.configure(text=" · ".join(parts))
 
     # ── Animations ───────────────────────────────────────────────────────────
 
@@ -395,8 +441,41 @@ class PetWindow:
         bright = ImageEnhance.Brightness(self.base_image).enhance(1.8)
         self._photo = ImageTk.PhotoImage(_apply_mood_filter(bright, self.current_mood))
         self.canvas.itemconfigure(self._image_id, image=self._photo)
+        self._drop_slice_piece()
         self._play_safe("slice")
         self.root.after(140, lambda: self._render_image(self.current_mood))
+
+    def _drop_slice_piece(self) -> None:
+        cx = self._canvas_center[0]
+        base_y = self._canvas_center[1] + self._img_h // 2 - 12
+        piece = self.canvas.create_oval(
+            cx - 18,
+            base_y - 8,
+            cx + 18,
+            base_y + 8,
+            fill="#F6F1E8",
+            outline="#CBA16A",
+            width=2,
+        )
+        seam = self.canvas.create_line(
+            cx - 8,
+            base_y - 2,
+            cx + 9,
+            base_y + 2,
+            fill="#E2C184",
+            width=2,
+        )
+
+        def tick(step: int = 0) -> None:
+            if step >= 16:
+                self.canvas.delete(piece)
+                self.canvas.delete(seam)
+                return
+            self.canvas.move(piece, 0, 2)
+            self.canvas.move(seam, 0, 2)
+            self.root.after(45, lambda: tick(step + 1))
+
+        tick()
 
     def show_bubble(self, text: str) -> None:
         if not text:
@@ -458,6 +537,7 @@ class PetWindow:
             if mood and mood != self.current_mood:
                 self._render_image(mood)
                 self._update_mood_label(mood)
+            self._update_progress_label(payload)
         elif kind == "slice":
             self._slice_flash()
         elif kind == "say":

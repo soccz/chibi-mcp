@@ -1,0 +1,41 @@
+{
+  "name": "chibi-mcp",
+  "version": "1.1.0",
+  "description": "치비 (chibi) — Korean rice cake themed MCP pet for Codex. Collect squishy characters, open a floating pet window, and let it react to your coding session.",
+  "author": {
+    "name": "soccz",
+    "url": "https://github.com/soccz"
+  },
+  "homepage": "https://github.com/soccz/chibi-mcp",
+  "repository": "https://github.com/soccz/chibi-mcp",
+  "license": "MIT",
+  "keywords": [
+    "chibi",
+    "tteoki",
+    "mcp",
+    "codex",
+    "pet",
+    "gacha",
+    "korean"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "tteoki",
+    "shortDescription": "A squishy Korean rice cake MCP pet for Codex.",
+    "longDescription": "Open a floating tteoki pet, collect characters, run gacha pulls, and show local CPU, RAM, battery, idle, tool-call, and slice state through MCP.",
+    "developerName": "soccz",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "MCP"
+    ],
+    "websiteURL": "https://github.com/soccz/chibi-mcp",
+    "defaultPrompt": [
+      "내 치비 보여줘",
+      "치비 뽑기 한 번",
+      "치비 보관함 열어"
+    ],
+    "brandColor": "#F59E0B"
+  }
+}

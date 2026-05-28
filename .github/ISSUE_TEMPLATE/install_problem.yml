@@ -1,0 +1,46 @@
+name: Install problem
+description: Get help with Claude Code, Codex, VS Code, or pipx install.
+title: "[Install]: "
+labels: ["install", "triage"]
+body:
+  - type: dropdown
+    id: path
+    attributes:
+      label: Install path
+      options:
+        - Claude Code one-command script
+        - Codex one-command script
+        - pipx manual install
+        - Claude plugin marketplace
+        - Codex plugin marketplace
+        - VS Code VSIX
+        - Local clone
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: "Ubuntu 24.04 / macOS 15 / Windows 11"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command used
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Remove tokens, home-directory secrets, and private paths.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: check
+    attributes:
+      label: chibi-mcp --check
+      render: json

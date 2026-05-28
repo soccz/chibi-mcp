@@ -131,10 +131,10 @@ def slice_now() -> dict:
 
 @mcp.tool()
 def get_license_status() -> dict:
-    """Return the user's license tier (free / pro) and any details.
+    """Return the current catalog access status.
 
-    The plugin and the Claude skill should use this before showing
-    Pro-only characters or pulls.
+    Kept as a stable MCP tool name. The open-source core has no paid
+    entitlement gate; unreleased catalog placeholders stay hidden.
     """
     from .license import verify_license
 
@@ -157,7 +157,7 @@ def _resolve_asset_dir() -> str | None:
         2. Glob ~/.claude/plugins/cache/**/assets/meta.json — pick the
            most-recently-modified match (latest installed plugin version).
         3. Walk up from this source file to find a sibling assets/meta.json
-           (works for source installs).
+           (works for source installs and packaged wheel assets).
     """
     import os as _os
 
@@ -190,11 +190,11 @@ def _resolve_asset_dir() -> str | None:
 
 @mcp.tool()
 def get_catalog() -> dict:
-    """Return the character catalog filtered by the user's license tier.
+    """Return the released character catalog.
 
-    Free users see 8 starter characters; Pro users see all 29. Resolves
-    the assets/ directory via `$CHIBI_ASSET_DIR`, the Claude Code plugin
-    cache glob, then a source-tree walk — in that order.
+    Users see released starter characters; unreleased placeholders stay hidden.
+    Resolves the assets/ directory via `$CHIBI_ASSET_DIR`, the Claude Code
+    plugin cache glob, then a source-tree walk — in that order.
     """
     import json
 
@@ -240,6 +240,32 @@ def _kill_existing_window() -> None:
     _WINDOW_PID_FILE.unlink(missing_ok=True)
 
 
+def _window_runtime_issue() -> dict | None:
+    try:
+        import tkinter  # noqa: F401
+    except Exception as exc:
+        return {
+            "opened": False,
+            "reason": "python tkinter unavailable",
+            "error": str(exc),
+            "next_step": (
+                "Ubuntu/Debian system Python: sudo apt-get install -y python3-tk. "
+                "pyenv Python: install tk-dev, then rebuild the Python version used by pipx."
+            ),
+        }
+
+    if sys.platform.startswith("linux") and not os.environ.get("DISPLAY") and not os.environ.get(
+        "WAYLAND_DISPLAY"
+    ):
+        return {
+            "opened": False,
+            "reason": "no desktop display session",
+            "next_step": "Run from a real desktop session, or set DISPLAY/WAYLAND_DISPLAY for a forwarded GUI session.",
+        }
+
+    return None
+
+
 @mcp.tool()
 def open_pet_window(character_id: str | None = None) -> dict:
     """Pop up a small always-on-top tk window showing the active 치비.
@@ -256,7 +282,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
     catalog = get_catalog()
     chars = catalog.get("characters", [])
     if not chars:
-        return {"opened": False, "reason": "no characters in your tier"}
+        return {"opened": False, "reason": "no released characters available"}
 
     state = get_state()
     snap = state.snapshot()
@@ -269,7 +295,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
         if ch is None:
             return {
                 "opened": False,
-                "reason": f"character {target_id!r} not in your tier",
+                "reason": f"character {target_id!r} is not released",
             }
     else:
         ch = chars[0]
@@ -280,6 +306,15 @@ def open_pet_window(character_id: str | None = None) -> dict:
     image_path = Path(asset_dir) / f"{ch['id']}.png"
     if not image_path.exists():
         return {"opened": False, "reason": f"image not found: {image_path}"}
+
+    runtime_issue = _window_runtime_issue()
+    if runtime_issue:
+        return {
+            **runtime_issue,
+            "character": ch["id"],
+            "name_ko": ch.get("name_ko") or ch["id"],
+            "image": str(image_path),
+        }
 
     # Prefer the user-given nickname if any
     nickname = ch.get("name_ko") or ch["id"]

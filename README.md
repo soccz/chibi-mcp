@@ -1,27 +1,73 @@
 # chibi-mcp
 
-> 치비 (chibi) — Korean rice cake desktop pet for Claude Code, shipped as a Claude Code plugin.
+[![CI](https://github.com/soccz/chibi-mcp/actions/workflows/build.yml/badge.svg)](https://github.com/soccz/chibi-mcp/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![No telemetry](https://img.shields.io/badge/telemetry-none-blue.svg)](SECURITY.md)
+
+> 치비 (chibi) — Korean rice cake MCP pet for Claude Code, Codex, and VS Code.
 >
 > Gacha-collect squishy characters (떡·과일·치즈·만두). They react to your coding session and get sliced every N tool calls.
 >
-> **100% free, MIT, no telemetry, OS-agnostic** — runs wherever Claude Code runs.
+> **MIT, no telemetry, OS-agnostic** — installed from GitHub, powered by a local MCP server.
 
-## Install (two lines)
+Star this repo to follow monthly character drops, VS Code builds, creator packs, and the no-telemetry MCP pet roadmap.
+
+## Install from GitHub
+
+One-command installers:
 
 ```bash
-pipx install chibi-mcp                                # 1. server binary on PATH
+# Claude Code
+bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.sh)
+
+# Codex
+bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-codex.sh)
 ```
 
-Then inside Claude Code:
+Manual install:
 
+```bash
+pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 ```
+
+Then connect it to your client:
+
+```bash
+# Codex CLI
+codex mcp add chibi -- chibi-mcp
+
+# Claude Code CLI
+claude mcp add chibi -- chibi-mcp
+```
+
+Claude Code plugin install:
+
+```text
 /plugin marketplace add soccz/chibi-mcp
 /plugin install chibi@chibi-mcp
 ```
 
-(First time only — Claude Code prompts you to enable the plugin's MCP server. Type `y`.)
+Codex plugin marketplace:
 
-That's it. Now ask Claude:
+```bash
+codex plugin marketplace add soccz/chibi-mcp
+```
+
+VS Code users can download the `.vsix` from the latest GitHub Release and install it:
+
+```bash
+code --install-extension chibi-mcp-*.vsix
+```
+
+See [INSTALL.md](INSTALL.md) for the full GitHub install matrix.
+
+Health check:
+
+```bash
+chibi-mcp --check
+```
+
+Now ask your client:
 
 > `/chibi`
 > "내 치비 보여줘"
@@ -37,7 +83,23 @@ That's it. Now ask Claude:
 - ⏱ **Slice cycle** — every N Claude tool calls (default 10), your pet gets sliced
 - 🎭 **Mood** driven by CPU·RAM·battery·idle (panting / drowsy / lonely / happy / surprised / joyful / calm)
 
-> v0.4 is the open-source freemium baseline. The remaining 21 characters will be released alongside a Pro tier later; pricing and release date TBD.
+The remaining 21 characters are catalog placeholders for future drops; release timing is TBD.
+
+## Why Developers Star It
+
+- **Immediate dopamine** — one-command install, then a visible pet reacts to your coding session.
+- **Local-first trust** — no telemetry, localhost-only runtime, explicit `chibi-mcp --check`.
+- **AI-native surface** — Claude Code plugin, Codex plugin metadata, MCP server, and VS Code `.vsix` from one repo.
+- **Share loop** — "today's slices", character pulls, and future 1080x1080 share cards are built for screenshots.
+- **Open content loop** — character packs and creator submissions are planned around transparent metadata, not a closed store.
+
+## Product Strategy
+
+chibi-mcp is positioned as an **AI coding companion identity layer**: a local MCP pet that can grow into character drops, creator packs, team distribution, brand collaborations, and desk-culture goods without reducing the free core.
+
+The base product stays free: Pet / Notification / Widget / VTuber modes, MCP tools, system status, starter characters, and local state are not commercial gates. Paid options, if later approved, should be cosmetics, direct-purchase packs, team support, signed/offline bundles, collaborations, or physical goods.
+
+See [COMMERCIAL_STRATEGY.md](COMMERCIAL_STRATEGY.md) for the commercial expansion plan and [GITHUB_STAR_STRATEGY.md](GITHUB_STAR_STRATEGY.md) for the source-backed GitHub growth plan.
 
 ## MCP tools
 
@@ -52,23 +114,33 @@ That's it. Now ask Claude:
 
 ```
 chibi-mcp/
+├── .codex-plugin/plugin.json   # Codex plugin manifest
 ├── .claude-plugin/plugin.json   # plugin manifest
 ├── .mcp.json                    # stdio MCP server spec
 ├── skills/chibi/SKILL.md        # behaviour guide for Claude
 ├── commands/chibi.md            # /chibi slash command
-├── assets/                      # 29 PNG + meta.json
-├── server/                      # Python MCP server (PyPI: chibi-mcp)
+├── COMMERCIAL_STRATEGY.md       # expansion model, revenue surfaces, guardrails
+├── GITHUB_STAR_STRATEGY.md      # README, topics, community, launch loop
+├── scripts/                     # install + verification scripts
+├── assets/                      # starter PNG assets + catalog meta.json
+├── server/                      # Python MCP server package
 └── server-rs/                   # (optional) Rust rewrite, same protocol
 ```
 
-## Deprecated paths
+## Client Paths
 
-The earlier v0.1/v0.2 lineage included:
+The plugin/MCP path is the primary install path for Claude Code and Codex. Other clients stay available as user-facing surfaces:
 
-- **Tauri desktop app** (`desktop/`) — required macOS code signing and per-platform builds. Removed in v0.3 in favor of the plugin model.
-- **VS Code extension** (`vscode-ext/`) — folder retained for reference but not actively published. The plugin already covers the inline-chat use case.
+- **Tauri desktop app** (`desktop/`) — cross-platform pet window path for users who want a native desktop client.
+- **VS Code extension** (`vscode-ext/`) — optional sidebar experience. Tagged GitHub Releases package it as a downloadable `.vsix`.
 
-Both folders are kept in the repo for archival reasons; they are not part of v0.3 install.
+## Community
+
+- Character ideas and creator packs: use the character pack issue form.
+- Install problems: include `chibi-mcp --check` output.
+- Screenshots/share cards: use the showcase issue form.
+- Contributions: see [CONTRIBUTING.md](CONTRIBUTING.md).
+- Security reports: see [SECURITY.md](SECURITY.md).
 
 ## Not affiliated with Anthropic
 

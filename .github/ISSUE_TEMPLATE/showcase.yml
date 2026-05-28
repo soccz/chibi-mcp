@@ -1,0 +1,27 @@
+name: Showcase
+description: Share your tteoki screenshot, pet state, or slice card.
+title: "[Showcase]: "
+labels: ["showcase"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: What happened?
+      placeholder: "오늘 몇 도막 잘렸는지, 어떤 캐릭터를 뽑았는지, 어떤 클라이언트에서 썼는지 적어주세요."
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: Client
+      options:
+        - Claude Code
+        - Codex
+        - VS Code
+        - Desktop/Tauri
+        - Other
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshot or share card
+      description: Drag and drop an image here. Remove private project information first.

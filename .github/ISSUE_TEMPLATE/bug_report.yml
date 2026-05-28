@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a reproducible chibi-mcp bug.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What broke?
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: Client
+      options:
+        - Claude Code
+        - Codex
+        - VS Code
+        - Desktop/Tauri
+        - Python server only
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: "Ubuntu 24.04 / macOS 15 / Windows 11"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run ...
+        2. Ask ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: check
+    attributes:
+      label: chibi-mcp --check
+      description: Paste the output if available.
+      render: json
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Remove secrets, local tokens, and private paths first.

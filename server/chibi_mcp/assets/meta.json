@@ -1,0 +1,236 @@
+{
+  "characters": [
+    {
+      "id": "white_tteok",
+      "name_ko": "흰떡",
+      "category": "tteok",
+      "rarity": 2,
+      "image": "characters/white_tteok.png",
+      "tier": "free"
+    },
+    {
+      "id": "garaetteok_short",
+      "name_ko": "가래떡(짧)",
+      "category": "tteok",
+      "rarity": 2,
+      "image": "characters/garaetteok_short.png",
+      "tier": "free"
+    },
+    {
+      "id": "mozzarella",
+      "name_ko": "???",
+      "category": "cheese",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "strawberry",
+      "name_ko": "???",
+      "category": "fruit",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "peach",
+      "name_ko": "???",
+      "category": "fruit",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "baekseolgi",
+      "name_ko": "백설기",
+      "category": "tteok",
+      "rarity": 2,
+      "image": "characters/baekseolgi.png",
+      "tier": "free"
+    },
+    {
+      "id": "songpyeon",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "green_grape",
+      "name_ko": "청포도",
+      "category": "fruit",
+      "rarity": 2,
+      "image": "characters/green_grape.png",
+      "tier": "free"
+    },
+    {
+      "id": "mochi",
+      "name_ko": "모찌",
+      "category": "tteok",
+      "rarity": 2,
+      "image": "characters/mochi.png",
+      "tier": "free"
+    },
+    {
+      "id": "duteobtteok",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 4,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "rainbow_tteok",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 5,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "injeolmi",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "ssuk_songpyeon",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "melon",
+      "name_ko": "멜론",
+      "category": "fruit",
+      "rarity": 2,
+      "image": "characters/melon.png",
+      "tier": "free"
+    },
+    {
+      "id": "siru_tteok",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 4,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "rainbow_mochi",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 5,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "kong_tteok",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "ssuk_songpyeon_v2",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "jeolpyeon",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 4,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "camembert",
+      "name_ko": "???",
+      "category": "cheese",
+      "rarity": 4,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "blue_cheese",
+      "name_ko": "???",
+      "category": "cheese",
+      "rarity": 4,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "garaetteok_long",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "cheddar",
+      "name_ko": "체다",
+      "category": "cheese",
+      "rarity": 2,
+      "image": "characters/cheddar.png",
+      "tier": "free"
+    },
+    {
+      "id": "mandu_bok",
+      "name_ko": "???",
+      "category": "mandu",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "mandu",
+      "name_ko": "???",
+      "category": "mandu",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "garaetteok_injeolmi",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 3,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "parmesan",
+      "name_ko": "???",
+      "category": "cheese",
+      "rarity": 2,
+      "tier": "upcoming",
+      "locked": true
+    },
+    {
+      "id": "toast",
+      "name_ko": "토스트",
+      "category": "etc",
+      "rarity": 2,
+      "image": "characters/toast.png",
+      "tier": "free"
+    },
+    {
+      "id": "bok_jumeoni",
+      "name_ko": "???",
+      "category": "tteok",
+      "rarity": 4,
+      "tier": "upcoming",
+      "locked": true
+    }
+  ]
+}

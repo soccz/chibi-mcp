@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from chibi_mcp.server import MAX_SAY_LEN, _sanitize_say
+from pathlib import Path
+
+from chibi_mcp.server import (
+    MAX_SAY_LEN,
+    _resolve_asset_dir,
+    _sanitize_say,
+    _window_runtime_issue,
+)
 
 
 def test_sanitize_short_text_passthrough():
@@ -39,3 +46,24 @@ def test_sanitize_handles_non_string_input():
 
 def test_sanitize_strips_surrounding_whitespace():
     assert _sanitize_say("   hello   ") == "hello"
+
+
+def test_asset_dir_resolves_for_direct_mcp_installs():
+    asset_dir = _resolve_asset_dir()
+    assert asset_dir is not None
+    assert (Path(asset_dir) / "meta.json").exists()
+
+
+def test_window_runtime_issue_reports_missing_tkinter(monkeypatch):
+    real_import = __import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "tkinter":
+            raise ModuleNotFoundError("No module named '_tkinter'")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr("builtins.__import__", fake_import)
+    issue = _window_runtime_issue()
+    assert issue is not None
+    assert issue["opened"] is False
+    assert issue["reason"] == "python tkinter unavailable"

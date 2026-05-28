@@ -4,21 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-`chibi-mcp` is an MCP server + cross-platform desktop character ("chibi") that surfaces system state (CPU, battery, session) through a character with personality. It is installed via the standard MCP install path (`claude mcp add ...`) and runs the character as a separate desktop app that talks to the MCP server over localhost.
+`chibi-mcp` is an MCP server + cross-platform desktop character ("chibi") that surfaces system state (CPU, battery, session) through a character with personality. It is installed from GitHub for Claude Code, Codex, and VS Code, and runs a local server/window that talks over localhost where a desktop session is available.
 
-The project is in **pre-code planning**: only specification documents exist. No code in `server/`, `desktop/`, `characters/`, or `build/` yet.
+The project now has an executable Python MCP server, Claude/Codex plugin metadata, a VS Code `.vsix` packaging path, and a Tauri desktop code path. Some docs still describe future product phases; check the current files before assuming a phase boundary.
 
-## Repository structure (planning phase)
+## Repository structure
 
 - `SPEC.md` — the source of truth for **what the user has actually asked for** and **what was jointly decided** vs **what is still undecided**. Read this first.
 - `CHARACTER_DESIGN.md` — character specifications (proportions, expressions, motions, sounds, palette). This is the **delegated design domain** (the user explicitly delegated design to Claude).
 - `STYLE_GUIDE.md` — UI, typography, voice, share-card design. Also delegated design domain.
-- `PROCESS.md` — Step A through Step E. Step A is gated on user decisions and **must complete before Step B**.
-- `server/` — future Python MCP server (FastMCP). Empty.
-- `desktop/` — future Tauri/Electron app. Empty.
-- `characters/` — future character sprites/SVG/Lottie assets. Empty.
+- `PROCESS.md` — Step A through Step G. Step F/G are commercial and GitHub growth strategy, not approved monetization implementation.
+- `COMMERCIAL_STRATEGY.md` — commercial expansion candidates and guardrails.
+- `GITHUB_STAR_STRATEGY.md` — source-backed GitHub growth plan, topics, community surface, launch loop.
+- `INSTALL.md` — GitHub install matrix for Claude Code, Codex, and VS Code.
+- `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/` — public community and trust surface.
+- `server/` — Python MCP server package.
+- `desktop/` — Tauri desktop client path.
+- `vscode-ext/` — VS Code extension packaging path.
+- `assets/` and `server/chibi_mcp/assets/` — starter PNG characters and metadata.
 
-When the project leaves the planning phase, this file should be updated with the actual build/test/run commands for `server/` and `desktop/`.
+Core commands:
+
+- Full verification: `make check` or `./scripts/verify_all.sh`
+- Python tests: `cd server && python -m pytest -q`
+- Server health check: `cd server && python -m chibi_mcp --check`
+- Claude plugin validation: `claude plugin validate .`
+- VS Code package: `./scripts/package-vscode.sh`
 
 ## Critical rules for working in this repo
 
@@ -33,6 +44,7 @@ The user has been explicit about which decisions are theirs and which are delega
   - Release channels
   - Success metrics
   - Monetization model and timing (deferred until traffic data exists)
+  - Which commercial tracks to launch: direct-purchase packs, creator marketplace, team edition, brand collaborations, physical goods
 
 - **Delegated design territory** (the user explicitly said "디자인은 너가 출처들 조합해서"):
   - Character proportions, expressions, motions
@@ -70,7 +82,7 @@ The user requested "출처 명확하게" (sources explicit). When the design or 
 
 Pet / Notification / Widget / VTuber — all four modes are free in the base product. Any gating logic must respect this.
 
-Monetization, if introduced, will be **post-traffic** and **not by gating modes**. Gacha-style mechanics were discussed; the leading model under consideration is the Korean keycap "raffle / monthly drop" pattern (transparent pricing, published probabilities) to stay within Korean game-industry-act compliance — but no implementation until the user decides.
+Monetization, if introduced, will be **post-traffic** and **not by gating modes**. Commercial expansion should prefer direct-purchase packs, creator packs, team support, signed/offline bundles, collaborations, and physical goods before any paid random reward. No implementation until the user decides.
 
 ### 6. Cross-platform from day one
 
@@ -78,11 +90,13 @@ Tauri or Electron — jointly decided. Linux/macOS/Windows must all work. Avoid 
 
 ## Working flow (from PROCESS.md)
 
-- **Step A** — converge user decisions (mostly complete as of 2026-05-18; character name still pending)
+- **Step A** — converge user decisions (mostly complete as of 2026-05-18; character name decided as tteoki)
 - **Step B** — MCP server core (`server/`, Python, FastMCP). Build the **common core for all four modes**, even though only pet mode will get a client in MVP.
 - **Step C** — pet-mode desktop client (`desktop/`, Tauri/Electron). MVP scope: **pet mode only**.
 - **Step D** — packaging (npm/PyPI + GitHub Releases per-OS installers)
 - **Step E** — GitHub Public Release. Other channels (ProductHunt, HN, Korean communities) are post-traffic decisions.
+- **Step F** — commercial expansion track. Strategy only until the user approves specific monetization or partnership moves.
+- **Step G** — GitHub star growth track. README/community/social-preview/topics work that improves public launch readiness.
 
 ## Step A decisions (2026-05-18)
 
@@ -100,6 +114,7 @@ Tauri or Electron — jointly decided. Linux/macOS/Windows must all work. Avoid 
 
 ## When to update this file
 
-- After Step A completes (the undecided items in `SPEC.md` will become decided — reflect them here in a "Decisions" section).
-- After `server/` gets its first commit (add the install/run/test commands).
-- After `desktop/` gets its first commit (add the Tauri/Electron dev/build commands).
+- After install, test, or build commands change.
+- After the user decides any commercial track in `COMMERCIAL_STRATEGY.md`.
+- After the GitHub growth plan in `GITHUB_STAR_STRATEGY.md` changes materially.
+- After `desktop/` shipping commands or platform package details change.

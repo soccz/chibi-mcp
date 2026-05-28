@@ -115,7 +115,7 @@ async fn handle_client(
         let payload = state.snapshot(&snap, mood);
         let msg = serde_json::json!({"type": "state", "payload": payload});
         write
-            .send(Message::Text(serde_json::to_string(&msg)?.into()))
+            .send(Message::Text(serde_json::to_string(&msg)?))
             .await?;
     }
 
@@ -125,7 +125,7 @@ async fn handle_client(
             broadcast_msg = rx.recv() => {
                 match broadcast_msg {
                     Ok(text) => {
-                        if write.send(Message::Text(text.into())).await.is_err() {
+                        if write.send(Message::Text(text)).await.is_err() {
                             break;
                         }
                     }

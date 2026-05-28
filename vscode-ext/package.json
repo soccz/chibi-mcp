@@ -10,7 +10,7 @@
   },
   "categories": ["Other", "Visualization"],
   "keywords": ["pet", "desktop pet", "kawaii", "tteoki", "gacha", "korean", "asmr"],
-  "icon": "resources/garaetteok_long.png",
+  "icon": "resources/garaetteok_short.png",
   "main": "./out/extension.js",
   "activationEvents": [
     "onStartupFinished"
@@ -55,8 +55,8 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint src --ext ts",
-    "package": "vsce package"
+    "lint": "tsc -p ./ --noEmit",
+    "package": "vsce package --no-dependencies"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

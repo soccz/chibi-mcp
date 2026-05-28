@@ -1,5 +1,8 @@
 {
   "name": "chibi-mcp",
+  "metadata": {
+    "description": "Claude Code plugins for tteoki, a Korean rice cake MCP pet with gacha, live mood, and slice events."
+  },
   "owner": {
     "name": "soccz",
     "url": "https://github.com/soccz"

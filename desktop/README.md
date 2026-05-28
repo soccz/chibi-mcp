@@ -4,7 +4,13 @@ tteoki — Korean rice cake desktop character. Cross-platform Tauri app that con
 
 ## Quick run (local development)
 
-Pre-req: Rust + Node.js + Linux deps (see `../.github/workflows/build.yml`).
+Pre-req: Rust + Node.js + Linux deps.
+
+Ubuntu/Debian:
+
+```bash
+sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file pkg-config libdbus-1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+```
 
 ```bash
 cd desktop

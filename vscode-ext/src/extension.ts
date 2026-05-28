@@ -12,7 +12,7 @@ interface Character {
     name_ko: string;
     category: string;
     rarity: number;
-    tier?: "free" | "pro";
+    tier?: "free" | "upcoming";
 }
 
 interface Catalog {
@@ -60,38 +60,12 @@ function saveInventory(context: vscode.ExtensionContext, inv: Inventory) {
     return context.globalState.update("inventory", inv);
 }
 
-function hasPro(): boolean {
-    // VS Code extension reads the same license file/env as the MCP server.
-    const env = process.env.CHIBI_LICENSE_KEY;
-    if (env && env.trim()) return verifyLicense(env.trim());
-    try {
-        const home = process.env.HOME || process.env.USERPROFILE || "";
-        const p = path.join(home, ".chibi-mcp", "license");
-        if (fs.existsSync(p)) return verifyLicense(fs.readFileSync(p, "utf-8").trim());
-    } catch {
-        /* fallthrough */
-    }
-    return false;
-}
-
-function verifyLicense(raw: string): boolean {
-    // NOTE: full HMAC verification is in the Python server. The extension
-    // delegates trust to the server-side check; here we accept any non-empty
-    // license string with the expected prefix and expiry in the future. The
-    // real authority for Pro features is `chibi-mcp get_license_status`.
-    const parts = raw.split("|");
-    if (parts.length !== 4 || parts[0] !== "chibi-pro") return false;
-    const expires = new Date(parts[2]);
-    return !isNaN(expires.getTime()) && expires > new Date();
-}
-
-function filterByTier(catalog: Catalog, isPro: boolean): Character[] {
-    if (isPro) return catalog.characters;
+function releasedCharacters(catalog: Catalog): Character[] {
     return catalog.characters.filter((c) => c.tier === "free");
 }
 
-function drawGacha(catalog: Catalog, isPro: boolean): Character {
-    const pool = filterByTier(catalog, isPro);
+function drawGacha(catalog: Catalog): Character {
+    const pool = releasedCharacters(catalog);
     const total = Object.values(RARITY_WEIGHTS).reduce((a, b) => a + b, 0);
     let r = Math.random() * total;
     let picked = 2;
@@ -134,7 +108,7 @@ class PetViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.onDidReceiveMessage((msg) => {
             const inv = loadInventory(this.context);
-            if (msg.type === "gacha") this.runGacha(inv, hasPro());
+            if (msg.type === "gacha") this.runGacha(inv);
             else if (msg.type === "select") this.selectActive(inv, msg.id);
             else if (msg.type === "rename") this.renameOne(inv, msg.id, msg.nickname);
             else if (msg.type === "ready") this.refresh();
@@ -147,13 +121,14 @@ class PetViewProvider implements vscode.WebviewViewProvider {
         this.view.webview.postMessage({ type: "state", inventory: inv, catalog: this.catalog });
     }
 
-    private runGacha(inv: Inventory, isPro: boolean): void {
+    private runGacha(inv: Inventory): void {
         if (inv.tickets <= 0) {
             this.view?.webview.postMessage({ type: "toast", text: "뽑기권이 없어요" });
             return;
         }
         inv.tickets -= 1;
-        const ch = drawGacha(this.catalog, isPro);
+        const ch = drawGacha(this.catalog);
+        const duplicate = Boolean(inv.owned[ch.id]);
         if (!inv.owned[ch.id]) {
             inv.owned[ch.id] = {
                 id: ch.id,
@@ -166,7 +141,7 @@ class PetViewProvider implements vscode.WebviewViewProvider {
             this.view?.webview.postMessage({
                 type: "gacha-result",
                 character: ch,
-                duplicate: Object.keys(inv.owned).length > 0 && !inv.owned[ch.id],
+                duplicate,
                 inventory: inv,
             });
         });
@@ -344,7 +319,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         vscode.commands.registerCommand("chibiMcp.gacha", () => {
             const inv = loadInventory(context);
-            (provider as any).runGacha(inv, hasPro());
+            (provider as any).runGacha(inv);
         }),
         vscode.commands.registerCommand("chibiMcp.collection", () => {
             vscode.commands.executeCommand("workbench.view.extension.chibiMcpContainer");

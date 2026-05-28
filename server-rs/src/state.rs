@@ -7,7 +7,7 @@ use std::time::Instant;
 
 use parking_lot::Mutex;
 use serde::Serialize;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 use crate::system_info::SystemSnapshot;
 
@@ -40,6 +40,7 @@ impl Mood {
 pub const DEFAULT_SLICE_INTERVAL: u32 = 10;
 const LONELY_IDLE_SECS: u64 = 30 * 60;
 const HAPPY_WINDOW_SECS: u64 = 30;
+const JOYFUL_WINDOW_SECS: u64 = 8;
 const SURPRISE_DELTA: f32 = 30.0;
 
 pub struct Tteoki {
@@ -53,6 +54,7 @@ struct Inner {
     slices_today: u32,
     started_at: Instant,
     last_call_at: Option<Instant>,
+    last_slice_at: Option<Instant>,
     last_cpu: f32,
 }
 
@@ -66,6 +68,7 @@ impl Tteoki {
                 slices_today: 0,
                 started_at: Instant::now(),
                 last_call_at: None,
+                last_slice_at: None,
                 last_cpu: 0.0,
             }),
         }
@@ -74,13 +77,15 @@ impl Tteoki {
     /// Increment counters; return `true` if the slice milestone fired.
     pub fn record_call(&self, force_slice: bool) -> CallResult {
         let mut s = self.inner.lock();
+        let now = Instant::now();
         s.call_count += 1;
         s.calls_since_slice += 1;
-        s.last_call_at = Some(Instant::now());
+        s.last_call_at = Some(now);
         let sliced = force_slice || s.calls_since_slice >= s.slice_interval;
         if sliced {
             s.calls_since_slice = 0;
             s.slices_today += 1;
+            s.last_slice_at = Some(now);
         }
         CallResult {
             call_count: s.call_count,
@@ -93,6 +98,7 @@ impl Tteoki {
     pub fn compute_mood(&self, snap: &SystemSnapshot) -> Mood {
         let mut s = self.inner.lock();
         let last_call = s.last_call_at;
+        let last_slice = s.last_slice_at;
         let last_cpu = s.last_cpu;
         s.last_cpu = snap.cpu_percent;
         let started_at = s.started_at;
@@ -110,6 +116,11 @@ impl Tteoki {
         }
         if snap.cpu_percent >= 80.0 {
             return Mood::Panting;
+        }
+        if let Some(t) = last_slice {
+            if now.duration_since(t).as_secs() <= JOYFUL_WINDOW_SECS {
+                return Mood::Joyful;
+            }
         }
         match last_call {
             Some(t) if now.duration_since(t).as_secs() <= HAPPY_WINDOW_SECS => Mood::Happy,
@@ -151,10 +162,6 @@ impl Tteoki {
         let prev = s.slice_interval;
         s.slice_interval = n.max(1);
         (prev, s.slice_interval)
-    }
-
-    pub fn slice_interval(&self) -> u32 {
-        self.inner.lock().slice_interval
     }
 }
 

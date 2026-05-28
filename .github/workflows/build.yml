@@ -39,6 +39,26 @@ jobs:
           npm install
           npm run lint
 
+  vscode-package:
+    name: vscode (.vsix)
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install + package VSIX
+        working-directory: vscode-ext
+        run: |
+          npm ci
+          npm run package
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chibi-mcp-vscode
+          path: vscode-ext/*.vsix
+
   rust-lint:
     name: rust (fmt + clippy)
     runs-on: ubuntu-22.04
@@ -51,6 +71,8 @@ jobs:
             libwebkit2gtk-4.1-dev \
             build-essential \
             curl wget file \
+            pkg-config \
+            libdbus-1-dev \
             libxdo-dev \
             libssl-dev \
             libayatana-appindicator3-dev \
@@ -95,6 +117,8 @@ jobs:
             libwebkit2gtk-4.1-dev \
             build-essential \
             curl wget file \
+            pkg-config \
+            libdbus-1-dev \
             libxdo-dev \
             libssl-dev \
             libayatana-appindicator3-dev \
@@ -156,7 +180,7 @@ jobs:
   pypi-publish:
     name: Publish to PyPI
     needs: [python-lint-test]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PUBLISH_PYPI == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # OIDC for PyPI Trusted Publishing (no token required)
@@ -177,7 +201,7 @@ jobs:
 
   release:
     name: GitHub Release
-    needs: [desktop-build, pypi-publish]
+    needs: [desktop-build, vscode-package]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
@@ -196,17 +220,24 @@ jobs:
             artifacts/**/*.exe
             artifacts/**/*.AppImage
             artifacts/**/*.msi
+            artifacts/**/*.vsix
           draft: true
           generate_release_notes: true
           body: |
-            ## Install
+            ## Install from GitHub
 
             ```bash
-            # Python MCP server
-            pip install chibi-mcp
+            pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 
-            # Register with Claude Code
+            # Claude Code
             claude mcp add chibi -- chibi-mcp
+
+            # Codex
+            codex mcp add chibi -- chibi-mcp
             ```
 
-            Then download the desktop installer below for your OS.
+            VS Code users can download the `.vsix` asset below and run:
+
+            ```bash
+            code --install-extension chibi-mcp-*.vsix
+            ```

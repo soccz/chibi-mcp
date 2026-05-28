@@ -1,26 +1,41 @@
 # chibi-mcp (server)
 
-MCP server for **tteoki** — a Korean rice cake (가래떡) desktop character that visualizes Claude Code session state.
+MCP server for **tteoki** — a Korean rice cake (가래떡) desktop character that visualizes Claude Code or Codex session state.
 
 The server has two jobs running together in one process:
 1. **MCP server (stdio)** — Claude Code / Codex calls these tools to interact with tteoki.
 2. **WebSocket server (`ws://127.0.0.1:9876`)** — pushes state snapshots and events to the desktop app.
 
-## Install
+## Install from GitHub
 
 ```bash
-pip install chibi-mcp
+pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
+```
+
+PyPI install, once published:
+
+```bash
+pipx install chibi-mcp
 ```
 
 (For local development from this repo, see "Develop" below.)
 
-## Register with Claude Code
+## Register with Claude Code or Codex
 
 ```bash
 claude mcp add chibi -- chibi-mcp
+codex mcp add chibi -- chibi-mcp
 ```
 
-Then launch the chibi-desktop app — it connects to the WebSocket and renders tteoki.
+Then call `open_pet_window` from the client — it launches the floating tteoki window and connects to the local WebSocket.
+
+## CLI checks
+
+```bash
+chibi-mcp --check      # verify packaged assets + local runtime support
+chibi-mcp --version
+chibi-mcp --ws-only    # development: run only ws://127.0.0.1:9876
+```
 
 ## MCP tools
 
@@ -70,7 +85,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-Run directly (without Claude Code) for the WebSocket side only:
+Run directly (without an MCP client) for the WebSocket side only:
 
 ```bash
 CHIBI_LOG_LEVEL=DEBUG python -m chibi_mcp
