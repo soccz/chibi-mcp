@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
+import os
+import signal
+import subprocess
+import sys
+from pathlib import Path
 
 from fastmcp import FastMCP
 
@@ -11,6 +17,10 @@ from .state import get_state
 from .ws_server import get_broadcaster
 
 log = logging.getLogger(__name__)
+
+# Tracks the spawned tk window process across MCP calls. A PID file persists
+# across MCP server restarts (the window is a detached subprocess).
+_WINDOW_PID_FILE = Path.home() / ".chibi-mcp" / "window.pid"
 
 mcp = FastMCP("chibi-mcp")
 
@@ -179,6 +189,105 @@ def get_catalog() -> dict:
         "characters": filtered.get("characters", []),
         "asset_dir": asset_dir,
     }
+
+
+def _kill_existing_window() -> None:
+    if not _WINDOW_PID_FILE.exists():
+        return
+    try:
+        pid = int(_WINDOW_PID_FILE.read_text().strip())
+    except (OSError, ValueError):
+        pid = None
+    if pid:
+        with contextlib.suppress(OSError, ProcessLookupError):
+            os.kill(pid, signal.SIGTERM)
+    _WINDOW_PID_FILE.unlink(missing_ok=True)
+
+
+@mcp.tool()
+def open_pet_window(character_id: str | None = None) -> dict:
+    """Pop up a small always-on-top tk window showing the active 치비.
+
+    Spawns a detached Python subprocess. The window stays open until the user
+    presses Esc / closes it / calls `close_pet_window`. Only one window at a
+    time — re-calling this closes the previous one and opens a new one.
+
+    Args:
+        character_id: optional. If given, shows that character (must be in the
+            user's accessible tier). Otherwise shows the first character in the
+            user's catalog.
+    """
+    catalog = get_catalog()
+    chars = catalog.get("characters", [])
+    if not chars:
+        return {"opened": False, "reason": "no characters in your tier"}
+
+    if character_id:
+        ch = next((c for c in chars if c["id"] == character_id), None)
+        if ch is None:
+            return {"opened": False, "reason": f"character {character_id!r} not in your tier"}
+    else:
+        ch = chars[0]
+
+    asset_dir = catalog.get("asset_dir")
+    if not asset_dir:
+        return {"opened": False, "reason": "asset_dir not configured"}
+    image_path = Path(asset_dir) / f"{ch['id']}.png"
+    if not image_path.exists():
+        return {"opened": False, "reason": f"image not found: {image_path}"}
+
+    state = get_state()
+    mood = state.snapshot()["mood"]
+
+    _kill_existing_window()
+
+    popen_kwargs: dict = {
+        "stdin": subprocess.DEVNULL,
+        "stdout": subprocess.DEVNULL,
+        "stderr": subprocess.DEVNULL,
+    }
+    if sys.platform == "win32":
+        popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
+    else:
+        popen_kwargs["start_new_session"] = True
+
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "chibi_mcp.window",
+            "--image",
+            str(image_path),
+            "--name",
+            ch.get("name_ko") or ch["id"],
+            "--rarity",
+            str(ch.get("rarity", 2)),
+            "--mood",
+            mood,
+        ],
+        **popen_kwargs,
+    )
+
+    _WINDOW_PID_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _WINDOW_PID_FILE.write_text(str(proc.pid))
+
+    return {
+        "opened": True,
+        "pid": proc.pid,
+        "character": ch["id"],
+        "name_ko": ch.get("name_ko"),
+        "rarity": ch.get("rarity"),
+        "mood": mood,
+        "image": str(image_path),
+    }
+
+
+@mcp.tool()
+def close_pet_window() -> dict:
+    """Close the floating 치비 window if one is open."""
+    existed = _WINDOW_PID_FILE.exists()
+    _kill_existing_window()
+    return {"closed": True, "had_window": existed}
 
 
 @mcp.tool()

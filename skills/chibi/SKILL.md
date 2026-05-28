@@ -25,12 +25,14 @@ If a free user requests Pro-only characters in a gacha pull or collection view, 
 
 Triggers: "내 치비 보여줘", "치비 보자", "/chibi", "show my chibi".
 
-1. Call `get_pet_state` to get the active character id and current mood.
-2. Look up the character in `meta.json`.
-3. Show the image: `![<nickname>](${CLAUDE_PLUGIN_ROOT}/assets/<id>.png)` followed by mood line:
-   `<nickname> (<name_ko>, ★<rarity>) — <mood>`.
+**Default behaviour: open a real floating window.** Markdown image references do NOT render in Claude Code's terminal — the user sees nothing if you only emit `![](path)`. Instead:
 
-If the user has no active character yet, run a free welcome pull (next section).
+1. Call `open_pet_window` (no args) — this spawns a tk window with the active character. The window is always-on-top, draggable, closed by Esc.
+2. Then send a short text confirmation: `<name_ko> ★<rarity> — 기분: <mood>`.
+
+If `open_pet_window` returns `opened: false` because there's no character available, run a free welcome pull instead (see Gacha section).
+
+If the user explicitly asks for terminal-only / "no window please", fall back to the old behaviour: call `get_pet_state` and emit a markdown image reference plus a text mood line.
 
 ## Gacha — drawing a character
 
@@ -63,4 +65,4 @@ When the user asks for 보관함 or "collection":
 
 ## Refusals
 
-If the user asks for sounds, animations, drag, or anything that needs a graphical window — explain that v0.4 is text/image inside Claude Code, and a desktop window is not part of this plugin (deprecated path). Suggest they open the collection or run a gacha instead.
+If the user asks for sounds — explain that v0.5 supports a small floating window (via `open_pet_window`) but not audio yet. Suggest they open the window or run a gacha instead.
