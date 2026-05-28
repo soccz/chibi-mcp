@@ -147,38 +147,74 @@ def get_license_status() -> dict:
     }
 
 
+def _resolve_asset_dir() -> str | None:
+    """Find the chibi plugin's assets/ directory robustly.
+
+    Priority:
+        1. $CHIBI_ASSET_DIR if it's a real expanded path with meta.json
+           (skip literal "${...}" values that some Claude Code versions
+           don't substitute).
+        2. Glob ~/.claude/plugins/cache/**/assets/meta.json — pick the
+           most-recently-modified match (latest installed plugin version).
+        3. Walk up from this source file to find a sibling assets/meta.json
+           (works for source installs).
+    """
+    import os as _os
+
+    env = _os.environ.get("CHIBI_ASSET_DIR", "")
+    if env and "$" not in env and "{" not in env:
+        p = Path(env).expanduser() / "meta.json"
+        if p.exists():
+            return str(p.parent)
+
+    cache_bases = [
+        Path.home() / ".claude" / "plugins" / "cache",
+        Path.home() / ".config" / "claude" / "plugins" / "cache",
+    ]
+    candidates: list[Path] = []
+    for base in cache_bases:
+        if base.exists():
+            candidates.extend(base.glob("**/assets/meta.json"))
+    if candidates:
+        latest = max(candidates, key=lambda p: p.stat().st_mtime)
+        return str(latest.parent)
+
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = parent / "assets" / "meta.json"
+        if candidate.exists():
+            return str(candidate.parent)
+
+    return None
+
+
 @mcp.tool()
 def get_catalog() -> dict:
     """Return the character catalog filtered by the user's license tier.
 
-    Free users see 8 starter characters; Pro users see all 29.
-    Loads metadata from `$CHIBI_ASSET_DIR/meta.json` (the plugin's bundled
-    assets directory). Falls back to an embedded path if the env var is
-    not set (e.g. running outside the plugin).
+    Free users see 8 starter characters; Pro users see all 29. Resolves
+    the assets/ directory via `$CHIBI_ASSET_DIR`, the Claude Code plugin
+    cache glob, then a source-tree walk — in that order.
     """
     import json
-    import os
-    from pathlib import Path
 
     from .license import filter_catalog_by_tier, verify_license
 
-    asset_dir = os.environ.get("CHIBI_ASSET_DIR")
+    asset_dir = _resolve_asset_dir()
     if not asset_dir:
-        # Fallback: walk up from this file to <repo>/assets/meta.json
-        here = Path(__file__).resolve()
-        for parent in here.parents:
-            candidate = parent / "assets" / "meta.json"
-            if candidate.exists():
-                asset_dir = str(candidate.parent)
-                break
-
-    if not asset_dir:
-        return {"error": "asset directory not found", "characters": []}
+        return {
+            "error": "asset directory not found",
+            "tried": {
+                "CHIBI_ASSET_DIR": os.environ.get("CHIBI_ASSET_DIR"),
+                "plugin_cache_globs": [
+                    str(Path.home() / ".claude" / "plugins" / "cache"),
+                    str(Path.home() / ".config" / "claude" / "plugins" / "cache"),
+                ],
+            },
+            "characters": [],
+        }
 
     meta_path = Path(asset_dir) / "meta.json"
-    if not meta_path.exists():
-        return {"error": f"meta.json missing at {meta_path}", "characters": []}
-
     catalog = json.loads(meta_path.read_text(encoding="utf-8"))
     status = verify_license()
     filtered = filter_catalog_by_tier(catalog, status)
