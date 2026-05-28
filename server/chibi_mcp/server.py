@@ -208,24 +208,33 @@ def _kill_existing_window() -> None:
 def open_pet_window(character_id: str | None = None) -> dict:
     """Pop up a small always-on-top tk window showing the active 치비.
 
-    Spawns a detached Python subprocess. The window stays open until the user
-    presses Esc / closes it / calls `close_pet_window`. Only one window at a
-    time — re-calling this closes the previous one and opens a new one.
+    Spawns a detached Python subprocess that connects to the local WebSocket
+    (ws://127.0.0.1:9876) and updates mood/slice/say events live. Only one
+    window at a time — re-calling closes the previous one.
 
     Args:
-        character_id: optional. If given, shows that character (must be in the
-            user's accessible tier). Otherwise shows the first character in the
-            user's catalog.
+        character_id: optional. If given (and you own it), shows that one.
+            Otherwise uses your active character; if no active, the first
+            character in your catalog.
     """
     catalog = get_catalog()
     chars = catalog.get("characters", [])
     if not chars:
         return {"opened": False, "reason": "no characters in your tier"}
 
-    if character_id:
-        ch = next((c for c in chars if c["id"] == character_id), None)
+    state = get_state()
+    snap = state.snapshot()
+    mood = snap["mood"]
+    active_id = snap["gacha"]["active_character_id"]
+
+    target_id = character_id or active_id
+    if target_id:
+        ch = next((c for c in chars if c["id"] == target_id), None)
         if ch is None:
-            return {"opened": False, "reason": f"character {character_id!r} not in your tier"}
+            return {
+                "opened": False,
+                "reason": f"character {target_id!r} not in your tier",
+            }
     else:
         ch = chars[0]
 
@@ -236,8 +245,11 @@ def open_pet_window(character_id: str | None = None) -> dict:
     if not image_path.exists():
         return {"opened": False, "reason": f"image not found: {image_path}"}
 
-    state = get_state()
-    mood = state.snapshot()["mood"]
+    # Prefer the user-given nickname if any
+    nickname = ch.get("name_ko") or ch["id"]
+    inv = state.inventory.get(ch["id"])
+    if inv and inv.get("nickname"):
+        nickname = inv["nickname"]
 
     _kill_existing_window()
 
@@ -259,11 +271,13 @@ def open_pet_window(character_id: str | None = None) -> dict:
             "--image",
             str(image_path),
             "--name",
-            ch.get("name_ko") or ch["id"],
+            nickname,
             "--rarity",
             str(ch.get("rarity", 2)),
             "--mood",
             mood,
+            "--ws",
+            f"ws://127.0.0.1:{os.environ.get('CHIBI_WS_PORT', '9876')}",
         ],
         **popen_kwargs,
     )
@@ -275,7 +289,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
         "opened": True,
         "pid": proc.pid,
         "character": ch["id"],
-        "name_ko": ch.get("name_ko"),
+        "name_ko": nickname,
         "rarity": ch.get("rarity"),
         "mood": mood,
         "image": str(image_path),
@@ -303,3 +317,95 @@ def set_slice_interval(n: int) -> dict:
     old = state.slice_interval
     state.slice_interval = n
     return {"previous": old, "current": n}
+
+
+# ── Gacha + inventory ───────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def pull_gacha() -> dict:
+    """Pull one 치비 from the gacha.
+
+    Costs:
+        - First pull of the calendar day is free (resets at local midnight).
+        - Otherwise costs 1 ticket.
+
+    Tickets are auto-granted: +1 per 100 Claude tool calls and +1 per 10
+    slices. Use `add_ticket` for manual grants (debug / promo).
+
+    Rarity weights: ★★★★★ 1%, ★★★★ 5%, ★★★ 24%, ★★ 70%. Newly pulled
+    character becomes your active 치비 if you didn't have one.
+    """
+    catalog = get_catalog()
+    chars = catalog.get("characters", [])
+    state = get_state()
+    result = state.pull_gacha(chars)
+    if result.get("drawn") is None:
+        return result
+
+    # Broadcast a slice-like event so any open window celebrates
+    broadcaster = get_broadcaster()
+    _fire_and_forget(
+        broadcaster.broadcast(
+            {
+                "type": "say",
+                "text": f"✨ {result['drawn']['name_ko']} ★{result['drawn']['rarity']} 등장!",
+            }
+        )
+    )
+    return result
+
+
+@mcp.tool()
+def get_inventory() -> dict:
+    """Return everything you own + ticket balance + active character."""
+    state = get_state()
+    snap = state.snapshot()["gacha"]
+    return {
+        "active_character_id": state.active_character_id,
+        "tickets": state.tickets,
+        "total_pulls": state.total_pulls,
+        "owned_count": len(state.inventory),
+        "inventory": state.inventory,
+        "last_free_pull_date": state.last_free_pull_date,
+        "next_free_in_seconds": _seconds_until_local_midnight(),
+        "summary": snap,
+    }
+
+
+@mcp.tool()
+def set_active_character(character_id: str) -> dict:
+    """Switch which 치비 is shown in the window. Must own the character."""
+    state = get_state()
+    result = state.set_active(character_id)
+    if result.get("ok") and _WINDOW_PID_FILE.exists():
+        # Auto-reopen the window with the new character if one was open
+        try:
+            open_pet_window(character_id=character_id)
+        except Exception as e:
+            log.warning("window reopen after set_active failed: %s", e)
+    return result
+
+
+@mcp.tool()
+def rename_character(character_id: str, nickname: str) -> dict:
+    """Rename a 치비 you own. Nickname is clipped to 40 chars."""
+    state = get_state()
+    return state.rename(character_id, nickname)
+
+
+@mcp.tool()
+def add_ticket(n: int = 1) -> dict:
+    """Grant N gacha tickets. n must be 1..100."""
+    if not 1 <= n <= 100:
+        raise ValueError("n must be between 1 and 100")
+    state = get_state()
+    return state.grant_tickets(n)
+
+
+def _seconds_until_local_midnight() -> int:
+    from datetime import datetime as _dt
+
+    now = _dt.now()
+    seconds_today = now.hour * 3600 + now.minute * 60 + now.second
+    return max(0, 86400 - seconds_today)

@@ -1,126 +1,288 @@
-"""Character state — derives tteoki's mood from system metrics and call counter."""
+"""치비 state — mood derivation + gacha inventory + persistence.
+
+Persistence: only inventory/tickets/active character are persisted across
+server restarts. Counters (calls, slices) reset per server lifecycle by design.
+"""
 
 from __future__ import annotations
 
+import json
+import logging
+import random
 import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import StrEnum
+from pathlib import Path
 from threading import Lock
 
 from .system_info import SystemSnapshot, read_snapshot
 
+log = logging.getLogger(__name__)
+
 
 class Mood(StrEnum):
-    CALM = "calm"          # 평온 — default
-    PANTING = "panting"    # 헐떡 — CPU 80%+
-    DROWSY = "drowsy"      # 졸림 — battery < 20% unplugged
-    LONELY = "lonely"      # 시무룩 — long idle (no Claude calls)
-    HAPPY = "happy"        # 기쁨 — recent Claude call
-    SURPRISED = "surprised"  # 놀람 — CPU sudden spike
-    JOYFUL = "joyful"      # 행복 — milestone (slice triggered)
+    CALM = "calm"
+    PANTING = "panting"
+    DROWSY = "drowsy"
+    LONELY = "lonely"
+    HAPPY = "happy"
+    SURPRISED = "surprised"
+    JOYFUL = "joyful"
 
 
 # Slice trigger: every N Claude tool calls (user-decided default = 10)
 DEFAULT_SLICE_INTERVAL = 10
 LONELY_IDLE_SECONDS = 30 * 60  # 30 minutes
 HAPPY_WINDOW_SECONDS = 30
-SURPRISE_DELTA = 30.0  # CPU jump of 30%+ within one tick = surprise
+SURPRISE_DELTA = 30.0
+
+# Gacha config
+RARITY_WEIGHTS = {5: 1, 4: 5, 3: 24, 2: 70}  # %
+TICKETS_PER_100_CALLS = 1
+TICKETS_PER_10_SLICES = 1
+
+# Persistence
+STATE_DIR = Path.home() / ".chibi-mcp"
+STATE_FILE = STATE_DIR / "state.json"
+STATE_SCHEMA_VERSION = 1
 
 
 @dataclass
 class TteokiState:
-    """In-memory state of the tteoki character.
-
-    Thread-safe via a single lock. Counters reset only when the server process restarts
-    (today's-work scope, intentional).
-    """
+    """In-memory + persisted state of the active 치비 collection."""
 
     slice_interval: int = DEFAULT_SLICE_INTERVAL
     _lock: Lock = field(default_factory=Lock, repr=False)
 
-    # Counters
-    call_count: int = 0           # cumulative Claude tool calls since server start
-    calls_since_slice: int = 0    # resets on each slice
-    slices_today: int = 0         # cumulative slice events since server start
-
-    # Timing
+    # Runtime-only counters (not persisted)
+    call_count: int = 0
+    calls_since_slice: int = 0
+    slices_today: int = 0
     started_at: float = field(default_factory=time.time)
     last_call_at: float | None = None
-
-    # CPU spike detection
     last_cpu: float = 0.0
 
-    def record_call(self, force_slice: bool = False) -> dict:
-        """Increment call counters. Returns a dict signaling if a slice fired.
+    # Persisted state
+    active_character_id: str | None = None
+    inventory: dict[str, dict] = field(default_factory=dict)
+    tickets: int = 0
+    last_free_pull_date: str | None = None  # ISO date
+    total_pulls: int = 0
 
-        When `force_slice` is True, the slice milestone is triggered regardless
-        of how many calls have accumulated. Used by the manual `slice_now` tool.
-        """
+    # ── Persistence ──────────────────────────────────────────────────────────
+
+    def _persisted_dict(self) -> dict:
+        return {
+            "schema_version": STATE_SCHEMA_VERSION,
+            "active_character_id": self.active_character_id,
+            "inventory": self.inventory,
+            "tickets": self.tickets,
+            "last_free_pull_date": self.last_free_pull_date,
+            "total_pulls": self.total_pulls,
+        }
+
+    def save(self) -> None:
+        """Persist to ~/.chibi-mcp/state.json. Safe to call from locked sections."""
+        try:
+            STATE_DIR.mkdir(parents=True, exist_ok=True)
+            tmp = STATE_FILE.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(self._persisted_dict(), indent=2), encoding="utf-8")
+            tmp.replace(STATE_FILE)
+        except OSError as e:
+            log.warning("state save failed: %s", e)
+
+    def load(self) -> None:
+        """Hydrate from ~/.chibi-mcp/state.json. Tolerates missing file."""
+        if not STATE_FILE.exists():
+            return
+        try:
+            data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            log.warning("state load failed (%s) — starting fresh", e)
+            return
+        with self._lock:
+            self.active_character_id = data.get("active_character_id")
+            self.inventory = data.get("inventory") or {}
+            self.tickets = int(data.get("tickets", 0))
+            self.last_free_pull_date = data.get("last_free_pull_date")
+            self.total_pulls = int(data.get("total_pulls", 0))
+
+    # ── Call tracking + ticket grants ────────────────────────────────────────
+
+    def record_call(self, force_slice: bool = False) -> dict:
+        """Increment call counters. Auto-grants tickets at milestones."""
         with self._lock:
             self.call_count += 1
             self.calls_since_slice += 1
             self.last_call_at = time.time()
             sliced = False
+            ticket_grants = 0
+
+            if self.call_count % 100 == 0:
+                self.tickets += TICKETS_PER_100_CALLS
+                ticket_grants += TICKETS_PER_100_CALLS
+
             if force_slice or self.calls_since_slice >= self.slice_interval:
                 self.calls_since_slice = 0
                 self.slices_today += 1
                 sliced = True
+                if self.slices_today % 10 == 0:
+                    self.tickets += TICKETS_PER_10_SLICES
+                    ticket_grants += TICKETS_PER_10_SLICES
+
+            if ticket_grants:
+                self.save()
+
             return {
                 "call_count": self.call_count,
                 "calls_since_slice": self.calls_since_slice,
                 "slices_today": self.slices_today,
                 "sliced": sliced,
+                "ticket_grants": ticket_grants,
+                "tickets": self.tickets,
             }
 
-    def compute_mood(self, snap: SystemSnapshot) -> Mood:
-        """Derive mood from current snapshot and timing history."""
-        now = time.time()
+    # ── Gacha ────────────────────────────────────────────────────────────────
 
+    def pull_gacha(self, characters: list[dict]) -> dict:
+        """Weighted pull from given catalog list. Mutates inventory & saves.
+
+        Returns:
+            { "drawn": {id, name_ko, rarity}, "was_free": bool, "tickets": N, "owned_count": M }
+            or { "drawn": None, "reason": "..." } if no tickets and no free pull
+        """
+        if not characters:
+            return {"drawn": None, "reason": "empty catalog"}
+
+        today = datetime.now().date().isoformat()
+
+        with self._lock:
+            had_free = self.last_free_pull_date != today
+            if not had_free and self.tickets < 1:
+                return {
+                    "drawn": None,
+                    "reason": "no free pull today, no tickets",
+                    "tickets": self.tickets,
+                    "next_free_in_seconds": _seconds_until_midnight(),
+                }
+
+            # Build weighted pool — weight = RARITY_WEIGHTS[rarity] / N_in_bucket
+            buckets: dict[int, list[dict]] = {}
+            for c in characters:
+                buckets.setdefault(int(c.get("rarity", 2)), []).append(c)
+
+            # Pick rarity by weight, but only from rarities that have entries
+            available_rarities = [r for r in (5, 4, 3, 2) if r in buckets]
+            weights = [RARITY_WEIGHTS.get(r, 0) for r in available_rarities]
+            picked_rarity = random.choices(available_rarities, weights=weights, k=1)[0]
+            pick = random.choice(buckets[picked_rarity])
+
+            # Spend ticket / mark free pull
+            if had_free:
+                self.last_free_pull_date = today
+                was_free = True
+            else:
+                self.tickets -= 1
+                was_free = False
+
+            self.total_pulls += 1
+
+            # Update inventory
+            inv = self.inventory.setdefault(
+                pick["id"],
+                {
+                    "count": 0,
+                    "nickname": pick.get("name_ko") or pick["id"],
+                    "first_rolled_at": datetime.now().isoformat(),
+                },
+            )
+            inv["count"] = int(inv.get("count", 0)) + 1
+
+            # If user has no active character, this becomes it
+            if not self.active_character_id:
+                self.active_character_id = pick["id"]
+
+            self.save()
+
+            return {
+                "drawn": {
+                    "id": pick["id"],
+                    "name_ko": pick.get("name_ko"),
+                    "rarity": pick.get("rarity"),
+                    "category": pick.get("category"),
+                },
+                "was_free": was_free,
+                "tickets": self.tickets,
+                "owned_count": inv["count"],
+                "active_character_id": self.active_character_id,
+                "total_pulls": self.total_pulls,
+            }
+
+    def set_active(self, character_id: str) -> dict:
+        with self._lock:
+            if character_id not in self.inventory:
+                return {"ok": False, "reason": f"you don't own {character_id!r}"}
+            self.active_character_id = character_id
+            self.save()
+            return {"ok": True, "active_character_id": character_id}
+
+    def rename(self, character_id: str, nickname: str) -> dict:
+        with self._lock:
+            if character_id not in self.inventory:
+                return {"ok": False, "reason": f"you don't own {character_id!r}"}
+            self.inventory[character_id]["nickname"] = nickname[:40]
+            self.save()
+            return {
+                "ok": True,
+                "character_id": character_id,
+                "nickname": self.inventory[character_id]["nickname"],
+            }
+
+    def grant_tickets(self, n: int) -> dict:
+        with self._lock:
+            self.tickets += int(n)
+            self.save()
+            return {"tickets": self.tickets}
+
+    # ── Mood derivation ──────────────────────────────────────────────────────
+
+    def compute_mood(self, snap: SystemSnapshot) -> Mood:
+        now = time.time()
         with self._lock:
             last_call = self.last_call_at
             last_cpu = self.last_cpu
             self.last_cpu = snap.cpu_percent
 
-        # Battery drowsiness wins if unplugged and low
         if (
             snap.battery_percent is not None
             and snap.battery_percent < 20
             and snap.battery_plugged is False
         ):
             return Mood.DROWSY
-
-        # CPU sudden spike (≥30% jump)
         if snap.cpu_percent - last_cpu >= SURPRISE_DELTA and snap.cpu_percent > 50:
             return Mood.SURPRISED
-
-        # Sustained high CPU
         if snap.cpu_percent >= 80:
             return Mood.PANTING
-
-        # Recent Claude call → happy
         if last_call is not None and (now - last_call) <= HAPPY_WINDOW_SECONDS:
             return Mood.HAPPY
-
-        # Long idle → lonely
         if last_call is None:
             session_age = now - self.started_at
             if session_age > LONELY_IDLE_SECONDS:
                 return Mood.LONELY
         elif (now - last_call) > LONELY_IDLE_SECONDS:
             return Mood.LONELY
-
         return Mood.CALM
 
+    # ── Public snapshot ──────────────────────────────────────────────────────
+
     def snapshot(self) -> dict:
-        """Return a JSON-serializable snapshot of full state (for MCP/WebSocket)."""
         snap = read_snapshot(interval=0.0)
         mood = self.compute_mood(snap)
-
         with self._lock:
             now = time.time()
             session_seconds = int(now - self.started_at)
             idle_seconds = int(now - self.last_call_at) if self.last_call_at else None
-
             return {
                 "mood": mood.value,
                 "system": snap.to_dict(),
@@ -134,10 +296,23 @@ class TteokiState:
                     "session_seconds": session_seconds,
                     "idle_seconds": idle_seconds,
                 },
+                "gacha": {
+                    "active_character_id": self.active_character_id,
+                    "tickets": self.tickets,
+                    "total_pulls": self.total_pulls,
+                    "owned_count": len(self.inventory),
+                    "last_free_pull_date": self.last_free_pull_date,
+                },
             }
 
 
-# Module-level singleton — one tteoki per server process
+def _seconds_until_midnight() -> int:
+    now = datetime.now()
+    seconds_today = now.hour * 3600 + now.minute * 60 + now.second
+    return max(0, 86400 - seconds_today)
+
+
+# Module-level singleton
 _STATE: TteokiState | None = None
 
 
@@ -145,10 +320,10 @@ def get_state() -> TteokiState:
     global _STATE
     if _STATE is None:
         _STATE = TteokiState()
+        _STATE.load()
     return _STATE
 
 
 def reset_state_for_tests() -> None:
-    """Test helper — DO NOT call from runtime code."""
     global _STATE
     _STATE = None
