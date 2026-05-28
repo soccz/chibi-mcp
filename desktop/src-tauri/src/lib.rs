@@ -43,7 +43,7 @@ fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
         ],
     )?;
 
-    let _tray = TrayIconBuilder::with_id("tteoki-tray")
+    let _ = TrayIconBuilder::with_id("tteoki-tray")
         .tooltip("tteoki")
         .menu(&menu)
         .on_menu_event(|app, event| match event.id.as_ref() {
