@@ -14,8 +14,8 @@
       {
         "label": "pet",
         "title": "tteoki",
-        "width": 720,
-        "height": 220,
+        "width": 340,
+        "height": 340,
         "resizable": false,
         "decorations": false,
         "transparent": true,

@@ -1,163 +1,92 @@
-// tteoki — chibi-mcp pet runtime.
+// main.js — tteoki v0.2 pet runtime.
 //
-// 1. Loads the base SVG character from characters/<id>/base.svg.
-// 2. Connects to the MCP server's WebSocket (ws://127.0.0.1:9876).
-// 3. Translates server messages into:
-//      - data-mood attribute (CSS handles tinting)
-//      - face element edits (eyes + mouth shape per mood)
-//      - body width growth based on session time
-//      - speech bubble + slice animation events
-//
-// Character slot: the SVG is loaded by id from `characters/<id>/base.svg`.
-// To swap to a new character (e.g., an illustrator's PNG/SVG), set
-// CHARACTER_ID below or store user preference later.
+// 1. Loads the character catalog + user inventory.
+// 2. On first launch, prompts the welcome / first-free-gacha flow.
+// 3. Renders the active character (PNG) and pipes mood/say/slice events
+//    from the MCP WebSocket server.
+// 4. Wires right-click menu (gacha / collection / size / quit) and the
+//    slangy interaction (click squish, drag stretch).
 
-const _CHARACTER_ID = "garaetteok";  // reserved for v0.2 dynamic loader
+import {
+    loadCatalog,
+    loadInventory,
+    saveInventory,
+    ownsCharacter,
+    ownedCount,
+    addCharacter,
+    renameCharacter,
+    setActive,
+    activeCharacter,
+    characterById,
+    consumeTicket,
+    grantTicket,
+    drawGacha,
+    evaluateTicketGrants,
+    rarityStars,
+    rarityClass,
+} from "./inventory.js";
+
 const WS_URL = "ws://127.0.0.1:9876";
-// Exponential backoff: 2s → 4s → 8s → 16s → 30s (cap).
-// Prevents tight reconnect loop when server is intentionally offline.
 const RECONNECT_INITIAL_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
 const RECONNECT_BACKOFF = 2.0;
 
-// === MOOD → face geometry ===
-// All coords align to characters/garaetteok/meta.json face_anchor.
-const FACES = {
-    calm: {
-        eyes: (g) => drawEyes(g, { kind: "round" }),
-        mouth: "M 512 120 Q 534 130 556 120",
-        mouth_inner: "M 518 122 Q 534 130 550 122",
-    },
-    happy: {
-        eyes: (g) => drawEyes(g, { kind: "crescent_up" }),
-        mouth: "M 508 116 Q 534 142 560 116",
-        mouth_inner: "M 514 120 Q 534 138 554 120",
-    },
-    panting: {
-        eyes: (g) => drawEyes(g, { kind: "round", rx: 6, ry: 7 }),
-        mouth: "M 528 118 a 6 7 0 1 0 12 0 a 6 7 0 1 0 -12 0",  // open O
-        mouth_inner: null,
-    },
-    drowsy: {
-        eyes: (g) => drawEyes(g, { kind: "closed" }),
-        mouth: "M 512 124 q 5 -3 10 0 q 5 3 10 0 q 5 -3 10 0",
-        mouth_inner: null,
-    },
-    lonely: {
-        eyes: (g) => drawEyes(g, { kind: "small_dot" }),
-        mouth: "M 514 130 Q 534 118 554 130",
-        mouth_inner: null,
-    },
-    surprised: {
-        eyes: (g) => drawEyes(g, { kind: "round", rx: 11, ry: 13 }),
-        mouth: "M 525 116 a 9 11 0 1 0 18 0 a 9 11 0 1 0 -18 0",
-        mouth_inner: null,
-    },
-    joyful: {
-        eyes: (g) => drawEyes(g, { kind: "star" }),
-        mouth: "M 506 114 Q 534 148 562 114",
-        mouth_inner: "M 514 118 Q 534 142 554 118",
-    },
-};
-
-function drawEyes(eyesGroup, opts) {
-    eyesGroup.innerHTML = "";
-    const left = { cx: 500, cy: 98 };
-    const right = { cx: 568, cy: 98 };
-
-    const make = (anchor) => {
-        if (opts.kind === "round") {
-            const rx = opts.rx ?? 9.5;
-            const ry = opts.ry ?? 11.5;
-            eyesGroup.append(
-                el("ellipse", { cx: anchor.cx, cy: anchor.cy, rx, ry, fill: "url(#eyeFill)" }),
-                el("ellipse", { cx: anchor.cx + 4, cy: anchor.cy - 6, rx: 4, ry: 4.5, fill: "#FFFFFF", opacity: 0.98 }),
-                el("ellipse", { cx: anchor.cx - 4, cy: anchor.cy + 5, rx: 1.8, ry: 2, fill: "#FFFFFF", opacity: 0.5 }),
-            );
-        } else if (opts.kind === "crescent_up") {
-            eyesGroup.append(
-                el("path", {
-                    d: `M ${anchor.cx - 10} ${anchor.cy + 2} Q ${anchor.cx} ${anchor.cy - 12} ${anchor.cx + 10} ${anchor.cy + 2}`,
-                    stroke: "#1F1410", "stroke-width": 4, fill: "none", "stroke-linecap": "round",
-                }),
-            );
-        } else if (opts.kind === "closed") {
-            eyesGroup.append(
-                el("path", {
-                    d: `M ${anchor.cx - 10} ${anchor.cy + 2} Q ${anchor.cx} ${anchor.cy + 8} ${anchor.cx + 10} ${anchor.cy + 2}`,
-                    stroke: "#1F1410", "stroke-width": 3.5, fill: "none", "stroke-linecap": "round",
-                }),
-            );
-        } else if (opts.kind === "small_dot") {
-            eyesGroup.append(
-                el("circle", { cx: anchor.cx, cy: anchor.cy + 2, r: 3.5, fill: "#1F1410" }),
-            );
-        } else if (opts.kind === "star") {
-            const starPath = starPathD(anchor.cx, anchor.cy, 5, 11, 4);
-            eyesGroup.append(
-                el("path", { d: starPath, fill: "#FFCB3D", stroke: "#A06200", "stroke-width": 1.5 }),
-            );
-        }
-    };
-
-    make(left);
-    make(right);
-}
-
-function starPathD(cx, cy, points, outerR, innerR) {
-    const arr = [];
-    const step = Math.PI / points;
-    for (let i = 0; i < points * 2; i++) {
-        const r = i % 2 === 0 ? outerR : innerR;
-        const a = i * step - Math.PI / 2;
-        const x = cx + r * Math.cos(a);
-        const y = cy + r * Math.sin(a);
-        arr.push(`${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`);
-    }
-    arr.push("Z");
-    return arr.join(" ");
-}
-
-function el(tag, attrs) {
-    const ns = "http://www.w3.org/2000/svg";
-    const n = document.createElementNS(ns, tag);
-    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
-    return n;
-}
-
-// === LENGTH GROWTH (deferred to v0.2) ===
-// Body length will grow linearly with session seconds. For v0.1 the window is
-// fixed-size so the visual growth is handled by the slice cycle alone.
-
-// === SLICE ANIMATION ===
-const board = () => document.getElementById("board");
-let pieceIdCounter = 0;
-
-function dropSlicePiece() {
-    const piece = document.createElement("div");
-    piece.className = "slice-piece";
-    piece.dataset.id = String(++pieceIdCounter);
-    // Spread pieces across cutting board horizontally
-    const x = 30 + Math.random() * (window.innerWidth - 90);
-    piece.style.left = `${x}px`;
-    board().appendChild(piece);
-    // Auto-remove after fade (5s total = 0.5s drop + 4.5s wait + ...)
-    setTimeout(() => piece.remove(), 5500);
-}
-
-function animateKnife() {
-    const k = document.getElementById("knife");
-    if (!k) return;
-    k.classList.remove("hidden", "slice-anim");
-    // force reflow then re-add class so animation restarts
-    void k.getBoundingClientRect();
-    k.classList.add("slice-anim");
-    setTimeout(() => k.classList.add("hidden"), 700);
-}
-
-// === SYRUP DRIP DYNAMIC RATE ===
-// Spawn an extra drip droplet element periodically depending on mood.
+let catalog = null;
+let inventory = null;
+let ws = null;
+let reconnectScheduled = false;
+let reconnectDelay = RECONNECT_INITIAL_MS;
+let speechTimer = null;
 let dripTimer = null;
+let lastCounters = { calls_total: 0, slices_today: 0, slice_interval: 10 };
+
+// ============== CHARACTER RENDER ==============
+
+function renderActiveCharacter() {
+    const ch = activeCharacter(inventory, catalog);
+    const img = document.getElementById("active-char");
+    if (!ch) {
+        img.removeAttribute("src");
+        img.style.visibility = "hidden";
+        return;
+    }
+    img.src = `characters/${ch.id}.png`;
+    img.alt = ch.name_ko;
+    img.style.visibility = "visible";
+}
+
+function applyMood(mood) {
+    const stage = document.getElementById("stage");
+    stage.dataset.mood = mood || "calm";
+    document.getElementById("hud-mood").textContent = mood || "calm";
+
+    if (mood === "panting") setDripCadence(1.0);
+    else if (mood === "drowsy" || mood === "lonely") setDripCadence(0);
+    else setDripCadence(4.0);
+}
+
+function updateHud(state) {
+    if (state.mood) document.getElementById("hud-mood").textContent = state.mood;
+    const c = state.counters ?? {};
+    lastCounters = { ...lastCounters, ...c };
+    document.getElementById("hud-slices").textContent = `${c.slices_today ?? 0}도막`;
+    document.getElementById("hud-calls").textContent =
+        `${c.calls_since_slice ?? 0}/${c.slice_interval ?? "?"}`;
+    document.getElementById("hud-tickets").textContent = `🎟 ${inventory.tickets}`;
+
+    // Ticket grants based on counters
+    const granted = evaluateTicketGrants(inventory, lastCounters);
+    if (granted > 0) {
+        document.getElementById("hud-tickets").textContent = `🎟 ${inventory.tickets} (+${granted})`;
+        flashTicketGain(granted);
+    }
+}
+
+function flashTicketGain(n) {
+    speak(`🎟 +${n} 뽑기권 획득!`);
+}
+
+// ============== DRIP / SLICE / SPEECH ==============
 
 function setDripCadence(seconds) {
     if (dripTimer) clearInterval(dripTimer);
@@ -166,20 +95,30 @@ function setDripCadence(seconds) {
 }
 
 function spawnDrip() {
-    const layer = document.getElementById("syrup-layer");
+    const layer = document.getElementById("stage");
     if (!layer) return;
-    const drop = el("ellipse", {
-        cx: 239, cy: 80, rx: 4, ry: 6,
-        fill: "url(#syrupMain)",
-        class: "syrup-drip",
-    });
+    const drop = document.createElement("div");
+    drop.className = "syrup-drop";
+    const img = document.getElementById("active-char");
+    const rect = img.getBoundingClientRect();
+    drop.style.left = `${rect.left + rect.width * (0.3 + Math.random() * 0.4)}px`;
+    drop.style.top = `${rect.bottom - 20}px`;
     layer.appendChild(drop);
-    setTimeout(() => drop.remove(), 1700);
+    setTimeout(() => drop.remove(), 1800);
 }
 
-// === SPEECH BUBBLE ===
-let speechTimer = null;
+function dropSlicePiece() {
+    const board = document.getElementById("board");
+    const piece = document.createElement("div");
+    piece.className = "slice-piece";
+    const x = 30 + Math.random() * (window.innerWidth - 90);
+    piece.style.left = `${x}px`;
+    board.appendChild(piece);
+    setTimeout(() => piece.remove(), 5500);
+}
+
 function speak(text) {
+    if (!text) return;
     const s = document.getElementById("speech");
     s.textContent = text;
     s.classList.remove("hidden");
@@ -191,62 +130,27 @@ function speak(text) {
     }, 3500);
 }
 
-// === HUD ===
-function updateHud(state) {
-    document.getElementById("hud-mood").textContent = state.mood ?? "—";
-    const c = state.counters ?? {};
-    document.getElementById("hud-slices").textContent = `${c.slices_today ?? 0}도막`;
-    document.getElementById("hud-calls").textContent =
-        `${c.calls_since_slice ?? 0}/${c.slice_interval ?? "?"}`;
+// ============== SLANGY INTERACTION ==============
+
+function setupSlangy() {
+    const img = document.getElementById("active-char");
+    img.addEventListener("click", (e) => {
+        e.stopPropagation();
+        img.classList.remove("squish");
+        void img.getBoundingClientRect();
+        img.classList.add("squish");
+        setTimeout(() => img.classList.remove("squish"), 450);
+    });
+    img.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+        img.classList.remove("bounce");
+        void img.getBoundingClientRect();
+        img.classList.add("bounce");
+        setTimeout(() => img.classList.remove("bounce"), 550);
+    });
 }
 
-// === MOOD APPLICATION ===
-let prevMood = null;
-function applyMood(mood) {
-    if (!FACES[mood]) mood = "calm";
-    const stage = document.getElementById("stage");
-    stage.dataset.mood = mood;
-
-    const eyesGroup = document.getElementById("eyes");
-    const mouth = document.getElementById("mouth");
-    const mouthInner = document.getElementById("mouth-inner");
-
-    const def = FACES[mood];
-    if (eyesGroup) def.eyes(eyesGroup);
-    if (mouth) mouth.setAttribute("d", def.mouth);
-    if (mouthInner) {
-        if (def.mouth_inner) {
-            mouthInner.setAttribute("d", def.mouth_inner);
-            mouthInner.style.display = "";
-        } else {
-            mouthInner.style.display = "none";
-        }
-    }
-
-    // Bounce/splat one-shots on certain transitions
-    const tteoki = document.getElementById("tteoki");
-    if (mood === "happy" && prevMood !== "happy") flash(tteoki, "bounce", 550);
-    if (mood === "surprised" && prevMood !== "surprised") flash(tteoki, "splat", 400);
-
-    // Adjust drip cadence based on CPU/mood
-    if (mood === "panting") setDripCadence(1.0);
-    else if (mood === "drowsy" || mood === "lonely") setDripCadence(0);
-    else setDripCadence(4.0);
-
-    prevMood = mood;
-}
-
-function flash(elem, cls, ms) {
-    elem.classList.remove(cls);
-    void elem.getBoundingClientRect();
-    elem.classList.add(cls);
-    setTimeout(() => elem.classList.remove(cls), ms);
-}
-
-// === WebSocket connection (with exponential backoff) ===
-let ws = null;
-let reconnectScheduled = false;
-let reconnectDelay = RECONNECT_INITIAL_MS;
+// ============== WEBSOCKET ==============
 
 function connect() {
     reconnectScheduled = false;
@@ -258,19 +162,16 @@ function connect() {
     }
     ws.onopen = () => {
         setConnected(true);
-        reconnectDelay = RECONNECT_INITIAL_MS;  // reset backoff on success
+        reconnectDelay = RECONNECT_INITIAL_MS;
     };
     ws.onclose = () => {
         setConnected(false);
         scheduleReconnect();
     };
-    ws.onerror = () => {
-        // onclose will handle reconnect
-    };
+    ws.onerror = () => {};
     ws.onmessage = (evt) => {
         try {
-            const msg = JSON.parse(evt.data);
-            handleMessage(msg);
+            handleMessage(JSON.parse(evt.data));
         } catch (e) {
             console.warn("bad ws message", e);
         }
@@ -286,79 +187,217 @@ function scheduleReconnect() {
 }
 
 function setConnected(ok) {
-    const stage = document.getElementById("stage");
-    stage.dataset.connected = ok ? "true" : "false";
+    document.getElementById("stage").dataset.connected = ok ? "true" : "false";
     if (!ok) document.getElementById("hud-mood").textContent = "offline";
 }
 
 function handleMessage(msg) {
     if (msg.type === "state") {
-        const payload = msg.payload ?? {};
-        applyMood(payload.mood);
-        updateHud(payload);
+        applyMood(msg.payload?.mood);
+        updateHud(msg.payload ?? {});
     } else if (msg.type === "say") {
         speak(msg.text ?? "");
     } else if (msg.type === "slice") {
-        animateKnife();
         dropSlicePiece();
     }
 }
 
-// === CONTEXT MENU (right-click: quit + resize) ===
+// ============== CONTEXT MENU ==============
+
 const SIZES = {
-    "size-small":  { w: 360, h: 110 },
-    "size-normal": { w: 720, h: 220 },
-    "size-large":  { w: 1080, h: 330 },
+    "size-small":  { w: 240, h: 240 },
+    "size-normal": { w: 340, h: 340 },
+    "size-large":  { w: 500, h: 500 },
 };
 
 function setupContextMenu() {
     const menu = document.getElementById("ctx-menu");
-    if (!menu) return;
-
     document.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         menu.classList.remove("hidden");
-        const x = Math.min(e.clientX, window.innerWidth - 160);
-        const y = Math.min(e.clientY, window.innerHeight - 140);
-        menu.style.left = `${x}px`;
-        menu.style.top = `${y}px`;
+        menu.style.left = `${Math.min(e.clientX, window.innerWidth - 180)}px`;
+        menu.style.top = `${Math.min(e.clientY, window.innerHeight - 240)}px`;
     });
-
-    document.addEventListener("click", () => {
-        menu.classList.add("hidden");
-    });
-
+    document.addEventListener("click", () => menu.classList.add("hidden"));
     menu.addEventListener("click", async (e) => {
         const btn = e.target.closest("button");
         if (!btn) return;
         const action = btn.dataset.action;
-
-        if (action === "quit") {
-            try {
-                const { getCurrentWindow } = window.__TAURI__.window;
-                await getCurrentWindow().close();
-            } catch {
-                window.close();
-            }
-        } else if (SIZES[action]) {
-            const { w, h } = SIZES[action];
-            try {
-                const { getCurrentWindow } = window.__TAURI__.window;
-                const { LogicalSize } = window.__TAURI__.window;
-                await getCurrentWindow().setSize(new LogicalSize(w, h));
-            } catch {
-                window.resizeTo(w, h);
-            }
-        }
         menu.classList.add("hidden");
+        if (action === "quit") {
+            await tauriQuit();
+        } else if (action === "gacha") {
+            tryGacha();
+        } else if (action === "collection") {
+            openCollection();
+        } else if (SIZES[action]) {
+            await tauriResize(SIZES[action]);
+        }
     });
 }
 
-// === BOOT ===
-window.addEventListener("DOMContentLoaded", () => {
-    applyMood("calm");
-    updateHud({ mood: "calm", counters: { slices_today: 0, calls_since_slice: 0, slice_interval: 10 } });
-    setConnected(false);
+async function tauriQuit() {
+    try {
+        const w = window.__TAURI__.window;
+        await w.getCurrentWindow().close();
+    } catch {
+        window.close();
+    }
+}
+
+async function tauriResize({ w, h }) {
+    try {
+        const t = window.__TAURI__.window;
+        await t.getCurrentWindow().setSize(new t.LogicalSize(w, h));
+    } catch {
+        window.resizeTo(w, h);
+    }
+}
+
+// ============== WELCOME / GACHA ==============
+
+function openWelcome() {
+    showModal("welcome-modal");
+    document.getElementById("welcome-draw").onclick = () => {
+        hideModal("welcome-modal");
+        // ensure a free ticket exists
+        if (inventory.tickets < 1) grantTicket(inventory, 1);
+        runGacha({ firstFree: true });
+    };
+}
+
+function tryGacha() {
+    if (inventory.tickets <= 0) {
+        speak("뽑기권이 없어요");
+        return;
+    }
+    consumeTicket(inventory);
+    runGacha({ firstFree: false });
+}
+
+function runGacha({ firstFree }) {
+    const ch = drawGacha(catalog);
+    const dup = ownsCharacter(inventory, ch.id);
+    if (!dup) addCharacter(inventory, ch);
+    else saveInventory(inventory); // re-saved in addCharacter, but harmless
+
+    document.getElementById("hud-tickets").textContent = `🎟 ${inventory.tickets}`;
+
+    // Show modal with reveal
+    showModal("gacha-modal");
+    const reveal = document.getElementById("gacha-reveal");
+    const rarity = document.getElementById("gacha-rarity");
+    const name = document.getElementById("gacha-name");
+    reveal.src = `characters/${ch.id}.png`;
+    reveal.className = `reveal-img ${rarityClass(ch.rarity)}`;
+    rarity.textContent = rarityStars(ch.rarity);
+    rarity.className = `gacha-rarity ${rarityClass(ch.rarity)}`;
+    name.textContent = dup ? `${ch.name_ko} (중복)` : ch.name_ko;
+
+    document.getElementById("gacha-rename").onclick = () => {
+        hideModal("gacha-modal");
+        openRename(ch.id, ch.name_ko, () => {
+            setActive(inventory, ch.id);
+            renderActiveCharacter();
+        });
+    };
+    document.getElementById("gacha-use").onclick = () => {
+        setActive(inventory, ch.id);
+        renderActiveCharacter();
+        hideModal("gacha-modal");
+    };
+    document.getElementById("gacha-keep").onclick = () => {
+        hideModal("gacha-modal");
+    };
+}
+
+function openRename(id, typeName, onSave) {
+    showModal("rename-modal");
+    const input = document.getElementById("rename-input");
+    const current = inventory.owned[id]?.nickname ?? typeName;
+    input.value = current;
+    input.focus();
+    input.select();
+    document.getElementById("rename-subtitle").textContent = `${typeName}에게 별명을 지어주세요`;
+    document.getElementById("rename-save").onclick = () => {
+        renameCharacter(inventory, id, input.value);
+        hideModal("rename-modal");
+        onSave?.();
+    };
+    document.getElementById("rename-cancel").onclick = () => {
+        hideModal("rename-modal");
+        onSave?.();
+    };
+}
+
+// ============== COLLECTION ==============
+
+function openCollection() {
+    const grid = document.getElementById("collection-grid");
+    grid.innerHTML = "";
+    const total = catalog.characters.length;
+    document.getElementById("collection-count").textContent =
+        `${ownedCount(inventory)} / ${total}`;
+    const active = activeCharacter(inventory, catalog);
+    document.getElementById("collection-active-line").textContent = active
+        ? `활성: ${inventory.owned[active.id].nickname} (${active.name_ko})`
+        : "활성 캐릭터 없음";
+
+    for (const ch of catalog.characters) {
+        const cell = document.createElement("button");
+        const owned = ownsCharacter(inventory, ch.id);
+        cell.className = `collection-cell ${rarityClass(ch.rarity)} ${owned ? "owned" : "locked"}`;
+        if (owned && inventory.active_id === ch.id) cell.classList.add("active");
+        cell.innerHTML = owned
+            ? `<img src="characters/${ch.id}.png" alt="${ch.name_ko}" /><div class="cell-name">${inventory.owned[ch.id].nickname}</div><div class="cell-rarity">${rarityStars(ch.rarity)}</div>`
+            : `<div class="cell-locked">?</div><div class="cell-rarity">${rarityStars(ch.rarity)}</div>`;
+        cell.onclick = () => {
+            if (!owned) return;
+            setActive(inventory, ch.id);
+            renderActiveCharacter();
+            openRename(ch.id, ch.name_ko, openCollection);
+        };
+        grid.appendChild(cell);
+    }
+    showModal("collection-modal");
+
+    document.querySelectorAll('[data-action="close-collection"]').forEach((b) => {
+        b.onclick = () => hideModal("collection-modal");
+    });
+}
+
+// ============== MODAL ==============
+
+function showModal(id) {
+    document.getElementById(id).classList.remove("hidden");
+}
+function hideModal(id) {
+    document.getElementById(id).classList.add("hidden");
+}
+
+// ============== BOOT ==============
+
+window.addEventListener("DOMContentLoaded", async () => {
+    try {
+        catalog = await loadCatalog();
+    } catch (e) {
+        console.error("failed to load catalog", e);
+        return;
+    }
+    inventory = loadInventory();
+
     setupContextMenu();
+    setupSlangy();
+    setConnected(false);
+
+    if (inventory.first_launch || ownedCount(inventory) === 0) {
+        inventory.first_launch = false;
+        saveInventory(inventory);
+        openWelcome();
+    } else {
+        renderActiveCharacter();
+    }
+
+    document.getElementById("hud-tickets").textContent = `🎟 ${inventory.tickets}`;
     connect();
 });
