@@ -12,6 +12,18 @@ It is local-first: no telemetry, localhost WebSocket by default, open-source cod
   <img src="assets/social-preview.png" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
 </p>
 
+## Public Beta Status
+
+`chibi-mcp` is ready for free public beta installs and permissioned pilots. It is not a paid character store: no paid packs, no paid random pulls, no Sponsors tiers, no license keys, and no team pricing are enabled.
+
+Maintainer preflight before a release tag:
+
+```bash
+xvfb-run -a make public-beta-check
+```
+
+See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist and the remaining manual demo assets.
+
 ## What You Get
 
 - A local MCP server for Claude Code and Codex.
@@ -33,7 +45,7 @@ The base product is free. Monetization is not enabled: no paid packs, no paid ra
 - Creators who want to submit rights-clean character or option packs.
 - Devtool, keyboard, hackathon, or coding-stream communities exploring free collaboration drops.
 
-Commercial readiness is documented without enabling payment: see [docs/PRODUCT_MARKET_READINESS.md](docs/PRODUCT_MARKET_READINESS.md), [docs/TEAM_ADOPTION.md](docs/TEAM_ADOPTION.md), and [docs/PILOT_PLAYBOOK.md](docs/PILOT_PLAYBOOK.md).
+Commercial readiness is documented without enabling payment: see [docs/PRODUCT_MARKET_READINESS.md](docs/PRODUCT_MARKET_READINESS.md), [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md), [docs/TEAM_ADOPTION.md](docs/TEAM_ADOPTION.md), and [docs/PILOT_PLAYBOOK.md](docs/PILOT_PLAYBOOK.md).
 
 ## Requirements
 

@@ -11,7 +11,7 @@
   "license": "MIT",
   "keywords": [
     "chibi",
-    "tteoki",
+    "rice-cake",
     "mcp",
     "codex",
     "pet",
@@ -22,9 +22,9 @@
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "tteoki",
+    "displayName": "chibi",
     "shortDescription": "A squishy Korean rice cake MCP pet for Codex.",
-    "longDescription": "Open a floating tteoki pet, collect characters, apply 12 free option layers, run gacha pulls, and show local CPU, RAM, battery, idle, tool-call, and slice state through MCP.",
+    "longDescription": "Open a floating chibi pet, collect characters, apply 12 free option layers, run gacha pulls, and show local CPU, RAM, battery, idle, tool-call, and slice state through MCP.",
     "developerName": "soccz",
     "category": "Productivity",
     "capabilities": [

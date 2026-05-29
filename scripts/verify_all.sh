@@ -122,6 +122,66 @@ for rel, expected in required.items():
 print("launch image assets ok")
 PY
 
+echo "== Brand identity sanity =="
+ROOT="$ROOT" python - <<'PY'
+import os
+from pathlib import Path
+
+root = Path(os.environ["ROOT"])
+legacy_terms = [
+    "tteo" + "ki",
+    "Tteo" + "ki",
+    "떡" + "이",
+    "my_" + "tteok",
+    "My " + "Tteok",
+    "new " + "tteok character",
+]
+skip_dirs = {
+    ".git",
+    ".ruff_cache",
+    "__pycache__",
+    "node_modules",
+    "target",
+    ".pytest_cache",
+    "build",
+    "dist",
+    "venv",
+}
+skip_suffixes = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".ico",
+    ".vsix",
+    ".lock",
+    ".pyc",
+}
+violations = []
+for path in root.rglob("*"):
+    rel = path.relative_to(root)
+    if any(part in skip_dirs for part in rel.parts):
+        continue
+    if not path.is_file() or path.suffix.lower() in skip_suffixes:
+        continue
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        continue
+    if b"\0" in raw:
+        continue
+    text = raw.decode("utf-8", errors="ignore")
+    for term in legacy_terms:
+        if term in text:
+            violations.append(f"{rel}: contains {term!r}")
+            break
+
+if violations:
+    raise SystemExit("legacy brand identity found:\n" + "\n".join(violations))
+print("brand identity ok")
+PY
+
 echo "== Claude plugin =="
 if command -v claude >/dev/null 2>&1; then
   if command -v timeout >/dev/null 2>&1; then
@@ -255,6 +315,7 @@ required_docs = [
     "TRADEMARK.md",
     "COMMERCIAL_STRATEGY.md",
     "docs/PRODUCT_MARKET_READINESS.md",
+    "docs/PUBLIC_BETA_READINESS.md",
     "docs/TEAM_ADOPTION.md",
     "docs/PILOT_PLAYBOOK.md",
     "docs/LAUNCH_KIT.md",

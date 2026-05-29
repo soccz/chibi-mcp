@@ -1,4 +1,4 @@
-.PHONY: check server-test server-build vscode-package desktop-lint rust-check runtime-check strict-check
+.PHONY: check server-test server-build vscode-package desktop-lint rust-check runtime-check strict-check public-beta-check
 
 check:
 	./scripts/verify_all.sh
@@ -25,3 +25,6 @@ runtime-check:
 
 strict-check:
 	CHIBI_STRICT_RUNTIME=1 ./scripts/verify_all.sh
+
+public-beta-check:
+	./scripts/public_beta_preflight.sh

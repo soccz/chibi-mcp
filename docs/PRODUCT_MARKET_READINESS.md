@@ -16,6 +16,12 @@ The current product is strongest as:
 
 It is not ready to be marketed as a paid character store. It is ready for free public use, creator/team pack experiments, and permissioned pilot feedback.
 
+Before broad sharing or a release tag, use [PUBLIC_BETA_READINESS.md](PUBLIC_BETA_READINESS.md) and run:
+
+```bash
+xvfb-run -a make public-beta-check
+```
+
 ## Priority Customer Profiles
 
 | Profile | Why they care | Current proof | Missing proof |
@@ -54,6 +60,7 @@ Before charging for anything, collect evidence for:
 
 Do now, without monetization:
 
+- Keep the public beta preflight green before release tags.
 - Add the demo GIF and real client screenshots.
 - Invite free pilot feedback through `.github/ISSUE_TEMPLATE/team_pilot.yml`.
 - Ask for showcase screenshots through `.github/ISSUE_TEMPLATE/showcase.yml`.

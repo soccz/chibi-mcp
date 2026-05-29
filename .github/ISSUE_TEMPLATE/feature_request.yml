@@ -8,7 +8,7 @@ body:
     attributes:
       label: User goal
       description: What should chibi-mcp help you do?
-      placeholder: "I want tteoki to react when ..."
+      placeholder: "I want chibi to react when ..."
     validations:
       required: true
   - type: dropdown

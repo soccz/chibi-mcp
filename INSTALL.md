@@ -199,6 +199,16 @@ In a headless SSH/CI session, use a virtual display:
 xvfb-run -a make runtime-check
 ```
 
+For a stricter public-beta gate before sharing a release tag:
+
+```bash
+xvfb-run -a make public-beta-check
+```
+
+This runs strict source/runtime verification and a public-surface checklist for
+README signals, rights docs, issue forms, plugin metadata, generated launch
+images, and hidden legacy brand-name leaks.
+
 On Ubuntu/Debian, Tauri requires system development packages before `make runtime-check` can pass:
 
 ```bash
