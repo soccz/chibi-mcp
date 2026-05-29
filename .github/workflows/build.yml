@@ -165,7 +165,7 @@ jobs:
               npm run tauri -- build
             fi
           else
-            npm run tauri -- build --debug
+            npm run tauri -- build --debug --no-bundle
           fi
 
       - name: Upload installer artifacts (tag builds only)
