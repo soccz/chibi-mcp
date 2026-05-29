@@ -40,6 +40,21 @@ def _setup_logging() -> None:
     )
 
 
+def _ws_endpoint() -> tuple[str, int]:
+    host = os.environ.get("CHIBI_WS_HOST", DEFAULT_WS_HOST)
+    port_raw = os.environ.get("CHIBI_WS_PORT", str(DEFAULT_WS_PORT))
+    try:
+        port = int(port_raw)
+        if not 1 <= port <= 65535:
+            raise ValueError("out of range")
+    except ValueError:
+        logging.getLogger(__name__).warning(
+            "invalid CHIBI_WS_PORT=%r; falling back to %d", port_raw, DEFAULT_WS_PORT
+        )
+        port = DEFAULT_WS_PORT
+    return host, port
+
+
 async def _run_ws_optional(host: str, port: int) -> None:
     """Run WS if available; keep MCP alive if another process owns the port."""
     log = logging.getLogger(__name__)
@@ -52,18 +67,7 @@ async def _run_ws_optional(host: str, port: int) -> None:
 
 async def _run_concurrent(ws_enabled: bool = True) -> None:
     """Run MCP (stdio) and WebSocket server concurrently."""
-    log = logging.getLogger(__name__)
-    host = os.environ.get("CHIBI_WS_HOST", DEFAULT_WS_HOST)
-    port_raw = os.environ.get("CHIBI_WS_PORT", str(DEFAULT_WS_PORT))
-    try:
-        port = int(port_raw)
-        if not 1 <= port <= 65535:
-            raise ValueError("out of range")
-    except ValueError:
-        log.warning(
-            "invalid CHIBI_WS_PORT=%r; falling back to %d", port_raw, DEFAULT_WS_PORT
-        )
-        port = DEFAULT_WS_PORT
+    host, port = _ws_endpoint()
 
     ws_task = asyncio.create_task(_run_ws_optional(host=host, port=port)) if ws_enabled else None
     # FastMCP's run_stdio_async is the asyncio variant of mcp.run()
@@ -102,8 +106,7 @@ async def _run_concurrent(ws_enabled: bool = True) -> None:
 
 
 async def _run_ws_only() -> None:
-    host = os.environ.get("CHIBI_WS_HOST", DEFAULT_WS_HOST)
-    port = int(os.environ.get("CHIBI_WS_PORT", DEFAULT_WS_PORT))
+    host, port = _ws_endpoint()
     await run_ws_server(host=host, port=port)
 
 
@@ -170,8 +173,7 @@ def main(argv: list[str] | None = None) -> int:
 
     _setup_logging()
     log = logging.getLogger("chibi_mcp")
-    host = os.environ.get("CHIBI_WS_HOST", DEFAULT_WS_HOST)
-    port = int(os.environ.get("CHIBI_WS_PORT", DEFAULT_WS_PORT))
+    host, port = _ws_endpoint()
     if args.ws_only:
         log.info("chibi-mcp starting (ws://%s:%d only)", host, port)
         with suppress(KeyboardInterrupt):

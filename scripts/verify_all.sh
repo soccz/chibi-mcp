@@ -5,6 +5,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "== Shell scripts =="
 bash -n "$ROOT"/scripts/*.sh
+if compgen -G "$ROOT/bin/*.sh" >/dev/null; then
+  bash -n "$ROOT"/bin/*.sh
+fi
 
 echo "== Python server =="
 (
@@ -12,6 +15,7 @@ echo "== Python server =="
   python -m ruff check .
   python -m pytest -q
   python -m py_compile chibi_mcp/__main__.py chibi_mcp/server.py chibi_mcp/window.py
+  python -m py_compile "$ROOT"/scripts/rotate-hmac.py
   if [ -x venv/bin/python ]; then
     venv/bin/python -m build --wheel
   else

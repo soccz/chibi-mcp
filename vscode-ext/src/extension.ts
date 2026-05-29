@@ -160,10 +160,18 @@ class PetViewProvider implements vscode.WebviewViewProvider {
         });
     }
 
-    private refresh(): void {
+    refresh(): void {
         if (!this.view) return;
         const inv = loadInventory(this.context);
         this.view.webview.postMessage({ type: "state", inventory: inv, catalog: this.catalog });
+    }
+
+    postToast(text: string, inv?: Inventory): void {
+        this.view?.webview.postMessage({
+            type: "toast",
+            text,
+            inventory: inv ?? loadInventory(this.context),
+        });
     }
 
     private runGacha(inv: Inventory): void {
@@ -218,11 +226,7 @@ class PetViewProvider implements vscode.WebviewViewProvider {
         const inv = loadInventory(this.context);
         inv.tickets += 1;
         saveInventory(this.context, inv).then(() => {
-            this.view?.webview.postMessage({
-                type: "toast",
-                text: `🎟 +1 (${label})`,
-                inventory: inv,
-            });
+            this.postToast(`🎟 +1 (${label})`, inv);
         });
     }
 
@@ -288,6 +292,16 @@ let catalog = null;
 let inventory = null;
 
 function rarityStars(n) { return "★".repeat(n) + "☆".repeat(5 - n); }
+function esc(value) {
+  const map = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  };
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => map[ch] || ch);
+}
 
 function render() {
   if (!catalog || !inventory) return;
@@ -313,7 +327,7 @@ function render() {
     const cell = document.createElement("div");
     cell.className = "cell " + (owned ? "owned" : "locked") + (inventory.active_id === ch.id ? " active" : "");
     cell.innerHTML = owned
-      ? \`<img src="\${charsBase}/\${ch.id}.png" alt="\${ch.name_ko}"><div class="cname">\${inventory.owned[ch.id].nickname}</div><div class="crarity">\${rarityStars(ch.rarity)}</div>\`
+      ? \`<img src="\${charsBase}/\${ch.id}.png" alt="\${esc(ch.name_ko)}"><div class="cname">\${esc(inventory.owned[ch.id].nickname)}</div><div class="crarity">\${rarityStars(ch.rarity)}</div>\`
       : \`<div class="locked-icon">?</div><div class="crarity">\${rarityStars(ch.rarity)}</div>\`;
     if (owned) {
       cell.onclick = () => {
@@ -398,9 +412,10 @@ export function activate(context: vscode.ExtensionContext) {
             if (inv.last_daily !== today) {
                 inv.last_daily = today;
                 inv.tickets += 1;
-                saveInventory(context, inv).then(() =>
-                    provider.grantTicket("오늘의 출석"),
-                );
+                saveInventory(context, inv).then(() => {
+                    provider.refresh();
+                    provider.postToast("🎟 +1 (오늘의 출석)", inv);
+                });
             }
             chibiSay(pickPhrase(["쓰자!", "또 한 줄~", "타이핑 가즈아", "굳"]));
         }),
