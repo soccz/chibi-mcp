@@ -55,6 +55,7 @@
 | **상업화 기반 CLI** | `chibi-audit`, `chibi-pack init/validate/preview`, `chibi-share` 추가. 결제/유료 게이트가 아니라 신뢰·콘텐츠·공유 루프 기반 |
 | **무료 옵션 레이어** | 12종 추가: `jocheong_drip`, `honey_glaze`, `sugar_beads`, `rainbow_sprinkles`, `condensed_milk`, `kinako_dust`, `black_sesame`, `red_bean_bits`, `flower_petals`, `resin_stars`, `matcha_powder`, `spicy_sauce`. 본체 기능을 잠그지 않는 무료 코스메틱 기반 |
 | **상업 샘플팩** | `examples/packs/spring-hwajeon`, `examples/packs/team-sprint` 추가. creator/team pack 제출과 검증 흐름을 실행 가능한 예시로 제공 |
+| **크로스플랫폼 설치** | Linux/macOS bash installer + Windows PowerShell installer + VS Code `.vsix` installer 제공. CI는 Python/desktop을 Linux·macOS·Windows에서 검증 |
 
 ## 아직 사용자 결정 대기
 

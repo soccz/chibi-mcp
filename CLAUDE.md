@@ -20,6 +20,7 @@ The project now has an executable Python MCP server, Claude/Codex plugin metadat
 - `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/` — public community and trust surface.
 - `server/` — Python MCP server package. Also ships the floating pet window (`chibi_mcp/window.py`), the `chibi-say` CLI used by hooks, and the `chibi-check` self-diagnostic.
 - `hooks/`, `bin/` — Claude Code plugin hooks bridge: `hooks/hooks.json` fires `bin/chibi-react.sh` on PreToolUse / PostToolUse, which forwards a contextual phrase via `chibi-say` to the floating window.
+- `scripts/install-*.sh`, `scripts/install-*.ps1` — Linux/macOS bash and Windows PowerShell install paths for Claude Code, Codex, and VS Code.
 - `vscode-ext/` — VS Code extension packaging path. As of 0.5.0 also calls `chibi-say` on save / task / debug events.
 - `desktop/` — legacy Tauri client; archival only.
 - `assets/` and `server/chibi_mcp/assets/` — starter PNG characters, free option layer PNGs, and metadata.

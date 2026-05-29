@@ -9,6 +9,19 @@ if compgen -G "$ROOT/bin/*.sh" >/dev/null; then
   bash -n "$ROOT"/bin/*.sh
 fi
 
+echo "== PowerShell scripts =="
+if command -v pwsh >/dev/null 2>&1; then
+  ROOT="$ROOT" pwsh -NoProfile -Command '
+    $ErrorActionPreference = "Stop"
+    Get-ChildItem -Path (Join-Path $env:ROOT "scripts") -Filter "*.ps1" | ForEach-Object {
+      [scriptblock]::Create((Get-Content -Raw $_.FullName)) | Out-Null
+      Write-Host "ok $($_.Name)"
+    }
+  '
+else
+  echo "skip: pwsh not found"
+fi
+
 echo "== Python server =="
 (
   cd "$ROOT/server"
@@ -215,7 +228,9 @@ from pathlib import Path
 
 workflow = Path(".github/workflows/build.yml").read_text(encoding="utf-8")
 required = [
+    "os: [ubuntu-latest, macos-latest, windows-latest]",
     "vscode-package:",
+    "name: vscode (.vsix)",
     "needs: [desktop-build, vscode-package]",
     "vars.PUBLISH_PYPI == 'true'",
     "artifacts/**/*.vsix",

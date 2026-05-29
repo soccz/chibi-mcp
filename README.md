@@ -29,11 +29,25 @@ Star this repo to follow monthly character drops, VS Code builds, creator packs,
 One-command installers:
 
 ```bash
-# Claude Code
+# Claude Code (Linux/macOS)
 bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.sh)
 
-# Codex
+# Codex (Linux/macOS)
 bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-codex.sh)
+
+# VS Code .vsix (Linux/macOS)
+bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-vscode.sh)
+```
+
+```powershell
+# Claude Code (Windows PowerShell)
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.ps1 | iex"
+
+# Codex (Windows PowerShell)
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-codex.ps1 | iex"
+
+# VS Code .vsix (Windows PowerShell)
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-vscode.ps1 | iex"
 ```
 
 Manual install:
@@ -71,7 +85,7 @@ VS Code users can download the `.vsix` from the latest GitHub Release and instal
 code --install-extension chibi-mcp-*.vsix
 ```
 
-See [INSTALL.md](INSTALL.md) for the full GitHub install matrix.
+See [INSTALL.md](INSTALL.md) for the full Claude/Codex/VS Code + Linux/macOS/Windows install matrix.
 
 Health check (either form works):
 
@@ -203,6 +217,8 @@ chibi-mcp/
 ├── COMMERCIAL_STRATEGY.md       # expansion readiness, deferred monetization guardrails
 ├── GITHUB_STAR_STRATEGY.md      # README, topics, community, launch loop
 ├── scripts/                     # install + verification scripts
+│   ├── install-*.sh             # Linux/macOS installers
+│   └── install-*.ps1            # Windows PowerShell installers
 ├── assets/                      # starter PNG assets, option layers + catalog meta.json
 ├── server/                      # Python MCP server package
 └── server-rs/                   # (optional) Rust rewrite, same protocol

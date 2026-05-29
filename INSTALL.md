@@ -1,10 +1,19 @@
 # Install from GitHub
 
-This repo supports three user-facing paths from the same GitHub source:
+This repo supports three user-facing clients from the same GitHub source, across Linux, macOS, and Windows:
 
 - Claude Code: MCP server plus Claude plugin commands.
 - Codex: MCP server plus optional Codex plugin marketplace metadata.
 - VS Code: downloadable `.vsix` from GitHub Releases.
+
+## Platform matrix
+
+| Platform | Claude Code | Codex | VS Code | Floating pet |
+|---|---|---|---|---|
+| Linux desktop | `install-claude.sh` | `install-codex.sh` | `install-vscode.sh` or `.vsix` | supported with `tkinter` + display session |
+| Linux SSH/headless | MCP tools work | MCP tools work | remote/editor dependent | returns a clear desktop diagnostic |
+| macOS | `install-claude.sh` | `install-codex.sh` | `install-vscode.sh` or `.vsix` | supported with Python `tkinter` |
+| Windows PowerShell | `install-claude.ps1` | `install-codex.ps1` | `install-vscode.ps1` or `.vsix` | supported with Python `tkinter` |
 
 ## Prerequisites
 
@@ -12,8 +21,25 @@ This repo supports three user-facing paths from the same GitHub source:
 - `pipx` on your PATH
 - A real desktop session if you want the floating pet window
 - Python `tkinter` support for the floating window (`chibi-mcp --check` reports this). On Ubuntu/Debian system Python, install `python3-tk`; for pyenv Python, install `tk-dev` and rebuild Python.
+- `code` on PATH for the VS Code installer. In VS Code, run "Shell Command: Install 'code' command in PATH" if needed.
+
+Typical `pipx` setup:
+
+```bash
+# Linux/macOS
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+```
+
+```powershell
+# Windows PowerShell
+py -m pip install --user pipx
+py -m pipx ensurepath
+```
 
 ## One-command installs
+
+### Linux/macOS
 
 Claude Code:
 
@@ -27,7 +53,33 @@ Codex:
 bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-codex.sh)
 ```
 
-Both scripts install or upgrade the `chibi-mcp` server with `pipx`, run `chibi-mcp --check`, then register the MCP server with the selected client.
+VS Code:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-vscode.sh)
+```
+
+### Windows PowerShell
+
+Claude Code:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.ps1 | iex"
+```
+
+Codex:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-codex.ps1 | iex"
+```
+
+VS Code:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-vscode.ps1 | iex"
+```
+
+The Claude/Codex scripts install or upgrade the `chibi-mcp` server with `pipx`, run `chibi-mcp --check`, then register the MCP server with the selected client. The VS Code scripts download the latest `.vsix` from GitHub Releases and install it with `code --install-extension`.
 
 ## Manual server install
 
@@ -104,6 +156,15 @@ Build the VSIX locally from a clone:
 ./scripts/package-vscode.sh
 ```
 
+On Windows from a clone:
+
+```powershell
+cd vscode-ext
+npm ci
+npm run package
+code --install-extension .\chibi-mcp-*.vsix --force
+```
+
 ## Local Verification
 
 From a clone:
@@ -113,6 +174,13 @@ make check
 ```
 
 This runs the Python server checks, Claude/Codex plugin validation, desktop lint, Rust checks, Tauri backend checks, VS Code package build, issue form YAML validation, and workflow sanity checks.
+
+GitHub Actions also verifies:
+
+- Python server on Linux, macOS, and Windows
+- desktop build smoke tests on Linux, macOS, and Windows
+- VS Code `.vsix` packaging
+- Rust/Tauri formatting and linting
 
 `make check` verifies source/package correctness. If local GUI dependencies are missing, it reports a skip instead of treating the repository as broken.
 
@@ -152,7 +220,7 @@ git tag v1.1.1
 git push origin v1.1.1
 ```
 
-3. GitHub Actions builds Python checks, Python wheel/sdist, desktop artifacts, and the VS Code `.vsix`.
-4. GitHub Actions publishes the GitHub Release and attaches the build artifacts.
+3. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.
+4. GitHub Actions publishes the GitHub Release and attaches the wheel, source archive, `.vsix`, and per-OS desktop artifacts.
 
 PyPI publishing is optional. Set the repository variable `PUBLISH_PYPI=true` only after PyPI Trusted Publishing is configured for this repo.

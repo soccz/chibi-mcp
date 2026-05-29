@@ -6,6 +6,9 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Added Windows PowerShell installers for Claude Code, Codex, and VS Code.
+- Added Linux/macOS VS Code `.vsix` installer script.
+- CI now runs Python tests on Linux, macOS, and Windows, and packages the VS Code `.vsix` on every push/PR.
 - Added runnable creator/team sample packs under `examples/packs/`.
 - Added `docs/CREATOR_PACKS.md` and `docs/LAUNCH_KIT.md` for creator submissions, team pack positioning, and launch channel readiness.
 - `verify_all.sh` and tests now validate the sample packs.
