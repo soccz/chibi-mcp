@@ -225,4 +225,4 @@ fi
 claude plugin marketplace add "$MARKETPLACE" || true
 claude plugin install "chibi@chibi-mcp" || true
 
-echo "Claude install complete. Try: /chibi"
+echo "Claude install complete. Try: /chibi-mcp:chibi"

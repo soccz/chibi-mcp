@@ -150,7 +150,15 @@ Plugin registration inside Claude Code:
 /plugin install chibi@chibi-mcp
 ```
 
-The plugin gives Claude the `/chibi` command and the `chibi` skill prompt. The MCP server must still be installed with `pipx` so the `chibi-mcp` command is available.
+The plugin gives Claude the `/chibi-mcp:chibi` command and the `chibi` skill prompt. The MCP server must still be installed with `pipx` so the `chibi-mcp` command is available.
+
+Try:
+
+```text
+/chibi-mcp:chibi
+/chibi-mcp:chibi 뽑기
+/chibi-mcp:chibi 보관함
+```
 
 ## VS Code
 
@@ -222,7 +230,7 @@ images, and hidden legacy brand-name leaks.
 For maintainer release-tag readiness after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.8
+make release-check TAG=v1.4.9
 ```
 
 See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
@@ -247,14 +255,14 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push `main`, then run:
 
 ```bash
-make release-check TAG=v1.4.8
+make release-check TAG=v1.4.9
 ```
 
 3. Push a tag:
 
 ```bash
-git tag v1.4.8
-git push origin v1.4.8
+git tag v1.4.9
+git push origin v1.4.9
 ```
 
 4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.

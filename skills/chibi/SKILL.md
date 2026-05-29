@@ -1,6 +1,6 @@
 ---
 name: chibi
-description: Floating chibi desktop pet with real gacha, inventory, live mood, and free option layers. Use whenever the user mentions chibi, 가래떡, 떡, 슬랑이, 뽑기, 보관함, 옵션, pet, or types /chibi. Talks to the chibi MCP server (open_pet_window, pull_gacha, get_inventory, get_options, set_active_options, clear_active_options, set_active_character, rename_character, pet_say, slice_now, get_pet_state).
+description: Floating chibi desktop pet with real gacha, inventory, live mood, and free option layers. Use whenever the user mentions chibi, 가래떡, 떡, 슬랑이, 뽑기, 보관함, 옵션, pet, or types /chibi-mcp:chibi. Talks to the chibi MCP server (open_pet_window, pull_gacha, get_inventory, get_options, set_active_options, clear_active_options, set_active_character, rename_character, pet_say, slice_now, get_pet_state).
 ---
 
 # chibi — Korean rice cake desktop pet
@@ -14,6 +14,7 @@ Claude is the primary client. Treat this skill as a small companion workflow, no
 - Default to Korean if the user wrote Korean.
 - Keep responses to one line after successful tool calls unless the user asks for details.
 - Prefer the pet's name + rarity + mood over implementation details.
+- When invoked from `/chibi-mcp:chibi`, handle the raw arguments directly. Do not invoke `/chibi` or any other slash command.
 - Do not explain MCP, WebSocket, tickets, or install paths during normal use.
 - When a tool fails, report the actionable reason and the exact next command only.
 
@@ -27,7 +28,7 @@ Claude is the primary client. Treat this skill as a small companion workflow, no
 
 ## When the user wants to see the pet
 
-Triggers: "chibi", "chibi 보자", `/chibi`, "show my chibi".
+Triggers: "chibi", "chibi 보자", `/chibi-mcp:chibi`, "show my chibi".
 
 1. Call `open_pet_window` (no args). Server picks the active character; if none, falls back to first in catalog.
 2. Send a one-line confirmation: `<name_ko> ★<rarity> — <mood_ko>`.
@@ -50,7 +51,7 @@ The window is **live**: mood, slice flashes, and `pet_say` bubbles update in rea
 
 ## Gacha
 
-Trigger: "뽑기", "한 번 뽑아", "pull", `/chibi 뽑기`.
+Trigger: "뽑기", "한 번 뽑아", "pull", `/chibi-mcp:chibi 뽑기`.
 
 1. Call `pull_gacha`. Server handles:
    - First pull of the calendar day is free.
@@ -67,7 +68,7 @@ Trigger: "뽑기", "한 번 뽑아", "pull", `/chibi 뽑기`.
 
 ## Inventory / 보관함
 
-Trigger: "보관함", "내 컬렉션", `/chibi 보관함`.
+Trigger: "보관함", "내 컬렉션", `/chibi-mcp:chibi 보관함`.
 
 `get_inventory` returns the user's persisted state: `active_character_id`, `tickets`, `total_pulls`, `owned_count`, the `inventory` map ({id: {count, nickname, first_rolled_at}}), `last_free_pull_date`, `next_free_in_seconds`. `get_catalog` is the source of truth for the released full list (license-tier-filtered, never the persisted state).
 

@@ -2,7 +2,7 @@
   "name": "chibi-mcp",
   "displayName": "chibi (chibi-mcp)",
   "description": "Korean rice cake desktop pet for VS Code. Gacha-collect characters, apply 12 free option layers, and react to your coding session.",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "publisher": "soccz",
   "license": "MIT",
   "engines": {

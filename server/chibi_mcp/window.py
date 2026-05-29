@@ -7,8 +7,8 @@ v1.1 visual upgrade:
     - Canvas-based image rendering: bob animation via canvas.move (no flicker).
     - Idle bob: 4px gentle vertical oscillation, ~0.6 Hz, like a slime breathing.
     - Sounds: short procedurally-generated wavs played via `afplay` (darwin),
-      `paplay`/`aplay` (linux), winsound (windows). Plays on dbl-click squish
-      and on slice events.
+      `paplay`/`aplay` (linux), winsound (windows). Event-specific sounds cover
+      squish, slice, gacha, rare pulls, option changes, and speech bubbles.
 
 Live behaviour (unchanged from v1.0):
     - Connects to ws://127.0.0.1:9876, receives state/say/slice events.
@@ -48,6 +48,7 @@ IDLE_BUBBLE_MIN_MS = 4 * 60_000
 IDLE_BUBBLE_MAX_MS = 7 * 60_000
 
 SOUND_DIR = Path.home() / ".chibi-mcp" / "sounds"
+SOUND_VERSION = "2"
 
 IDLE_PHRASES_BY_MOOD: dict[str, list[str]] = {
     "calm":      ["말랑...", "심심해", "쉬자", "..."],
@@ -170,62 +171,154 @@ def _ensure_sounds() -> dict[str, Path]:
     SOUND_DIR.mkdir(parents=True, exist_ok=True)
     paths = {
         "bubble": SOUND_DIR / "bubble.wav",
-        "slice":  SOUND_DIR / "slice.wav",
+        "slice": SOUND_DIR / "slice.wav",
+        "squish": SOUND_DIR / "squish.wav",
+        "gacha": SOUND_DIR / "gacha.wav",
+        "rare": SOUND_DIR / "rare.wav",
+        "option": SOUND_DIR / "option.wav",
     }
-    if not paths["bubble"].exists():
-        _write_bubble_wav(paths["bubble"])
-    if not paths["slice"].exists():
-        _write_slice_wav(paths["slice"])
+    version_file = SOUND_DIR / ".version"
+    regenerate = version_file.read_text(encoding="utf-8").strip() != SOUND_VERSION if version_file.exists() else True
+    writers = {
+        "bubble": _write_bubble_wav,
+        "slice": _write_slice_wav,
+        "squish": _write_squish_wav,
+        "gacha": _write_gacha_wav,
+        "rare": _write_rare_wav,
+        "option": _write_option_wav,
+    }
+    for key, path in paths.items():
+        if regenerate or not path.exists():
+            writers[key](path)
+    version_file.write_text(SOUND_VERSION, encoding="utf-8")
     return paths
 
 
-def _write_bubble_wav(path: Path) -> None:
-    """A short rising-then-falling tone — like a soft 'boyoing'."""
-    sr = 22050
-    duration = 0.28
-    n = int(sr * duration)
-    frames = bytearray()
-    for i in range(n):
-        t = i / sr
-        # Pitch: 360 Hz → 720 Hz → 540 Hz
-        env_t = i / n
-        if env_t < 0.5:
-            freq = 360 + (720 - 360) * (env_t * 2)
-        else:
-            freq = 720 - (720 - 540) * ((env_t - 0.5) * 2)
-        # Smooth attack + decay envelope
-        env = (1.0 - abs(2 * env_t - 1)) ** 1.3
-        sample = int(0.32 * 32767 * env * math.sin(2 * math.pi * freq * t))
-        frames += struct.pack("<h", max(-32768, min(32767, sample)))
+def _write_wav(path: Path, samples: list[int] | bytearray, sr: int = 22050) -> None:
+    if isinstance(samples, bytearray):
+        frames = bytes(samples)
+    else:
+        frames = b"".join(struct.pack("<h", max(-32768, min(32767, sample))) for sample in samples)
     with wave.open(str(path), "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(sr)
-        w.writeframes(bytes(frames))
+        w.writeframes(frames)
+
+
+def _noise(seed: int, i: int) -> float:
+    # Cheap deterministic pseudo-noise so generated sounds are stable.
+    x = math.sin((i + 1) * (seed * 12.9898 + 78.233)) * 43758.5453
+    return (x - math.floor(x)) * 2 - 1
+
+
+def _write_bubble_wav(path: Path) -> None:
+    """Soft gel bubble pop."""
+    sr = 22050
+    duration = 0.34
+    n = int(sr * duration)
+    samples: list[int] = []
+    for i in range(n):
+        t = i / sr
+        env_t = i / n
+        if env_t < 0.5:
+            freq = 260 + (620 - 260) * (env_t * 2)
+        else:
+            freq = 620 - (620 - 420) * ((env_t - 0.5) * 2)
+        env = (1.0 - abs(2 * env_t - 1)) ** 1.3
+        wobble = math.sin(2 * math.pi * 9 * t) * 22
+        tone = math.sin(2 * math.pi * (freq + wobble) * t)
+        samples.append(int(0.26 * 32767 * env * tone))
+    _write_wav(path, samples, sr)
 
 
 def _write_slice_wav(path: Path) -> None:
-    """A short descending sweep — like a soft 'schhk' slice."""
+    """Soft mochi knife slice with rice-flour noise."""
     sr = 22050
-    duration = 0.18
+    duration = 0.26
     n = int(sr * duration)
-    frames = bytearray()
-    import random as _r
-
+    samples: list[int] = []
     for i in range(n):
+        t = i / sr
         env_t = i / n
-        # Frequency sweeps down 1600 -> 400 Hz, mixed with noise
-        freq = 1600 - (1600 - 400) * env_t
-        env = (1.0 - env_t) ** 1.4
-        tone = math.sin(2 * math.pi * freq * (i / sr))
-        noise = (_r.random() * 2 - 1) * 0.6
-        sample = int(0.28 * 32767 * env * (tone * 0.4 + noise * 0.6))
-        frames += struct.pack("<h", max(-32768, min(32767, sample)))
-    with wave.open(str(path), "wb") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(sr)
-        w.writeframes(bytes(frames))
+        freq = 1800 - 1350 * env_t
+        env = (1.0 - env_t) ** 1.55
+        scrape = math.sin(2 * math.pi * freq * t) * 0.34
+        flour = _noise(3, i) * 0.66
+        samples.append(int(0.24 * 32767 * env * (scrape + flour)))
+    _write_wav(path, samples, sr)
+
+
+def _write_squish_wav(path: Path) -> None:
+    """Low, wet squish for double-clicking the pet."""
+    sr = 22050
+    duration = 0.42
+    n = int(sr * duration)
+    samples: list[int] = []
+    for i in range(n):
+        t = i / sr
+        env_t = i / n
+        env = math.sin(math.pi * env_t) ** 0.45
+        freq = 95 + 55 * math.sin(2 * math.pi * 3.2 * t)
+        tone = math.sin(2 * math.pi * freq * t)
+        slap = _noise(7, i) * max(0.0, 1.0 - env_t * 2.3)
+        samples.append(int(0.31 * 32767 * env * (tone * 0.72 + slap * 0.28)))
+    _write_wav(path, samples, sr)
+
+
+def _write_gacha_wav(path: Path) -> None:
+    """Small capsule roll and pop for normal pulls."""
+    sr = 22050
+    duration = 0.72
+    n = int(sr * duration)
+    samples: list[int] = []
+    notes = [392, 494, 587]
+    for i in range(n):
+        t = i / sr
+        env_t = i / n
+        note = notes[min(len(notes) - 1, int(env_t * len(notes)))]
+        pop_env = max(0.0, 1.0 - abs((env_t - 0.72) / 0.18)) ** 2
+        roll_env = max(0.0, 1.0 - env_t) ** 1.4
+        bell = math.sin(2 * math.pi * note * t) * pop_env
+        roll = _noise(11, i) * roll_env * 0.42
+        samples.append(int(0.24 * 32767 * (bell + roll)))
+    _write_wav(path, samples, sr)
+
+
+def _write_rare_wav(path: Path) -> None:
+    """Brighter sparkle reveal for rare pulls."""
+    sr = 22050
+    duration = 0.95
+    n = int(sr * duration)
+    samples: list[int] = []
+    notes = [523, 659, 784, 1046]
+    for i in range(n):
+        t = i / sr
+        env_t = i / n
+        note = notes[min(len(notes) - 1, int(env_t * len(notes)))]
+        attack = min(1.0, env_t * 8)
+        decay = (1.0 - env_t) ** 0.65
+        env = attack * decay
+        shimmer = math.sin(2 * math.pi * note * t) + 0.45 * math.sin(2 * math.pi * note * 2.01 * t)
+        sparkle = _noise(17, i) * max(0.0, math.sin(math.pi * env_t)) * 0.18
+        samples.append(int(0.22 * 32767 * env * (shimmer * 0.74 + sparkle)))
+    _write_wav(path, samples, sr)
+
+
+def _write_option_wav(path: Path) -> None:
+    """Sticky syrup/glaze brush for option changes."""
+    sr = 22050
+    duration = 0.5
+    n = int(sr * duration)
+    samples: list[int] = []
+    for i in range(n):
+        t = i / sr
+        env_t = i / n
+        env = math.sin(math.pi * env_t) ** 0.7
+        sticky = math.sin(2 * math.pi * (150 + 70 * env_t) * t)
+        brush = _noise(23, i) * 0.5
+        samples.append(int(0.2 * 32767 * env * (sticky * 0.5 + brush * 0.5)))
+    _write_wav(path, samples, sr)
 
 
 def _play_sound(path: Path) -> None:
@@ -561,7 +654,7 @@ class PetWindow:
 
     def _squish(self, _event: tk.Event) -> None:
         self._render_image(self.current_mood, scale=(1.15, 0.6))
-        self._play_safe("bubble")
+        self._play_safe("squish")
         self._after(180, lambda: self._render_image(self.current_mood))
 
     def _slice_flash(self) -> None:
@@ -613,6 +706,7 @@ class PetWindow:
             return
         clipped = text[:120] + ("…" if len(text) > 120 else "")
         self.bubble.configure(text=clipped)
+        self._play_safe("bubble")
         try:
             self.bubble.pack(pady=(2, 10), padx=10, before=self.mood_label)
         except tk.TclError:
@@ -696,6 +790,10 @@ class PetWindow:
             self._slice_flash()
         elif kind == "say":
             self.show_bubble(evt.get("text", ""))
+        elif kind == "sound":
+            sound = str(evt.get("name") or "")
+            if sound in self._sound_paths:
+                self._play_safe(sound)
 
     # ── Lifecycle ────────────────────────────────────────────────────────────
 

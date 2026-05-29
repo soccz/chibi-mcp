@@ -211,4 +211,4 @@ if ($LASTEXITCODE -ne 0) {
     Write-Warning "Claude plugin install failed; MCP registration is still complete."
 }
 
-Write-Host "Claude install complete. Try: /chibi"
+Write-Host "Claude install complete. Try: /chibi-mcp:chibi"

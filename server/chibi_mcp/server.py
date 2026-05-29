@@ -82,6 +82,14 @@ def _record_call_and_maybe_slice(force_slice: bool = False) -> dict:
     return result
 
 
+def _broadcast_sound(name: str) -> bool:
+    """Ask any open floating window to play a local sound by key."""
+    if name not in {"bubble", "slice", "squish", "gacha", "rare", "option"}:
+        return False
+    broadcaster = get_broadcaster()
+    return _fire_and_forget(broadcaster.broadcast({"type": "sound", "name": name}))
+
+
 @mcp.tool()
 def get_pet_state() -> dict:
     """Return chibi's current state: mood, system metrics, counters, timing.
@@ -292,7 +300,9 @@ def set_active_options(option_ids: list[str]) -> dict:
     result = state.set_active_options(cleaned, available)
     if result.get("ok") and _WINDOW_PID_FILE.exists():
         try:
-            open_pet_window()
+            window_result = open_pet_window()
+            if window_result.get("opened"):
+                _broadcast_sound("option")
         except Exception as e:
             log.warning("window reopen after set_active_options failed: %s", e)
     return result
@@ -575,6 +585,8 @@ def pull_gacha() -> dict:
 
     # Broadcast a slice-like event so any open window celebrates
     broadcaster = get_broadcaster()
+    sound_name = "rare" if int(result["drawn"].get("rarity", 0)) >= 4 else "gacha"
+    _broadcast_sound(sound_name)
     _fire_and_forget(
         broadcaster.broadcast(
             {

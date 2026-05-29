@@ -125,7 +125,7 @@ Register it manually:
 claude mcp add chibi -- chibi-mcp
 ```
 
-If using the Claude plugin path, the plugin gives `/chibi` commands, but the Python server still has to be installed so the `chibi-mcp` command is available.
+If using the Claude plugin path, the plugin gives `/chibi-mcp:chibi` commands, but the Python server still has to be installed so the `chibi-mcp` command is available.
 
 ## Codex Does Not See Chibi
 

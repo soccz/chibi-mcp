@@ -207,7 +207,8 @@ Then download the desktop app: [Releases](#)
 ## Credits
 
 캐릭터 디자인: ...
-사운드: CC0 sources from Freesound.org
+사운드: 기본 제품은 로컬 procedural wav 생성. 실제 녹음 ASMR팩은 CC0
+또는 권리 검증된 creator submission만 허용.
 
 ## License
 
