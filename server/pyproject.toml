@@ -1,6 +1,6 @@
 [project]
 name = "chibi-mcp"
-version = "1.3.3"
+version = "1.4.0"
 description = "MCP server for 치비 (chibi) — a Korean rice cake desktop pet that pops up a floating tk window (mood-tinted, live-updating, gacha-driven) in your Claude Code session"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -43,6 +43,9 @@ dev = [
 chibi-mcp = "chibi_mcp.__main__:main"
 chibi-say = "chibi_mcp.cli:say_main"
 chibi-check = "chibi_mcp.cli:check_main"
+chibi-audit = "chibi_mcp.commercial:audit_main"
+chibi-pack = "chibi_mcp.commercial:pack_main"
+chibi-share = "chibi_mcp.commercial:share_main"
 
 [build-system]
 requires = ["hatchling"]

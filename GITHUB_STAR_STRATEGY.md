@@ -51,6 +51,15 @@ Star conversion에 필요한 시각 자료:
 3. `docs/screenshots/claude-code.png`
 4. `docs/screenshots/vscode-sidebar.png`
 
+현재 실행 가능한 시작점:
+
+```bash
+chibi-share --out docs/screenshots/share-card.png
+chibi-pack preview ./example-pack --out docs/screenshots/pack-preview.html
+```
+
+실제 demo GIF는 수동 녹화가 필요하지만, share card와 pack preview는 repo 안에서 즉시 생성 가능하다.
+
 ### 3. Topics for Discovery
 
 GitHub repository topics should include:
@@ -112,6 +121,7 @@ Must stay visible:
 
 - no telemetry statement in README
 - `chibi-mcp --check`
+- `chibi-audit`
 - localhost-only WebSocket default
 - SECURITY.md with reporting path
 - no hidden paid gate in the open-source core

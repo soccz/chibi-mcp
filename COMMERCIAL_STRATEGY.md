@@ -39,6 +39,9 @@
 - 로컬-only 상태 저장
 - telemetry 없음
 - `chibi-mcp --check`로 설치 진단
+- `chibi-audit`로 로컬 신뢰 리포트 출력
+- `chibi-share`로 1080×1080 세션 공유 카드 생성
+- `chibi-pack validate/preview`로 크리에이터·팀 캐릭터팩 검증
 
 무료 코어는 줄이지 않는다. 이 제품은 신뢰와 귀여움이 먼저다.
 
@@ -80,6 +83,15 @@ MVP:
 - pack preview HTML
 - GitHub issue template: character pack submission
 
+현재 실행 가능한 기반:
+
+```bash
+chibi-pack validate ./my-pack
+chibi-pack preview ./my-pack
+```
+
+`meta.json`의 `characters[]` 항목은 `id`, `name_ko`, `category`, `rarity`, `tier`, PNG 이미지로 검증된다. 이 단계는 marketplace 결제를 켜기 전에도 작가·팀·브랜드 pack 품질을 표준화한다.
+
 ### 4. Team Edition
 
 목적: B2B/팀 예산으로 결제 가능한 제품.
@@ -94,6 +106,15 @@ MVP:
 - no-telemetry audit note
 - priority support
 - team share cards: sprint 도막, PR 도막, release 도막
+
+현재 실행 가능한 기반:
+
+```bash
+chibi-audit --json
+chibi-share --out sprint-card.png
+```
+
+팀 유료화 전에는 이 두 결과물을 sales asset으로 쓴다. `chibi-audit`는 no telemetry, localhost-only default, state path, asset catalog, hook/plugin files를 보여주고, `chibi-share`는 팀/스프린트/릴리스 공유 카드의 초기 형태가 된다.
 
 가격 후보:
 

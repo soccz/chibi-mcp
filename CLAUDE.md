@@ -29,6 +29,7 @@ Core commands:
 - Full verification: `make check` or `./scripts/verify_all.sh`
 - Python tests: `cd server && python -m pytest -q`
 - Server health check: `cd server && python -m chibi_mcp --check`
+- Commercial-readiness CLIs: `chibi-audit`, `chibi-pack validate <dir>`, `chibi-pack preview <dir>`, `chibi-share --out share-card.png`
 - Claude plugin validation: `claude plugin validate .`
 - VS Code package: `./scripts/package-vscode.sh`
 

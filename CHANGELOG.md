@@ -2,6 +2,26 @@
 
 All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condensed.
 
+## v1.4.0 — 2026-05-29
+
+Commercial-readiness surfaces without paid gates.
+
+- New `chibi-audit` CLI: local trust report covering no telemetry, localhost default, state path, asset catalog, entry points, and hook/plugin files.
+- New `chibi-pack` CLI: validate creator/team character packs and write static HTML previews.
+- New `chibi-share` CLI: generate a 1080×1080 local session share card PNG.
+- README, commercial strategy, and GitHub star strategy now point to executable share/pack/trust commands.
+
+## v1.3.3 — 2026-05-29
+
+Final v1.3 audit gaps.
+
+- VS Code daily save reward no longer grants duplicate tickets.
+- VS Code webview escapes nickname/alt text before rendering.
+- `CHIBI_WS_PORT` invalid values fall back consistently across stdio/WS modes.
+- `verify_all.sh` checks shell syntax and compiles `scripts/rotate-hmac.py`.
+- `rotate-hmac.py --apply` is disabled until a user-approved paid entitlement gate exists.
+- Branch desktop CI now uses `tauri build --debug --no-bundle`; tag builds still produce installers.
+
 ## v1.3.2 — 2026-05-29
 
 Audit follow-up polish.
