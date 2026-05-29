@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "soccz" }]
-keywords = ["mcp", "claude-code", "desktop-pet", "korean", "tteoki", "garaetteok"]
+keywords = ["mcp", "claude-code", "desktop-pet", "korean", "chibi", "garaetteok"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

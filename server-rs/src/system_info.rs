@@ -1,4 +1,4 @@
-//! Thin sysinfo wrapper — CPU/RAM/battery snapshot for tteoki.
+//! Thin sysinfo wrapper — CPU/RAM/battery snapshot for chibi.
 
 use serde::Serialize;
 use sysinfo::System;

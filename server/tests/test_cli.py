@@ -322,7 +322,7 @@ def test_share_card_writes_png(tmp_path):
     result = write_share_card(
         out=out,
         character_id="white_tteok",
-        title="tteoki coding recap",
+        title="chibi coding recap",
         subtitle="local MCP pet",
     )
     assert result["ok"] is True
@@ -336,7 +336,7 @@ def test_social_preview_writes_expected_size(tmp_path):
     result = write_share_card(
         out=out,
         character_id="white_tteok",
-        title="tteoki",
+        title="chibi",
         subtitle="local MCP pet",
         preset="social-preview",
     )
@@ -351,7 +351,7 @@ def test_lineup_preview_writes_expected_size(tmp_path):
     result = write_share_card(
         out=out,
         character_id="white_tteok",
-        title="tteoki starter lineup",
+        title="chibi starter lineup",
         subtitle="local MCP pet",
         preset="lineup",
     )
@@ -366,7 +366,7 @@ def test_options_preview_writes_expected_size(tmp_path):
     result = write_share_card(
         out=out,
         character_id="white_tteok",
-        title="tteoki options",
+        title="chibi options",
         subtitle="honey, jocheong, beads",
         preset="options",
     )

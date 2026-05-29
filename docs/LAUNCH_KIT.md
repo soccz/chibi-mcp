@@ -61,7 +61,7 @@ Still needed before public push:
 6. Tag a GitHub Release with wheel, `.vsix`, checksums, and screenshots.
 7. Update GitHub social preview using `assets/social-preview.png`.
 8. Set topics: `mcp`, `model-context-protocol`, `claude-code`, `codex`, `vscode-extension`, `local-first`, `no-telemetry`, `desktop-pet`, `ai-agent`.
-9. Open a pinned "Show your tteoki" issue or Discussion.
+9. Open a pinned "Show your chibi" issue or Discussion.
 10. Invite free team/pilot feedback with `.github/ISSUE_TEMPLATE/team_pilot.yml`.
 11. Collect free collaboration/drop ideas with `.github/ISSUE_TEMPLATE/collaboration_idea.yml`.
 
@@ -82,7 +82,7 @@ Korean short:
 ```text
 Claude Code / Codex / VS Code에서 돌아가는 로컬 MCP 펫 만들었습니다.
 
-떡이(tteoki)가 CPU·배터리·툴 호출에 반응하고, N번 호출마다 도막나고, 캐릭터/옵션팩까지 확장됩니다. telemetry 없음.
+chibi가 CPU·배터리·툴 호출에 반응하고, N번 호출마다 도막나고, 캐릭터/옵션팩까지 확장됩니다. telemetry 없음.
 
 https://github.com/soccz/chibi-mcp
 ```

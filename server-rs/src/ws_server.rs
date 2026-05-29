@@ -12,7 +12,7 @@ use tokio::net::TcpListener;
 use tokio::sync::broadcast;
 use tokio_tungstenite::tungstenite::Message;
 
-use crate::state::Tteoki;
+use crate::state::Chibi;
 use crate::system_info::SystemReader;
 
 pub const DEFAULT_HOST: &str = "127.0.0.1";
@@ -49,7 +49,7 @@ impl Broadcaster {
 pub async fn run_ws_server(
     host: &str,
     port: u16,
-    state: Arc<Tteoki>,
+    state: Arc<Chibi>,
     broadcaster: Broadcaster,
 ) -> anyhow::Result<()> {
     let addr = format!("{host}:{port}");
@@ -100,7 +100,7 @@ pub async fn run_ws_server(
 async fn handle_client(
     stream: tokio::net::TcpStream,
     peer: std::net::SocketAddr,
-    state: Arc<Tteoki>,
+    state: Arc<Chibi>,
     sysreader: Arc<Mutex<SystemReader>>,
     broadcaster: Broadcaster,
 ) -> anyhow::Result<()> {

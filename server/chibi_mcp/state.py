@@ -49,7 +49,7 @@ STATE_SCHEMA_VERSION = 2
 
 
 @dataclass
-class TteokiState:
+class ChibiState:
     """In-memory + persisted state of the active 치비 collection."""
 
     slice_interval: int = DEFAULT_SLICE_INTERVAL
@@ -379,7 +379,7 @@ def _clean_option_ids(raw: object) -> list[str]:
 
 # Module-level singleton + init lock (avoids TOCTOU when two threads
 # request state simultaneously during cold start).
-_STATE: TteokiState | None = None
+_STATE: ChibiState | None = None
 _STATE_INIT_LOCK = Lock()
 
 # Serializes file writes from _save_data so concurrent persistence calls
@@ -387,12 +387,12 @@ _STATE_INIT_LOCK = Lock()
 _SAVE_LOCK = Lock()
 
 
-def get_state() -> TteokiState:
+def get_state() -> ChibiState:
     global _STATE
     if _STATE is None:
         with _STATE_INIT_LOCK:
             if _STATE is None:
-                inst = TteokiState()
+                inst = ChibiState()
                 inst.load()
                 _STATE = inst
     return _STATE

@@ -7,7 +7,7 @@ import json
 import pytest
 
 from chibi_mcp import state as state_mod
-from chibi_mcp.state import TteokiState, reset_state_for_tests
+from chibi_mcp.state import ChibiState, reset_state_for_tests
 
 
 @pytest.fixture(autouse=True)
@@ -30,7 +30,7 @@ CATALOG = [
 
 
 def test_first_pull_is_free_today():
-    s = TteokiState()
+    s = ChibiState()
     result = s.pull_gacha(CATALOG)
     assert result["drawn"] is not None
     assert result["was_free"] is True
@@ -38,7 +38,7 @@ def test_first_pull_is_free_today():
 
 
 def test_second_pull_same_day_costs_ticket():
-    s = TteokiState()
+    s = ChibiState()
     s.pull_gacha(CATALOG)
     # No tickets after free pull
     result = s.pull_gacha(CATALOG)
@@ -47,7 +47,7 @@ def test_second_pull_same_day_costs_ticket():
 
 
 def test_pull_with_ticket_succeeds():
-    s = TteokiState()
+    s = ChibiState()
     s.pull_gacha(CATALOG)  # consume free pull
     s.tickets = 1
     result = s.pull_gacha(CATALOG)
@@ -57,13 +57,13 @@ def test_pull_with_ticket_succeeds():
 
 
 def test_first_pulled_becomes_active():
-    s = TteokiState()
+    s = ChibiState()
     result = s.pull_gacha(CATALOG)
     assert s.active_character_id == result["drawn"]["id"]
 
 
 def test_inventory_count_increments():
-    s = TteokiState()
+    s = ChibiState()
     s.tickets = 5
     s.pull_gacha(CATALOG)  # free
     for _ in range(4):
@@ -74,23 +74,23 @@ def test_inventory_count_increments():
 
 def test_persistence_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "rt.json")
-    s = TteokiState()
+    s = ChibiState()
     s.tickets = 7
     s.active_character_id = "white_tteok"
     s.active_option_ids = ["jocheong_drip", "sugar_beads"]
-    s.inventory = {"white_tteok": {"count": 2, "nickname": "흰떡이"}}
+    s.inventory = {"white_tteok": {"count": 2, "nickname": "흰떡"}}
     s.save()
 
-    s2 = TteokiState()
+    s2 = ChibiState()
     s2.load()
     assert s2.tickets == 7
     assert s2.active_character_id == "white_tteok"
     assert s2.active_option_ids == ["jocheong_drip", "sugar_beads"]
-    assert s2.inventory["white_tteok"]["nickname"] == "흰떡이"
+    assert s2.inventory["white_tteok"]["nickname"] == "흰떡"
 
 
 def test_ticket_grant_every_100_calls():
-    s = TteokiState(slice_interval=1000)  # avoid slice noise
+    s = ChibiState(slice_interval=1000)  # avoid slice noise
     for _ in range(99):
         s.record_call()
     assert s.tickets == 0
@@ -100,7 +100,7 @@ def test_ticket_grant_every_100_calls():
 
 
 def test_ticket_grant_every_10_slices():
-    s = TteokiState(slice_interval=1)
+    s = ChibiState(slice_interval=1)
     grants = 0
     for _ in range(20):
         r = s.record_call()
@@ -113,23 +113,23 @@ def test_ticket_grant_every_10_slices():
 
 
 def test_rename_persists():
-    s = TteokiState()
+    s = ChibiState()
     s.tickets = 1
     s.pull_gacha(CATALOG)
     cid = s.active_character_id
-    r = s.rename(cid, "내떡이")
+    r = s.rename(cid, "내chibi")
     assert r["ok"] is True
-    assert s.inventory[cid]["nickname"] == "내떡이"
+    assert s.inventory[cid]["nickname"] == "내chibi"
 
 
 def test_set_active_requires_ownership():
-    s = TteokiState()
+    s = ChibiState()
     r = s.set_active("white_tteok")  # not owned
     assert r["ok"] is False
 
 
 def test_set_active_after_owning():
-    s = TteokiState()
+    s = ChibiState()
     s.pull_gacha(CATALOG)  # owns something
     s.tickets = 5
     # Pull until we get a different character
@@ -144,7 +144,7 @@ def test_set_active_after_owning():
 
 
 def test_set_active_options_requires_known_options():
-    s = TteokiState()
+    s = ChibiState()
     available = {"jocheong_drip", "honey_glaze", "sugar_beads"}
     result = s.set_active_options(["jocheong_drip", "sugar_beads"], available)
     assert result["ok"] is True
@@ -156,7 +156,7 @@ def test_set_active_options_requires_known_options():
 
 
 def test_state_file_is_atomic_json():
-    s = TteokiState()
+    s = ChibiState()
     s.pull_gacha(CATALOG)
     data = json.loads(state_mod.STATE_FILE.read_text())
     assert data["schema_version"] == state_mod.STATE_SCHEMA_VERSION
@@ -171,12 +171,12 @@ def test_save_does_not_hold_lock_during_io(monkeypatch):
     having _save_data try to call a method that requires the lock — if save
     were still holding it, this would deadlock.
     """
-    s = TteokiState()
+    s = ChibiState()
     s.tickets = 1
     s.pull_gacha(CATALOG)  # consume free pull
     captured: list[bool] = []
 
-    original = state_mod.TteokiState._save_data
+    original = state_mod.ChibiState._save_data
 
     def spy(data):
         # If lock is held by caller, this acquire would block forever.
@@ -187,7 +187,7 @@ def test_save_does_not_hold_lock_during_io(monkeypatch):
             s._lock.release()
         original(data)
 
-    monkeypatch.setattr(state_mod.TteokiState, "_save_data", staticmethod(spy))
+    monkeypatch.setattr(state_mod.ChibiState, "_save_data", staticmethod(spy))
 
     # Trigger a save by pulling with a ticket (consumes ticket, calls save)
     s.tickets = 1
@@ -198,7 +198,7 @@ def test_save_does_not_hold_lock_during_io(monkeypatch):
 
 
 def test_invalid_character_id_rejected_by_set_active():
-    s = TteokiState()
+    s = ChibiState()
     s.pull_gacha(CATALOG)
     r = s.set_active("../etc/passwd")
     assert r["ok"] is False

@@ -9,7 +9,7 @@
 
 `chibi-mcp`는 단순 데스크탑 펫이 아니라 **AI coding companion identity layer**다.
 
-개발자는 이미 Claude Code, Codex, VS Code 안에서 장시간 머문다. tteoki는 그 작업 흐름 안에 들어가서 시스템 상태, 세션 리듬, 도구 호출, 컬렉션, 공유 가능한 캐릭터성을 붙인다. 지금 단계의 목표는 결제 기능이 아니라 다음 네 가지 장기 확장 기반을 무료 코어 위에 준비하는 것이다.
+개발자는 이미 Claude Code, Codex, VS Code 안에서 장시간 머문다. chibi는 그 작업 흐름 안에 들어가서 시스템 상태, 세션 리듬, 도구 호출, 컬렉션, 공유 가능한 캐릭터성을 붙인다. 지금 단계의 목표는 결제 기능이 아니라 다음 네 가지 장기 확장 기반을 무료 코어 위에 준비하는 것이다.
 
 1. **수집 가능한 캐릭터 콘텐츠**
 2. **팀/조직용 배포와 관리**
@@ -182,7 +182,7 @@ chibi-share --preset options --out option-showcase.png
 
 후보:
 
-- tteoki sticker pack
+- chibi sticker pack
 - desk mat
 - artisan keycap
 - acrylic stand
@@ -220,7 +220,7 @@ chibi-share --preset options --out option-showcase.png
 ### Shareable Artifacts
 
 - 1080×1080 share card
-- GitHub README badge: `tteoki worked with me N calls`
+- GitHub README badge: `chibi worked with me N calls`
 - release celebration card
 - team sprint recap image
 - VS Code sidebar screenshot card

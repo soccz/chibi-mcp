@@ -8,7 +8,7 @@ This is a commercial-readiness surface, not a paid gate. The base app, MCP tools
 
 | Pack type | Example | Business value | Status |
 |---|---|---|---|
-| Free monthly drop | new tteok character or option | repeat visits, GitHub shares | ready via `meta.json` |
+| Free monthly drop | new chibi character or option | repeat visits, GitHub shares | ready via `meta.json` |
 | Creator pack | artist-made character/option set | external content supply | ready via validator |
 | Team pack | private mascot, release badge | B2B admin value | ready via validator |
 | Brand collab | keycap/cafe/devtool skin | distribution partner | strategy only |

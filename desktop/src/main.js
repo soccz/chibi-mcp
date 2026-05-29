@@ -1,4 +1,4 @@
-// main.js — tteoki v0.2 pet runtime.
+// main.js — chibi v0.2 pet runtime.
 //
 // 1. Loads the character catalog + user inventory.
 // 2. On first launch, prompts the welcome / first-free-gacha flow.

@@ -1,6 +1,6 @@
 // inventory.js — localStorage-backed character collection + gacha system.
 
-const STORAGE_KEY = "tteoki.inventory.v1";
+const STORAGE_KEY = "chibi.inventory.v1";
 
 const RARITY_WEIGHTS = { 5: 1, 4: 5, 3: 24, 2: 70 };
 

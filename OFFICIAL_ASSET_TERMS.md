@@ -11,7 +11,7 @@ These terms apply to official project images and presentation assets, including:
 - `vscode-ext/resources/`
 - `docs/screenshots/`
 - `assets/social-preview.png`
-- official `tteoki` / `chibi-mcp` character presentation in README and release assets
+- official `chibi` / `chibi-mcp` character presentation in README and release assets
 
 The project code remains under [MIT](LICENSE). Official artwork, social previews, character images, option-layer PNGs, names, badges, and release presentation are not automatically relicensed as standalone stock art by the MIT code license.
 

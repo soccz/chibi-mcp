@@ -97,7 +97,7 @@ Tauri or Electron — jointly decided. Linux/macOS/Windows must all work. Avoid 
 
 ## Working flow (from PROCESS.md)
 
-- **Step A** — converge user decisions (mostly complete as of 2026-05-18; character name decided as tteoki)
+- **Step A** — converge user decisions (mostly complete as of 2026-05-18; character name updated to chibi on 2026-05-30)
 - **Step B** — MCP server core (`server/`, Python, FastMCP). Build the **common core for all four modes**, even though only pet mode will get a client in MVP.
 - **Step C** — pet-mode desktop client (`desktop/`, Tauri/Electron). MVP scope: **pet mode only**.
 - **Step D** — packaging (npm/PyPI + GitHub Releases per-OS installers)
@@ -112,7 +112,7 @@ Tauri or Electron — jointly decided. Linux/macOS/Windows must all work. Avoid 
 | MVP scope | Common core for all 4 modes + pet-mode client only |
 | Pacing | Free-paced, no deadlines |
 | Release channel | GitHub Public Release (others deferred) |
-| Character name | **tteoki** (떡이) — Korean rice cake + diminutive suffix "이" |
+| Character name | **chibi** |
 | Character shape concept | **Korean rice cake (떡) variety series** — design-friendly varieties all included |
 | Base character | **가래떡 (garaetteok / Korean rice cake stick)** — horizontal cylinder. Surface 조청 drip animation. **Lengthen-and-slice motion as time visualization** (key novel feature). |
 | Slice trigger | Every **N Claude tool calls** (default 10, user-configurable). Sliced pieces stack at bottom of screen and fade out. |

@@ -150,7 +150,7 @@ Download the latest `.vsix` from GitHub Releases, then run:
 code --install-extension chibi-mcp-*.vsix
 ```
 
-Open the `tteoki` activity bar view to use the sidebar pet. The VS Code extension is packaged as a separate UI path; the MCP server remains the canonical state engine for Codex and Claude.
+Open the `chibi` activity bar view to use the sidebar pet. The VS Code extension is packaged as a separate UI path; the MCP server remains the canonical state engine for Codex and Claude.
 
 Build the VSIX locally from a clone:
 

@@ -164,7 +164,7 @@ Must stay visible:
 - Add demo GIF/social preview.
 - Add community health files.
 - Add GitHub topics.
-- Pin a release issue: "Show your tteoki".
+- Pin a release issue: "Show your chibi".
 - Open Discussions if the repo starts receiving questions.
 
 ### Launch

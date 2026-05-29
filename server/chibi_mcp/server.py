@@ -1,4 +1,4 @@
-"""FastMCP server — tools Claude Code calls to interact with tteoki."""
+"""FastMCP server — tools Claude Code calls to interact with chibi."""
 
 from __future__ import annotations
 
@@ -84,7 +84,7 @@ def _record_call_and_maybe_slice(force_slice: bool = False) -> dict:
 
 @mcp.tool()
 def get_pet_state() -> dict:
-    """Return tteoki's current state: mood, system metrics, counters, timing.
+    """Return chibi's current state: mood, system metrics, counters, timing.
 
     The desktop app reads this to render the character. Calling this tool
     counts as a Claude interaction and may trigger a slice every N calls.
@@ -98,7 +98,7 @@ def get_pet_state() -> dict:
 
 @mcp.tool()
 def pet_say(text: str) -> dict:
-    """Make tteoki say something via a speech bubble in the desktop app.
+    """Make chibi say something via a speech bubble in the desktop app.
 
     Args:
         text: short message (≤ 200 chars; longer text is truncated with "…").
@@ -533,7 +533,7 @@ def close_pet_window() -> dict:
 
 @mcp.tool()
 def set_slice_interval(n: int) -> dict:
-    """Change how often (every N Claude tool calls) tteoki gets sliced.
+    """Change how often (every N Claude tool calls) chibi gets sliced.
 
     Args:
         n: positive integer. Default is 10. Suggested values: 5, 10, 25, 50, 100.

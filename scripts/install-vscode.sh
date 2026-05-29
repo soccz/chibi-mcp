@@ -45,4 +45,4 @@ vsix="$tmpdir/chibi-mcp.vsix"
 curl -fL "$asset_url" -o "$vsix"
 code --install-extension "$vsix" --force
 
-echo "VS Code install complete. Open the tteoki activity bar view."
+echo "VS Code install complete. Open the chibi activity bar view."

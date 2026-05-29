@@ -14,7 +14,7 @@ This is operational guidance, not legal advice.
   not ideas, facts, systems, or methods of operation.
 - Original PNG artwork, character expressions, written copy, screenshots, and
   source files can be evidence of original expression.
-- `chibi-mcp`, `tteoki`, logos, badges, marketplace names, and official release
+- `chibi-mcp`, `chibi`, logos, badges, marketplace names, and official release
   presentation are brand signals. Stronger brand protection is a trademark
   decision, not a normal code change.
 - A fork is allowed under an open-source code license, but a fork should not
@@ -68,7 +68,7 @@ Acceptable submissions should include:
 
 Do not implement these without explicit user approval:
 
-- Trademark search and registration for `chibi-mcp`, `tteoki`, and any logo.
+- Trademark search and registration for `chibi-mcp`, `chibi`, and any logo.
 - Signed asset manifests or release checksums for official packs.
 - Private high-resolution source art with lower-resolution runtime PNGs in the
   public package.

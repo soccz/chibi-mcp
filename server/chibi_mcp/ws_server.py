@@ -1,4 +1,4 @@
-"""WebSocket server — pushes tteoki state to the desktop app.
+"""WebSocket server — pushes chibi state to the desktop app.
 
 Protocol (JSON messages, server → client):
     {"type": "state", "payload": {...full state snapshot...}}
@@ -29,7 +29,7 @@ DEFAULT_WS_PORT = 9876
 STATE_PUSH_INTERVAL_SECONDS = 2.0  # snapshot push cadence
 
 
-class TteokiBroadcaster:
+class ChibiBroadcaster:
     """Holds connected desktop clients and broadcasts events."""
 
     def __init__(self) -> None:
@@ -65,13 +65,13 @@ class TteokiBroadcaster:
             await ws.send(payload)
 
 
-_BROADCASTER: TteokiBroadcaster | None = None
+_BROADCASTER: ChibiBroadcaster | None = None
 
 
-def get_broadcaster() -> TteokiBroadcaster:
+def get_broadcaster() -> ChibiBroadcaster:
     global _BROADCASTER
     if _BROADCASTER is None:
-        _BROADCASTER = TteokiBroadcaster()
+        _BROADCASTER = ChibiBroadcaster()
     return _BROADCASTER
 
 

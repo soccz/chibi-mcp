@@ -11,7 +11,7 @@ the repository, not legal advice.
   [OFFICIAL_ASSET_TERMS.md](OFFICIAL_ASSET_TERMS.md), not treated as standalone
   stock art under the code license.
 - Brand and naming confusion is covered by [TRADEMARK.md](TRADEMARK.md).
-- The names `chibi-mcp` and `tteoki`, the project social preview, starter
+- The names `chibi-mcp` and `chibi`, the project social preview, starter
   character identity, and official pack presentation should not be used to
   imply sponsorship, endorsement, or an official release from this project.
 - Character/option pack submissions must include `license`, `source_rights`,
@@ -83,7 +83,7 @@ https://www.uspto.gov/trademarks/basics/trademark-process
 
 These should remain explicit user/business decisions:
 
-- Whether to register `chibi-mcp`, `tteoki`, or a logo as a trademark.
+- Whether to register `chibi-mcp`, `chibi`, or a logo as a trademark.
 - Whether to keep high-resolution source art private and publish only runtime
   PNGs.
 - Whether to allow commercial redistribution of official starter art.

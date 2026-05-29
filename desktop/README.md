@@ -1,6 +1,6 @@
 # chibi-mcp-desktop
 
-tteoki — Korean rice cake desktop character. Cross-platform Tauri app that connects to the chibi-mcp server (`ws://127.0.0.1:9876`) and renders the character on your desktop.
+chibi — Korean rice cake desktop character. Cross-platform Tauri app that connects to the chibi-mcp server (`ws://127.0.0.1:9876`) and renders the character on your desktop.
 
 ## Quick run (local development)
 

@@ -55,9 +55,9 @@ def pack_main(argv: list[str] | None = None) -> int:
 
     init = sub.add_parser("init", help="Create a starter character pack")
     init.add_argument("pack_dir", type=Path)
-    init.add_argument("--id", default="my_tteok", help="Starter character id")
-    init.add_argument("--name", default="My Tteok", help="Starter display name")
-    init.add_argument("--category", default="tteok", help="Starter category slug")
+    init.add_argument("--id", default="my_chibi", help="Starter character id")
+    init.add_argument("--name", default="My Chibi", help="Starter display name")
+    init.add_argument("--category", default="chibi", help="Starter category slug")
     init.add_argument("--tier", default="creator", help="Pack tier")
     init.add_argument("--force", action="store_true", help="Overwrite existing starter files")
 
@@ -138,7 +138,7 @@ def share_main(argv: list[str] | None = None) -> int:
         help="Card dimensions: square=1080x1080, social-preview=1280x640, lineup/options=1600x900",
     )
     parser.add_argument("--character", default=None, help="Character id to render")
-    parser.add_argument("--title", default="tteoki coding recap")
+    parser.add_argument("--title", default="chibi coding recap")
     parser.add_argument(
         "--subtitle",
         default="local MCP pet for Claude Code, Codex, and VS Code",

@@ -45,7 +45,7 @@
 ❌ `MCP 서버에서 WebSocket으로 상태를 브로드캐스트하고 있습니다.`
 ❌ `현재 mood는 calm이고 counters는 ...`
 
-### 캐릭터 말풍선 (tteoki가 말하는 톤)
+### 캐릭터 말풍선 (chibi가 말하는 톤)
 - 짧음 (8자 이내 권장, 최대 15자)
 - 친근·반말 가능 (한국 사용자 기준)
 - 이모지 1개 이내 (과다 X)
@@ -55,7 +55,7 @@
 ✅ "헐… 일 많네"
 ✅ "고마워!"
 
-❌ "안녕하세요. 저는 tteoki입니다. 오늘 하루도 화이팅!"  (너무 김)
+❌ "안녕하세요. 저는 chibi입니다. 오늘 하루도 화이팅!"  (너무 김)
 ❌ "배터리 충전 권장 🔋⚡💪"  (이모지 과다)
 
 ### 웹사이트·README 톤 (작가 톤)
@@ -64,7 +64,7 @@
 - 마케팅 과장 X — "수집·자랑·재미" 사실만 짚기
 
 ✅ "Claude Code 옆에 작은 친구가 있다면."
-✅ "키캡 옆에 둘 친구, tteoki."
+✅ "키캡 옆에 둘 친구, chibi."
 
 ❌ "혁신적인 AI 어시스턴트 마스코트!"
 ❌ "당신의 코딩을 새로운 차원으로!"
@@ -84,7 +84,7 @@
 - 색상: Light/Dark 두 버전 SVG
 
 ### Favicon
-- 32×32 tteoki 얼굴 (단순화)
+- 32×32 chibi 얼굴 (단순화)
 - ICO + PNG + SVG 모두 제공
 
 ---
@@ -125,7 +125,7 @@
 
 #### 색상 — Brand
 ```
-Primary:   #FFE5EC  (tteoki 핑크)
+Primary:   #FFE5EC  (chibi 핑크)
 Secondary: #2C2C2C  (텍스트·outline)
 Background: #FFFFFF (white)
 Accent:    #FF6B9D  (CTA 버튼)
@@ -138,7 +138,7 @@ Accent:    #FF6B9D  (CTA 버튼)
 ├──────────────────────────────────────────┤
 │                                            │
 │       ⊂(◍•ᴥ•◍)⊃                            │
-│        tteoki                            │
+│        chibi                            │
 │                                            │
 │   "Claude Code 옆에 작은 친구가 있다면."    │
 │                                            │
@@ -166,7 +166,7 @@ Accent:    #FF6B9D  (CTA 버튼)
 
 > Your tiny friend for Claude Code.
 
-[데모 GIF — 12초, tteoki가 출렁이며 CPU 변화에 반응]
+[데모 GIF — 12초, chibi가 출렁이며 CPU 변화에 반응]
 
 ## Quick start (30 seconds)
 
@@ -225,10 +225,10 @@ Assets and pack submissions: see ASSET_RIGHTS.md
 │  배경: 그라데이션 #FFE5EC → #FCE38A     │
 │                                          │
 │           ⊂(◍•ᴥ•◍)⊃                      │
-│           (tteoki 그림 큼)             │
+│           (chibi 그림 큼)             │
 │                                          │
 │         "오늘도 같이 코딩!"             │
-│         ── tteoki #047                │
+│         ── chibi #047                │
 │                                          │
 │  ⏱️ 3h 22m   ⌨️ 47 calls   🍡 1/?       │
 │                                          │
@@ -252,7 +252,7 @@ Assets and pack submissions: see ASSET_RIGHTS.md
 ### 사용자 첫 실행 시 — 사운드 동의
 ```
 ┌────────────────────────────────────┐
-│   🎵 tteoki가 슬라임 사운드를     │
+│   🎵 chibi가 슬라임 사운드를     │
 │      들려줘도 될까요?              │
 │                                      │
 │   (ASMR 느낌, 매우 작은 음량)       │

@@ -162,7 +162,7 @@ def _check() -> dict:
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="chibi-mcp",
-        description="MCP server for tteoki, the Korean rice cake coding pet.",
+        description="MCP server for chibi, the Korean rice cake coding pet.",
     )
     parser.add_argument("--version", action="store_true", help="Print version and exit")
     parser.add_argument("--check", action="store_true", help="Check assets and local runtime support")

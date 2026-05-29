@@ -2,7 +2,7 @@
 name = "chibi-mcp-server"
 version = "0.2.0-alpha.1"
 edition = "2021"
-description = "Rust MCP server for tteoki — chibi-mcp v0.2 prototype"
+description = "Rust MCP server for chibi — chibi-mcp v0.2 prototype"
 license = "MIT"
 
 [[bin]]

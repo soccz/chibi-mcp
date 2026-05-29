@@ -1,4 +1,4 @@
-// tteoki VS Code extension — chibi-mcp.
+// chibi VS Code extension — chibi-mcp.
 // Renders the gacha pet in a sidebar webview. Uses VS Code globalState for
 // inventory persistence, and listens to file save / debug start / problems
 // counters to drive simple mood cues.
@@ -474,13 +474,13 @@ export function activate(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand("chibiMcp.reset", async () => {
             const yes = await vscode.window.showWarningMessage(
-                "tteoki 보관함을 초기화합니다. 정말 진행할까요?",
+                "chibi 보관함을 초기화합니다. 정말 진행할까요?",
                 { modal: true },
                 "초기화",
             );
             if (yes === "초기화") {
                 await context.globalState.update("inventory", undefined);
-                vscode.window.showInformationMessage("tteoki 보관함이 초기화되었습니다.");
+                vscode.window.showInformationMessage("chibi 보관함이 초기화되었습니다.");
             }
         }),
 
@@ -527,7 +527,7 @@ export function activate(context: vscode.ExtensionContext) {
         saveInventory(context, inv).then(() => {
             vscode.window
                 .showInformationMessage(
-                    "tteoki에 오신 걸 환영해요! 무료 뽑기 한 장이 보관함에 들어있어요.",
+                    "chibi에 오신 걸 환영해요! 무료 뽑기 한 장이 보관함에 들어있어요.",
                     "뽑기 열기",
                 )
                 .then((sel) => {

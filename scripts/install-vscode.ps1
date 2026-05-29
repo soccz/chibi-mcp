@@ -29,7 +29,7 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "code --install-extension failed"
     }
-    Write-Host "VS Code install complete. Open the tteoki activity bar view."
+    Write-Host "VS Code install complete. Open the chibi activity bar view."
 } finally {
     Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
 }

@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![No telemetry](https://img.shields.io/badge/telemetry-none-blue.svg)](SECURITY.md)
 
-`chibi-mcp` adds a local desktop pet, **tteoki**, to Claude Code, Codex, and VS Code. It reacts to CPU/RAM/battery/idle state, tracks coding-session rhythm, collects characters, applies free visual option layers, and can be opened from an MCP client.
+`chibi-mcp` adds a local desktop pet, **chibi**, to Claude Code, Codex, and VS Code. It reacts to CPU/RAM/battery/idle state, tracks coding-session rhythm, collects characters, applies free visual option layers, and can be opened from an MCP client.
 
 It is local-first: no telemetry, localhost WebSocket by default, open-source code, and `chibi-mcp --check` for install diagnostics.
 
@@ -20,7 +20,7 @@ It is local-first: no telemetry, localhost WebSocket by default, open-source cod
 - 8 starter characters and 12 free option layers.
 - Gacha, inventory, rename, active character, and option selection tools.
 - Mood based on CPU, RAM, battery, and idle time.
-- Slice cycle: every N tool calls, tteoki gets sliced.
+- Slice cycle: every N tool calls, chibi gets sliced.
 - `chibi-say`, a tiny CLI for making the pet show speech bubbles from scripts.
 
 The base product is free. Monetization is not enabled: no paid packs, no paid random pulls, no Sponsors tiers, no license keys, and no team pricing unless explicitly approved later.
@@ -116,7 +116,7 @@ Manual `.vsix` install:
 code --install-extension chibi-mcp-*.vsix
 ```
 
-Open the `tteoki` activity bar view in VS Code after install.
+Open the `chibi` activity bar view in VS Code after install.
 
 See [INSTALL.md](INSTALL.md) for the full Claude/Codex/VS Code and Linux/macOS/Windows install matrix.
 

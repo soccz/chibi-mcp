@@ -2,14 +2,14 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8" />
-    <title>tteoki</title>
+    <title>chibi</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
     <!-- ===== Pet stage ===== -->
     <div id="stage" data-mood="calm" data-connected="false" data-tauri-drag-region>
         <!-- Active character. main.js sets src from inventory.active_id. -->
-        <img id="active-char" src="" alt="tteoki" draggable="false" />
+        <img id="active-char" src="" alt="chibi" draggable="false" />
 
         <!-- Speech bubble -->
         <div id="speech" class="hidden"></div>
@@ -31,7 +31,7 @@
 
     <!-- ===== Right-click context menu ===== -->
     <div id="ctx-menu" class="hidden">
-        <div class="ctx-label">tteoki</div>
+        <div class="ctx-label">chibi</div>
         <button data-action="gacha">🎟 뽑기</button>
         <button data-action="collection">📦 보관함</button>
         <div class="ctx-divider"></div>
@@ -46,7 +46,7 @@
     <!-- ===== Welcome modal (first launch) ===== -->
     <div id="welcome-modal" class="modal hidden">
         <div class="modal-card">
-            <h2>tteoki에 오신 걸 환영해요</h2>
+            <h2>chibi에 오신 걸 환영해요</h2>
             <p>Claude Code 옆에서 같이 코딩할 친구를 뽑아보세요.<br/>첫 뽑기 한 장을 드릴게요. 🎟</p>
             <button class="btn-primary" id="welcome-draw">첫 뽑기 받기</button>
         </div>

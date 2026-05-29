@@ -1,4 +1,4 @@
-//! In-memory tteoki state — mood derivation + slice counter.
+//! In-memory chibi state — mood derivation + slice counter.
 //!
 //! Mirrors the v0.1 Python implementation so the desktop frontend protocol
 //! stays unchanged.
@@ -43,7 +43,7 @@ const HAPPY_WINDOW_SECS: u64 = 30;
 const JOYFUL_WINDOW_SECS: u64 = 8;
 const SURPRISE_DELTA: f32 = 30.0;
 
-pub struct Tteoki {
+pub struct Chibi {
     inner: Mutex<Inner>,
 }
 
@@ -58,7 +58,7 @@ struct Inner {
     last_cpu: f32,
 }
 
-impl Tteoki {
+impl Chibi {
     pub fn new() -> Self {
         Self {
             inner: Mutex::new(Inner {

@@ -1,4 +1,4 @@
-//! chibi-mcp desktop — tteoki window runtime (v0.2).
+//! chibi-mcp desktop — chibi window runtime (v0.2).
 
 #![allow(
     clippy::collapsible_if,
@@ -27,7 +27,7 @@ pub fn run() {
 }
 
 fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
-    let show = MenuItem::with_id(app, "show", "tteoki 보기", true, None::<&str>)?;
+    let show = MenuItem::with_id(app, "show", "chibi 보기", true, None::<&str>)?;
     let hide = MenuItem::with_id(app, "hide", "숨기기", true, None::<&str>)?;
     let collection = MenuItem::with_id(app, "collection", "보관함", true, None::<&str>)?;
     let gacha = MenuItem::with_id(app, "gacha", "뽑기", true, None::<&str>)?;
@@ -49,8 +49,8 @@ fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
         ],
     )?;
 
-    let _ = TrayIconBuilder::with_id("tteoki-tray")
-        .tooltip("tteoki")
+    let _ = TrayIconBuilder::with_id("chibi-tray")
+        .tooltip("chibi")
         .menu(&menu)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => {

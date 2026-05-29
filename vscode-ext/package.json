@@ -1,6 +1,6 @@
 {
   "name": "chibi-mcp",
-  "displayName": "tteoki (chibi-mcp)",
+  "displayName": "chibi (chibi-mcp)",
   "description": "Korean rice cake desktop pet for VS Code. Gacha-collect characters, apply 12 free option layers, and react to your coding session.",
   "version": "0.5.2",
   "publisher": "soccz",
@@ -9,7 +9,7 @@
     "vscode": "^1.85.0"
   },
   "categories": ["Other", "Visualization"],
-  "keywords": ["pet", "desktop pet", "kawaii", "tteoki", "gacha", "korean", "asmr", "cosmetics"],
+  "keywords": ["pet", "desktop pet", "kawaii", "chibi", "gacha", "korean", "asmr", "cosmetics"],
   "icon": "resources/garaetteok_short.png",
   "main": "./out/extension.js",
   "activationEvents": [
@@ -20,7 +20,7 @@
       "activitybar": [
         {
           "id": "chibiMcpContainer",
-          "title": "tteoki",
+          "title": "chibi",
           "icon": "$(symbol-color)"
         }
       ]
@@ -30,28 +30,28 @@
         {
           "type": "webview",
           "id": "chibiMcp.petView",
-          "name": "tteoki",
+          "name": "chibi",
           "icon": "$(symbol-color)",
-          "contextualTitle": "tteoki"
+          "contextualTitle": "chibi"
         }
       ]
     },
     "commands": [
       {
         "command": "chibiMcp.gacha",
-        "title": "tteoki: 뽑기"
+        "title": "chibi: 뽑기"
       },
       {
         "command": "chibiMcp.collection",
-        "title": "tteoki: 보관함"
+        "title": "chibi: 보관함"
       },
       {
         "command": "chibiMcp.reset",
-        "title": "tteoki: 보관함 초기화"
+        "title": "chibi: 보관함 초기화"
       }
     ],
     "configuration": {
-      "title": "tteoki",
+      "title": "chibi",
       "properties": {
         "chibiMcp.sayBridge.enabled": {
           "type": "boolean",

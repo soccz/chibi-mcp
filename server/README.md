@@ -1,9 +1,9 @@
 # chibi-mcp (server)
 
-MCP server for **tteoki** — a Korean rice cake (가래떡) desktop character that visualizes Claude Code or Codex session state.
+MCP server for **chibi** — a Korean rice cake (가래떡) desktop character that visualizes Claude Code or Codex session state.
 
 The server has two jobs running together in one process:
-1. **MCP server (stdio)** — Claude Code / Codex calls these tools to interact with tteoki.
+1. **MCP server (stdio)** — Claude Code / Codex calls these tools to interact with chibi.
 2. **WebSocket server (`ws://127.0.0.1:9876`)** — pushes state snapshots and events to the desktop app.
 
 ## Install from GitHub
@@ -27,7 +27,7 @@ claude mcp add chibi -- chibi-mcp
 codex mcp add chibi -- chibi-mcp
 ```
 
-Then call `open_pet_window` from the client — it launches the floating tteoki window and connects to the local WebSocket.
+Then call `open_pet_window` from the client — it launches the floating chibi window and connects to the local WebSocket.
 
 ## CLI checks
 
@@ -50,7 +50,7 @@ chibi-share --preset options --out option-showcase.png
 | Tool | Description |
 |---|---|
 | `get_pet_state` | Returns mood, system metrics (CPU/RAM/battery), counters, timing. Counts as a Claude interaction (may trigger a slice every N calls). |
-| `pet_say(text)` | Make tteoki say something in a speech bubble. |
+| `pet_say(text)` | Make chibi say something in a speech bubble. |
 | `slice_now` | Force a slice (resets the lengthen cycle, fires a slice event). |
 | `set_slice_interval(n)` | Change how often (every N Claude tool calls) the auto-slice fires. Default: 10. |
 | `get_options` | List free visual option layers such as jocheong, honey, kinako, sesame, petals, resin, and sauce. |

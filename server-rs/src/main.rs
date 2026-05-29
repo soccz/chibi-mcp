@@ -23,11 +23,11 @@ use rmcp::{
 use serde::Deserialize;
 use serde_json::json;
 
-use crate::state::Tteoki;
+use crate::state::Chibi;
 use crate::system_info::SystemReader;
 use crate::ws_server::{Broadcaster, DEFAULT_HOST, DEFAULT_PORT};
 
-static GLOBAL_STATE: OnceCell<Arc<Tteoki>> = OnceCell::new();
+static GLOBAL_STATE: OnceCell<Arc<Chibi>> = OnceCell::new();
 static GLOBAL_BROADCASTER: OnceCell<Broadcaster> = OnceCell::new();
 static GLOBAL_SYSREADER: OnceCell<Arc<Mutex<SystemReader>>> = OnceCell::new();
 
@@ -59,7 +59,7 @@ impl ChibiMcp {
     }
 
     #[tool(
-        description = "Return tteoki's current mood, system metrics, counters, and timing. Counts as a Claude interaction; every N calls fires a slice event."
+        description = "Return chibi's current mood, system metrics, counters, and timing. Counts as a Claude interaction; every N calls fires a slice event."
     )]
     async fn get_pet_state(&self) -> Result<CallToolResult, McpError> {
         let state = GLOBAL_STATE.get().expect("state init");
@@ -87,7 +87,7 @@ impl ChibiMcp {
     }
 
     #[tool(
-        description = "Make tteoki say something via a speech bubble in the desktop app. Text is truncated to 200 chars and control characters are stripped."
+        description = "Make chibi say something via a speech bubble in the desktop app. Text is truncated to 200 chars and control characters are stripped."
     )]
     async fn pet_say(
         &self,
@@ -133,7 +133,7 @@ impl ChibiMcp {
     }
 
     #[tool(
-        description = "Change how often (every N Claude tool calls) tteoki gets sliced. Default 10. Suggested: 5, 10, 25, 50, 100."
+        description = "Change how often (every N Claude tool calls) chibi gets sliced. Default 10. Suggested: 5, 10, 25, 50, 100."
     )]
     async fn set_slice_interval(
         &self,
@@ -153,7 +153,7 @@ impl ServerHandler for ChibiMcp {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             instructions: Some(
-                "tteoki — Korean rice cake desktop pet. v0.2 Rust server with WebSocket broadcast."
+                "chibi — Korean rice cake desktop pet. v0.2 Rust server with WebSocket broadcast."
                     .into(),
             ),
             capabilities: ServerCapabilities::builder().enable_tools().build(),
@@ -186,7 +186,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     // Global singletons
-    let state = Arc::new(Tteoki::new());
+    let state = Arc::new(Chibi::new());
     GLOBAL_STATE.set(Arc::clone(&state)).ok();
     GLOBAL_BROADCASTER.set(Broadcaster::new()).ok();
     GLOBAL_SYSREADER

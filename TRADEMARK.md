@@ -7,7 +7,7 @@ This document explains how to avoid confusing users about the official chibi-mcp
 The following identify the official project:
 
 - `chibi-mcp`
-- `tteoki`
+- `chibi`
 - official starter character artwork and option-layer presentation
 - official README, social preview, release notes, package names, and marketplace listings
 
@@ -15,7 +15,7 @@ The MIT code license does not grant permission to imply official endorsement, sp
 
 ## Allowed Uses
 
-You may use the names `chibi-mcp` and `tteoki` to:
+You may use the names `chibi-mcp` and `chibi` to:
 
 - refer to the project accurately;
 - describe compatibility, such as "pack for chibi-mcp";
@@ -27,7 +27,7 @@ You may use the names `chibi-mcp` and `tteoki` to:
 Ask before using project brand signals for:
 
 - a marketplace listing that could look official;
-- a package, plugin, app, or website that uses `chibi-mcp` or `tteoki` as its primary brand;
+- a package, plugin, app, or website that uses `chibi-mcp` or `chibi` as its primary brand;
 - a paid product, creator pack, team pack, merchandise, event, or collaboration;
 - a logo, mascot, or social preview that is confusingly similar to the official presentation.
 
@@ -36,14 +36,14 @@ Ask before using project brand signals for:
 Forks should choose names that avoid confusion. Good patterns:
 
 - `yourname-chibi-mcp-fork`
-- `tteoki-pack-yourname`
+- `chibi-pack-yourname`
 - `chibi-mcp-compatible-<feature>`
 
 Avoid names that imply official status:
 
 - `official-chibi-mcp`
 - `chibi-mcp-pro`
-- `tteoki-official`
+- `chibi-official`
 - package listings that copy the official README/social preview without clear fork labeling
 
 ## Reporting Confusion
