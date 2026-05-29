@@ -153,8 +153,7 @@ impl ServerHandler for ChibiMcp {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             instructions: Some(
-                "chibi — Korean rice cake desktop pet. v0.2 Rust server with WebSocket broadcast."
-                    .into(),
+                "chibi — local desktop pet. v0.2 Rust server with WebSocket broadcast.".into(),
             ),
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             ..Default::default()

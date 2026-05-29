@@ -68,7 +68,7 @@ IDs must be lowercase slugs. PNGs should be transparent, square, and at least 12
 - No misleading claim that the pack, fork, or variant is an official project release.
 - PNG background is transparent.
 - Character is readable at 80px, because the VS Code sidebar and share cards use small previews.
-- Option layer works over the default `garaetteok_short` body.
+- Option layer works over the default starter chibi body.
 - Pack passes `chibi-pack validate --submission <dir>`.
 - Preview HTML is attached to the issue or PR.
 

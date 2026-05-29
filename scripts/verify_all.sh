@@ -124,9 +124,12 @@ PY
 
 echo "== Launch image assets =="
 python - <<'PY'
+import os
+import sys
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 required = {
     "assets/social-preview.png": (1280, 640),
@@ -139,11 +142,35 @@ for rel, expected in required.items():
     assert path.exists(), rel
     with Image.open(path) as image:
         assert image.size == expected, (rel, image.size, expected)
+
+root = Path.cwd()
+with TemporaryDirectory() as home, TemporaryDirectory() as generated:
+    os.environ["HOME"] = home
+    os.environ["CHIBI_ASSET_DIR"] = str(root / "server" / "chibi_mcp" / "assets")
+    sys.path.insert(0, str(root / "server"))
+    from chibi_mcp.commercial import share_main
+    from chibi_mcp.state import reset_state_for_tests
+
+    reset_state_for_tests()
+    generated_root = Path(generated)
+    outputs = {
+        "assets/social-preview.png": ["--preset", "social-preview"],
+        "docs/screenshots/share-card.png": [],
+        "docs/screenshots/starter-lineup.png": ["--preset", "lineup"],
+        "docs/screenshots/option-showcase.png": ["--preset", "options"],
+    }
+    for rel, args in outputs.items():
+        expected = generated_root / Path(rel).name
+        assert share_main([*args, "--out", str(expected)]) == 0
+        with Image.open(root / rel).convert("RGB") as actual, Image.open(expected).convert("RGB") as fresh:
+            diff = ImageChops.difference(actual, fresh)
+            assert diff.getbbox() is None, f"{rel} is stale; regenerate with chibi-share"
 print("launch image assets ok")
 PY
 
 echo "== Brand identity sanity =="
 ROOT="$ROOT" python - <<'PY'
+import json
 import os
 from pathlib import Path
 
@@ -204,17 +231,39 @@ if violations:
 public_surfaces = [
     "README.md",
     "INSTALL.md",
+    "SPEC.md",
+    "SPEC_V0.2.md",
+    "CLAUDE.md",
+    "CHARACTER_DESIGN.md",
+    "STYLE_GUIDE.md",
+    "PROCESS.md",
+    "COMMERCIAL_STRATEGY.md",
+    "GITHUB_STAR_STRATEGY.md",
     "server/README.md",
     "server/pyproject.toml",
+    "server/chibi_mcp/__main__.py",
+    "server/chibi_mcp/server.py",
+    "server/chibi_mcp/window.py",
+    "server/chibi_mcp/ws_server.py",
+    "server-rs/src/main.rs",
+    "desktop/README.md",
+    "desktop/src-tauri/Cargo.toml",
+    "desktop/src/index.html",
+    "desktop/src/main.js",
+    "desktop/src/preview.html",
+    "vscode-ext/package.json",
     ".claude-plugin/plugin.json",
     ".claude-plugin/marketplace.json",
     ".codex-plugin/plugin.json",
     "commands/chibi.md",
     "skills/chibi/SKILL.md",
+    "docs/CREATOR_PACKS.md",
     "docs/LAUNCH_KIT.md",
     "docs/PUBLIC_BETA_READINESS.md",
 ]
 public_terms = [
+    "Tteo" + "ki",
+    "tteo" + "ki",
     "Korean rice cake",
     "rice cake",
     "rice-cake",
@@ -237,6 +286,48 @@ for rel in public_surfaces:
 
 if public_violations:
     raise SystemExit("public chibi branding drift found:\n" + "\n".join(public_violations))
+
+catalog_display_surfaces = [
+    "assets/meta.json",
+    "server/chibi_mcp/assets/meta.json",
+    "vscode-ext/resources/meta.json",
+    "examples/packs/spring-hwajeon/meta.json",
+    "examples/packs/team-sprint/meta.json",
+]
+catalog_display_terms = [
+    *public_terms,
+    "흰떡",
+    "백설기",
+    "무지개떡",
+    "송편",
+    "모찌",
+    "rice syrup",
+    "jocheong",
+    "jocheong drip",
+    "chapssaltteok",
+    "tteokbokki",
+    "injeolmi-style",
+]
+catalog_fields = {"name", "name_ko", "category", "description"}
+catalog_violations = []
+for rel in catalog_display_surfaces:
+    path = root / rel
+    catalog = json.loads(path.read_text(encoding="utf-8"))
+    for section in ("characters", "options"):
+        for index, item in enumerate(catalog.get(section, [])):
+            if not isinstance(item, dict):
+                continue
+            for field in catalog_fields:
+                value = str(item.get(field, ""))
+                for term in catalog_display_terms:
+                    if term.lower() in value.lower():
+                        catalog_violations.append(
+                            f"{rel}:{section}[{index}].{field} contains legacy display term {term!r}"
+                        )
+                        break
+
+if catalog_violations:
+    raise SystemExit("catalog display branding drift found:\n" + "\n".join(catalog_violations))
 print("brand identity ok")
 PY
 

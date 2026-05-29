@@ -8,6 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The project now has an executable Python MCP server, Claude/Codex plugin metadata, a VS Code `.vsix` packaging path, and a floating pet window implemented in pure Python (tk + Pillow + PyObjC for macOS transparency) spawned as a detached subprocess by the MCP server. A legacy Tauri attempt remains under `desktop/` for v0.1–v0.2 reference but is not part of the current install path. Some docs still describe future product phases; check the current files before assuming a phase boundary.
 
+Branding rule from the 2026-05-30 user decision: public-facing README copy,
+screenshots, share cards, marketplace/plugin metadata, installer text, and
+runtime UI must use **chibi**. Do not show previous food-specific character
+or syrup naming on public surfaces. Legacy internal IDs and filenames may stay
+only as compatibility details and must not leak into generated README assets.
+
 ## Repository structure
 
 - `SPEC.md` — the source of truth for **what the user has actually asked for** and **what was jointly decided** vs **what is still undecided**. Read this first.
@@ -113,9 +119,9 @@ Tauri or Electron — jointly decided. Linux/macOS/Windows must all work. Avoid 
 | Pacing | Free-paced, no deadlines |
 | Release channel | GitHub Public Release (others deferred) |
 | Character name | **chibi** |
-| Character shape concept | **Korean rice cake (떡) variety series** — design-friendly varieties all included |
-| Base character | **가래떡 (garaetteok / Korean rice cake stick)** — horizontal cylinder. Surface 조청 drip animation. **Lengthen-and-slice motion as time visualization** (key novel feature). |
-| Slice trigger | Every **N Claude tool calls** (default 10, user-configurable). Sliced pieces stack at bottom of screen and fade out. |
+| Character shape concept | **chibi variety series** — soft, glossy, collectible starter shapes |
+| Base character | **soft horizontal chibi body** with amber/honey gloss options and session-rhythm motion. |
+| Milestone trigger | Every **N Claude tool calls** (default 10, user-configurable). chibi plays a small milestone reaction. |
 
 **Do not insert deadlines.** The user chose free pacing.
 

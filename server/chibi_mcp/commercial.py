@@ -771,7 +771,7 @@ def _draw_square_share_card(
 
     metrics = [
         ("calls", str(counters["calls_total"])),
-        ("slices", str(counters["slices_today"])),
+        ("milestones", str(counters["slices_today"])),
         ("mood", mood),
         ("tickets", str(gacha["tickets"])),
     ]
@@ -802,15 +802,17 @@ def _draw_social_preview_card(
     small_font: ImageFont.ImageFont,
 ) -> None:
     draw.rounded_rectangle((40, 40, 1240, 600), radius=30, fill="#ffffff", outline="#fed7aa", width=4)
+    social_title_font = _load_font(56, bold=True)
+    social_subtitle_font = _load_font(26)
     draw.rounded_rectangle((76, 78, 742, 168), radius=20, fill="#0f766e")
-    draw.text((108, 94), _fit_text(draw, title, title_font, 595), fill="#ffffff", font=title_font)
-    draw.text((106, 194), _fit_text(draw, subtitle, subtitle_font, 690), fill="#475569", font=subtitle_font)
+    draw.text((108, 100), _fit_text(draw, title, social_title_font, 595), fill="#ffffff", font=social_title_font)
+    draw.text((106, 200), _fit_text(draw, subtitle, social_subtitle_font, 690), fill="#475569", font=social_subtitle_font)
     draw.text((106, 270), "Claude Code / Codex / VS Code", fill="#1f2937", font=metric_font)
     draw.text((108, 318), "local-first MCP pet | no telemetry | creator packs", fill="#64748b", font=small_font)
 
     metrics = [
         ("calls", str(counters["calls_total"])),
-        ("slices", str(counters["slices_today"])),
+        ("milestones", str(counters["slices_today"])),
         ("mood", mood),
         ("tickets", str(gacha["tickets"])),
     ]
@@ -859,10 +861,10 @@ def _draw_lineup_share_card(
     draw.rounded_rectangle((82, 78, 1034, 174), radius=22, fill="#0f766e")
     draw.text((116, 96), _fit_text(draw, title, title_font, 860), fill="#ffffff", font=title_font)
     draw.text((116, 206), _fit_text(draw, subtitle, subtitle_font, 1200), fill="#475569", font=subtitle_font)
-    draw.text((116, 268), "8 free starter PNG characters from the local catalog", fill="#1f2937", font=metric_font)
+    draw.text((116, 268), "8 free starter chibi characters from the local catalog", fill="#1f2937", font=metric_font)
     draw.text(
         (116, 316),
-        f"calls {counters['calls_total']} | slices {counters['slices_today']} | mood {mood} | tickets {gacha['tickets']}",
+        f"calls {counters['calls_total']} | milestones {counters['slices_today']} | mood {mood} | tickets {gacha['tickets']}",
         fill="#64748b",
         font=small_font,
     )
@@ -894,13 +896,11 @@ def _draw_lineup_share_card(
         draw.rounded_rectangle((x, y, x + tile_w, y + tile_h), radius=18, fill="#f8fafc", outline="#dbeafe")
         draw.ellipse((x + 22, y + 30, x + 132, y + 140), fill="#ffedd5", outline="#fed7aa", width=3)
         _paste_pet(image, character["image"], max_size=(102, 102), center=(x + 77, y + 85))
-        text_x = x + 154
-        max_text_width = tile_w - 176
-        label = str(character["id"]).replace("_", " ")
-        if label.endswith(" short"):
-            label = label.removesuffix(" short")
+        text_x = x + 148
+        max_text_width = tile_w - 166
+        label = str(character.get("name") or character["id"]).replace("_", " ")
         draw.text((text_x, y + 48), _fit_text(draw, label, label_font, max_text_width), fill="#1f2937", font=label_font)
-        detail = f"{character['category']} | star {character['rarity']}"
+        detail = f"starter | star {character['rarity']}"
         draw.text((text_x, y + 92), _fit_text(draw, detail, detail_font, max_text_width), fill="#64748b", font=detail_font)
         draw.text((text_x, y + 128), "free starter", fill="#0f766e", font=detail_font)
 
@@ -937,7 +937,7 @@ def _draw_options_share_card(
     draw.text((116, 268), "12 free option layers: glaze, powder, seeds, petals, resin, and sauce", fill="#1f2937", font=metric_font)
     draw.text(
         (116, 316),
-        f"calls {counters['calls_total']} | slices {counters['slices_today']} | mood {mood} | tickets {gacha['tickets']}",
+        f"calls {counters['calls_total']} | milestones {counters['slices_today']} | mood {mood} | tickets {gacha['tickets']}",
         fill="#64748b",
         font=small_font,
     )
@@ -971,7 +971,7 @@ def _draw_options_share_card(
         draw.ellipse((x + 22, y + 22, x + 118, y + 118), fill="#ffedd5", outline="#fed7aa", width=3)
         option_paths = [option["image"]] if option.get("image") else []
         _paste_pet(image, asset_path, max_size=(86, 86), center=(x + 70, y + 70), option_paths=option_paths)
-        label = str(option["id"]).replace("_", " ")
+        label = str(option.get("name") or option["id"]).replace("_", " ")
         draw.text((x + 132, y + 38), _fit_text(draw, label, label_font, 184), fill="#1f2937", font=label_font)
         detail = f"{option['category']} | free"
         draw.text((x + 132, y + 76), _fit_text(draw, detail, detail_font, 184), fill="#0f766e", font=detail_font)
@@ -1203,12 +1203,13 @@ def _resolve_character_image(
     prefix: str = "character",
     subdir: str = "characters",
 ) -> Path | None:
+    pack_root = pack_dir.resolve()
     image_value = character.get("image")
     candidates: list[Path] = []
     if image_value:
         explicit = pack_dir / str(image_value)
         resolved = explicit.resolve()
-        if not resolved.is_relative_to(pack_dir):
+        if not resolved.is_relative_to(pack_root):
             if errors is not None:
                 errors.append(f"{prefix}.image must stay inside the pack directory")
             return None
@@ -1219,7 +1220,7 @@ def _resolve_character_image(
         candidates.append(pack_dir / subdir / f"{character_id}.png")
     for candidate in candidates:
         resolved = candidate.resolve()
-        if candidate.exists() and resolved.is_relative_to(pack_dir):
+        if candidate.exists() and resolved.is_relative_to(pack_root):
             return resolved
     return None
 
@@ -1266,10 +1267,19 @@ def _pick_share_asset(asset_dir: Path, character_id: str | None) -> Path | None:
         candidate = asset_dir / f"{character_id}.png"
         if candidate.exists():
             return candidate
-    for preferred in ("garaetteok_short.png", "white_tteok.png", "mochi.png"):
-        candidate = asset_dir / preferred
-        if candidate.exists():
+
+    meta_path = asset_dir / "meta.json"
+    try:
+        catalog = json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        catalog = {"characters": []}
+    for character in catalog.get("characters", []):
+        if not isinstance(character, dict) or character.get("tier") != "free":
+            continue
+        candidate = _resolve_character_image(asset_dir, character)
+        if candidate is not None:
             return candidate
+
     pngs = sorted(asset_dir.glob("*.png"))
     return pngs[0] if pngs else None
 

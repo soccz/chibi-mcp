@@ -1,7 +1,7 @@
 {
   "name": "chibi-mcp",
   "displayName": "chibi (chibi-mcp)",
-  "description": "Korean rice cake desktop pet for VS Code. Gacha-collect characters, apply 12 free option layers, and react to your coding session.",
+  "description": "Local chibi desktop pet for VS Code. Collect characters, apply 12 free option layers, and react to your coding session.",
   "version": "0.5.3",
   "publisher": "soccz",
   "license": "MIT",
@@ -10,7 +10,7 @@
   },
   "categories": ["Other", "Visualization"],
   "keywords": ["pet", "desktop pet", "kawaii", "chibi", "gacha", "korean", "asmr", "cosmetics"],
-  "icon": "resources/garaetteok_short.png",
+  "icon": "resources/chibi-icon.png",
   "main": "./out/extension.js",
   "activationEvents": [
     "onStartupFinished"

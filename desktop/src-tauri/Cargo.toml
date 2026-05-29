@@ -1,7 +1,7 @@
 [package]
 name = "chibi-mcp-desktop"
 version = "0.2.1"
-description = "chibi — Korean rice cake desktop character"
+description = "chibi — local desktop character"
 authors = ["soccz"]
 license = "MIT"
 edition = "2021"

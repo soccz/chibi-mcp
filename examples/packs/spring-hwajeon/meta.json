@@ -11,11 +11,11 @@
     {
       "id": "spring_hwajeon",
       "name_ko": "봄 화전",
-      "category": "tteok",
+      "category": "chibi",
       "rarity": 3,
       "tier": "creator",
       "image": "spring_hwajeon.png",
-      "description": "Round rice-cake character with flower-petal styling for seasonal drops."
+      "description": "Round chibi character with flower-petal styling for seasonal drops."
     }
   ],
   "options": [

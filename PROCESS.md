@@ -70,7 +70,7 @@ MVP는 펫 모드만. 나머지 3모드는 v0.2 이후.
 
 후보 단계:
 
-- Share loop: 1080x1080 공유 카드, "오늘 N도막", 데모 GIF
+- Share loop: 1080x1080 공유 카드, "오늘 N milestones", 데모 GIF
 - Content loop: 월간 무료 drop, 직접 구매 캐릭터팩, pack validator
 - Creator loop: 외부 작가 pack 제출, 검수 기준, 수익 배분 후보
 - Team loop: 조직용 install guide, signed/offline bundle, 팀 전용 pack, 지원

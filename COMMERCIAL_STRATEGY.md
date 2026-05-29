@@ -58,7 +58,7 @@
 - `chibi-audit`로 로컬 신뢰 리포트 출력
 - `chibi-share`로 1080×1080 세션 공유 카드 생성
 - `chibi-share --preset lineup`으로 제공된 PNG 캐릭터 전체 라인업 생성
-- `chibi-share --preset options`로 조청·꿀·비즈·가루·씨앗·꽃잎·레진·소스 12종 옵션 쇼케이스 생성
+- `chibi-share --preset options`로 앰버 글레이즈·꿀·비즈·가루·씨앗·꽃잎·레진·소스 12종 옵션 쇼케이스 생성
 - `chibi-pack validate/preview`로 크리에이터·팀 캐릭터팩 검증
 - `examples/packs/spring-hwajeon`, `examples/packs/team-sprint`로 실제 검증 가능한 creator/team pack 템플릿 제공
 - `docs/CREATOR_PACKS.md`, `docs/LAUNCH_KIT.md`로 제출/배포/런칭 루프 문서화
@@ -75,7 +75,7 @@
 권장 모델:
 
 - Monthly free drop: 매월 1종 무료 공개
-- Monthly free option: 조청/꿀/비즈/스프링클/콩가루/흑임자/꽃잎/레진 별 같은 작은 옵션 레이어 공개
+- Monthly free option: 앰버 글레이즈/꿀/비즈/스프링클/콩가루/흑임자/꽃잎/레진 별 같은 작은 옵션 레이어 공개
 - Free creator/community pack: 작가·기여자가 제안한 pack을 무료 검토/공개
 - Limited collab drop: 기간 한정 브랜드/작가 콜라보 후보 검토
 - Contributor drop: 오픈소스 기여자 전용 배지/캐릭터
@@ -133,7 +133,7 @@ chibi-pack validate --submission examples/packs/team-sprint
 - offline install bundle
 - no-telemetry audit note
 - priority support
-- team share cards: sprint 도막, PR 도막, release 도막
+- team share cards: sprint milestone, PR milestone, release milestone
 
 현재 실행 가능한 기반:
 
@@ -187,8 +187,8 @@ chibi-share --preset options --out option-showcase.png
 - artisan keycap
 - acrylic stand
 - plush
-- “오늘 N도막” calendar card
-- small rice-cake-themed desk toy
+- “오늘 N milestones” calendar card
+- small chibi-themed desk toy
 
 물리 굿즈는 지금 판매하지 않는다. 장기적으로 검토할 수 있는 커뮤니티 정체성 후보로만 둔다.
 
@@ -211,10 +211,10 @@ chibi-share --preset options --out option-showcase.png
 
 ### Developer Rituals
 
-- “첫 커밋 도막”
+- “첫 커밋 milestone”
 - “CI 실패하면 시무룩”
 - “release tag 만들면 반짝”
-- “PR merge 도막”
+- “PR merge milestone”
 - “야근 감지 졸림”
 
 ### Shareable Artifacts
@@ -268,7 +268,7 @@ Stopping condition:
 Build before payment.
 
 - share card generator
-- “오늘 N도막” visual
+- “오늘 N milestones” visual
 - GitHub issue template for sharing pets
 - demo GIF in README
 - starter pack polish

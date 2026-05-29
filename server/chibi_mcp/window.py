@@ -8,10 +8,10 @@ v1.1 visual upgrade:
     - Idle bob: 4px gentle vertical oscillation, ~0.6 Hz, like a slime breathing.
     - Sounds: short procedurally-generated wavs played via `afplay` (darwin),
       `paplay`/`aplay` (linux), winsound (windows). Event-specific sounds cover
-      squish, slice, gacha, rare pulls, option changes, and speech bubbles.
+      squish, milestones, gacha, rare pulls, option changes, and speech bubbles.
 
 Live behaviour (unchanged from v1.0):
-    - Connects to ws://127.0.0.1:9876, receives state/say/slice events.
+    - Connects to ws://127.0.0.1:9876, receives state/say/milestone events.
     - Mood filter applied to base PNG (brightness/saturation/tint).
 """
 
@@ -241,7 +241,7 @@ def _write_bubble_wav(path: Path) -> None:
 
 
 def _write_slice_wav(path: Path) -> None:
-    """Soft mochi knife slice with rice-flour noise."""
+    """Soft milestone tick with airy texture."""
     sr = 22050
     duration = 0.26
     n = int(sr * duration)
@@ -717,7 +717,7 @@ class PetWindow:
         if calls is not None and interval:
             parts.append(f"{calls}/{interval}")
         if slices is not None:
-            parts.append(f"{slices}도막")
+            parts.append(f"리듬 {slices}")
         if tickets is not None:
             parts.append(f"티켓 {tickets}")
         self.progress_label.configure(text=" · ".join(parts))
@@ -1092,7 +1092,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--no-sounds", action="store_true",
-        help="Disable click/slice sound effects",
+        help="Disable click/milestone sound effects",
     )
     args = parser.parse_args(argv)
 

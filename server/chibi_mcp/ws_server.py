@@ -3,7 +3,7 @@
 Protocol (JSON messages, server → client):
     {"type": "state", "payload": {...full state snapshot...}}
     {"type": "say", "text": "..."}
-    {"type": "slice"}                  # fires when N-call milestone hits
+    {"type": "slice"}                  # internal event for N-call milestones
 
 The desktop app connects to ws://localhost:9876 and listens for events.
 

@@ -26,7 +26,7 @@
 방문자가 첫 화면에서 바로 봐야 하는 것:
 
 - what it is: local MCP pet for Claude Code / Codex / VS Code
-- why it is fun: coding session reacts, slice cycle, gacha collection
+- why it is fun: coding session reacts, milestone loop, gacha collection
 - why it is safe: no telemetry, localhost, open source, `chibi-mcp --check`
 - how to try: one-command install
 - why to star: monthly drops, creator packs, VS Code builds, roadmap
@@ -37,9 +37,9 @@ README 첫 화면은 설명서보다 데모 판매 페이지처럼 작동해야 
 
 Star conversion에 필요한 시각 자료:
 
-- README 상단 GIF: pet opens, mood changes, slice drops
+- README 상단 GIF: pet opens, mood changes, milestone reaction plays
 - 1280x640 GitHub social preview image
-- 1080x1080 share card: "오늘 7도막 잘림"
+- 1080x1080 share card: "7 milestones today"
 - 1600x900 starter lineup generated from the project PNG assets
 - 1600x900 option showcase generated from 12 free topping/glaze/powder/seed/resin PNG layers
 - runnable creator/team pack examples under `examples/packs/`
@@ -127,11 +127,11 @@ Why: GitHub's community profile checks for recommended files, and issue/PR templ
 
 People star projects they want to come back to. chibi-mcp needs repeatable moments:
 
-- "오늘 N도막" daily share card
-- "첫 PR merge 도막"
+- "N milestones today" daily share card
+- "first PR merge milestone"
 - "CI 실패 시무룩"
 - "release tag 반짝"
-- "월간 떡 drop"
+- "monthly chibi drop"
 - "이번 달 옵션 토핑"
 - "contributor-only badge"
 

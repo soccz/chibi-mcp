@@ -79,7 +79,7 @@ Do not claim exclusive ownership over:
 - the general idea of a local desktop pet;
 - MCP integration as a concept;
 - coding-session reactions as a broad feature idea;
-- rice-cake-inspired mascots in general;
+- cute coding mascots in general;
 - public domain facts, names, recipes, or generic UI patterns.
 
 Focus on copied expression, official images, misleading brand presentation, exact text, package names, and user confusion.

@@ -14,13 +14,13 @@
 5. **한국 인기 트렌드 (아티잔 키캡 + 슬라임 ASMR) 반영** — 출처 명확
 6. **새로우면서 익숙한** 디자인 — 틱톡·유튜브 조회수 높은 사운드/모션/스타일 반영
 7. **디자인은 위임됨** — 모션·사운드·스타일·색감은 출처 조합해 결정
-8. **떡 종류 시리즈** (사용자 제안 2026-05-18) — 디자인하기 좋은 떡 다 포함
-9. **가래떡 베이스 + 조청 흐르는 모션** (사용자 제안 2026-05-18)
-10. **시간 흐름 시각화** (사용자 제안 2026-05-18) — 가래떡 길어지는 모션 + 자르는 모션 활용
+8. **chibi 캐릭터 시리즈로 통일** (사용자 재결정 2026-05-30) — 공개 표면은 이전 명칭을 쓰지 않고 chibi로 통일
+9. **소프트 글로시 베이스 + 꿀/앰버 글레이즈 계열 모션** (사용자 재결정 2026-05-30)
+10. **시간 흐름 시각화** (사용자 제안 2026-05-18, 표현 재정리 2026-05-30) — 길어지는 모션 + 마일스톤 반응 활용
 11. **상업적으로 더 다양하게 강화** (사용자 요청 2026-05-29) — 무료 코어를 유지하면서 캐릭터 콘텐츠, 팀 배포, 크리에이터 팩, 브랜드 콜라보, 물리 굿즈 등으로 확장 가능한 구조 검토
 12. **요즘 출처 기반으로 GitHub star 받을만한 형태 강화** (사용자 요청 2026-05-29) — AI coding/MCP 흐름, GitHub community 표준, social preview, topics, showcase loop 반영
 13. **상업화 기반 기능까지 진행** (사용자 요청 2026-05-29) — 데모/공유, 정식 배포 준비, 캐릭터팩 SDK, 신뢰 리포트, 팀 에디션 준비를 무료 코어 위에 추가
-14. **옵션 이미지 계열 추가** (사용자 요청 2026-05-29) — 꿀, 조청, 비즈/스프링클에서 시작해 연유, 콩가루, 흑임자, 팥, 꽃잎, 레진 별, 말차, 매콤 소스까지 무료 시각 옵션 레이어를 캐릭터 위에 합성 가능하게 추가
+14. **옵션 이미지 계열 추가** (사용자 요청 2026-05-29) — 꿀, 앰버 글레이즈, 비즈/스프링클에서 시작해 연유, 콩가루, 흑임자, 팥, 꽃잎, 레진 별, 말차, 매콤 소스까지 무료 시각 옵션 레이어를 캐릭터 위에 합성 가능하게 추가
 15. **사업성 강화** (사용자 요청 2026-05-29) — 결제 게이트 없이 creator/team pack 예시, launch kit, pack submission guide, 배포 채널 근거 문서를 추가해 상업화 준비도를 높임
 16. **카피·이미지 저작권 대비** (사용자 요청 2026-05-30) — 오픈소스 코드 확산은 유지하되 공식 이미지/브랜드/팩 제출은 출처·권리 메타데이터, 검수 문서, 제출 검증기로 방어
 17. **상업성 추가 강화** (사용자 요청 2026-05-30) — 유료화 없이 product-market readiness, team adoption, pilot feedback, collaboration/drop 제안 흐름을 정리해 실제 수요 검증 가능하게 함
@@ -50,12 +50,12 @@
 | **일정 압박** | 자유 페이스 (마감일 없음) |
 | **출시 채널** | GitHub Public Release (현재). 트래픽 보고 ProductHunt·HN·한국 커뮤니티 추가 검토 |
 | **캐릭터 이름** | **chibi** — 사용자 재결정 2026-05-30. 이전 캐릭터명은 사용하지 않고 chibi로 통일 |
-| **캐릭터 모양 컨셉** | **한국 떡 종류 시리즈** (사용자 제안). 디자인하기 좋은 떡 풀 다 포함 |
-| **베이스 캐릭터** | **가래떡 + 조청 흐르는 모션** (사용자 선택 2026-05-18). 가로로 길쭉한 형태 + 표면 조청 drip 애니메이션 |
-| **자르기 트리거** | **Claude 호출 N회마다 자동** (디폴트 10회, 사용자 설정 가능). 자른 도막은 화면 하단 누적 후 fade out |
+| **캐릭터 모양 컨셉** | **chibi 캐릭터 시리즈** (사용자 재결정 2026-05-30). 공개 표면은 chibi로 통일 |
+| **베이스 캐릭터** | **소프트 글로시 chibi 바디 + 꿀/앰버 글레이즈 계열 모션**. 가로로 길쭉한 형태와 부드러운 세션 리듬 애니메이션 |
+| **마일스톤 트리거** | **Claude 호출 N회마다 자동** (디폴트 10회, 사용자 설정 가능). chibi가 작은 마일스톤 반응을 재생 |
 | **상업 확장 원칙** | **무료 코어 유지 + 콘텐츠/팀/콜라보/굿즈 확장 후보 검토**. 네 가지 모드와 MCP 기본 기능은 유료 게이트로 막지 않음 |
 | **상업화 기반 CLI** | `chibi-audit`, `chibi-pack init/validate/preview`, `chibi-share` 추가. 결제/유료 게이트가 아니라 신뢰·콘텐츠·공유 루프 기반 |
-| **무료 옵션 레이어** | 12종 추가: `jocheong_drip`, `honey_glaze`, `sugar_beads`, `rainbow_sprinkles`, `condensed_milk`, `kinako_dust`, `black_sesame`, `red_bean_bits`, `flower_petals`, `resin_stars`, `matcha_powder`, `spicy_sauce`. 본체 기능을 잠그지 않는 무료 코스메틱 기반 |
+| **무료 옵션 레이어** | 12종 추가: Amber Glaze, Honey Glaze, Sugar Beads, Rainbow Bits, Condensed Milk, Toasty Dust, Black Sesame, Red Bean Bits, Flower Petals, Resin Stars, Matcha Powder, Spicy Sauce. 공개 표시명은 chibi 코스메틱 기준으로 노출하며, 본체 기능을 잠그지 않는 무료 코스메틱 기반 |
 | **상업 샘플팩** | `examples/packs/spring-hwajeon`, `examples/packs/team-sprint` 추가. creator/team pack 제출과 검증 흐름을 실행 가능한 예시로 제공 |
 | **크로스플랫폼 설치** | Linux/macOS bash installer + Windows PowerShell installer + VS Code `.vsix` installer 제공. CI는 Python/desktop을 Linux·macOS·Windows에서 검증 |
 | **이미지/브랜드 권리 가드레일** | `ASSET_RIGHTS.md`, `OFFICIAL_ASSET_TERMS.md`, `TRADEMARK.md`, `docs/IP_AND_RIGHTS.md`, `docs/COPYCAT_RESPONSE.md`, `chibi-pack validate --submission` 추가. 공개 pack은 전체 권리 metadata 필요 |
@@ -65,7 +65,7 @@
 
 | 항목 | 상태 |
 |---|---|
-| 추가 떡 종류 출시 순서 | 진행 중 (후보 검토) |
+| 추가 chibi 변형 출시 순서 | 진행 중 (후보 검토) |
 | 성공 지표·트래픽 기준 | `[미정 — 출시 후 결정]` |
 | 가챠/Drop 모델 | `[미정 — 트래픽 누적 후 결정]` |
 | 추가 출시 채널 시점 | `[미정 — 트래픽 본 뒤]` |

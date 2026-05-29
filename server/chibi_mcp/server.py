@@ -102,7 +102,7 @@ def get_pet_state() -> dict:
     """Return chibi's current state: mood, system metrics, counters, timing.
 
     The desktop app reads this to render the character. Calling this tool
-    counts as a Claude interaction and may trigger a slice every N calls.
+    counts as a Claude interaction and may trigger a milestone every N calls.
     """
     counter = _record_call_and_maybe_slice()
     state = get_state()
@@ -138,7 +138,7 @@ def pet_say(text: str) -> dict:
 
 @mcp.tool()
 def slice_now() -> dict:
-    """Manually trigger a slice (force the lengthen-cycle to reset).
+    """Manually trigger a milestone animation.
 
     Useful when the user wants to mark a milestone without waiting for the
     N-call automatic trigger.
@@ -259,7 +259,7 @@ def get_catalog() -> dict:
 
 @mcp.tool()
 def get_options() -> dict:
-    """Return free visual option layers such as honey, jocheong, and beads."""
+    """Return free visual option layers such as honey, amber glaze, and beads."""
     catalog = get_catalog()
     asset_dir = catalog.get("asset_dir")
     state = get_state()
@@ -388,7 +388,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
     """Pop up a small always-on-top tk window showing the active chibi.
 
     Spawns a detached Python subprocess that connects to the local WebSocket
-    (ws://127.0.0.1:9876) and updates mood/slice/say events live. Only one
+    (ws://127.0.0.1:9876) and updates mood/milestone/say events live. Only one
     window at a time — re-calling closes the previous one.
 
     Args:
@@ -558,7 +558,7 @@ def close_pet_window() -> dict:
 
 @mcp.tool()
 def set_slice_interval(n: int) -> dict:
-    """Change how often (every N Claude tool calls) chibi gets sliced.
+    """Change how often (every N Claude tool calls) chibi shows a milestone.
 
     Args:
         n: positive integer. Default is 10. Suggested values: 5, 10, 25, 50, 100.

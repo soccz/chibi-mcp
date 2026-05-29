@@ -9,12 +9,12 @@
   "no_third_party_ip": true,
   "characters": [
     {
-      "id": "team_sprint_tteok",
+      "id": "team_sprint_chibi",
       "name_ko": "스프린트 chibi",
       "category": "team",
       "rarity": 2,
       "tier": "creator",
-      "image": "team_sprint_tteok.png",
+      "image": "team_sprint_chibi.png",
       "description": "Team mascot sample for sprint/release recap cards."
     }
   ],

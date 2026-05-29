@@ -68,7 +68,7 @@ function updateHud(state) {
     if (state.mood) document.getElementById("hud-mood").textContent = state.mood;
     const c = state.counters ?? {};
     lastCounters = { ...lastCounters, ...c };
-    document.getElementById("hud-slices").textContent = `${c.slices_today ?? 0}도막`;
+    document.getElementById("hud-slices").textContent = `리듬 ${c.slices_today ?? 0}`;
     document.getElementById("hud-calls").textContent =
         `${c.calls_since_slice ?? 0}/${c.slice_interval ?? "?"}`;
     document.getElementById("hud-tickets").textContent = `🎟 ${inventory.tickets}`;

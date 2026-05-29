@@ -9,7 +9,7 @@ This is operational guidance, not legal advice.
 
 ## What Can And Cannot Be Protected
 
-- The idea of a local AI coding pet, MCP companion, rice-cake mascot, or
+- The idea of a local AI coding pet, MCP companion, chibi mascot, or
   desktop widget is not enough by itself. Copyright protects original expression,
   not ideas, facts, systems, or methods of operation.
 - Original PNG artwork, character expressions, written copy, screenshots, and
