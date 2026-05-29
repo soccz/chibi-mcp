@@ -6,6 +6,10 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- GitHub Releases now attach `SHA256SUMS.txt` for release artifact verification.
+- CI now parses Windows PowerShell installer scripts on `windows-latest`.
+- Added `docs/TROUBLESHOOTING.md` for Claude Code, Codex, VS Code, Linux, macOS, and Windows install/runtime fixes.
+- Added a feature request issue form with no-telemetry, no-paid-gate, and cross-platform guardrails.
 - Added Windows PowerShell installers for Claude Code, Codex, and VS Code.
 - Added Linux/macOS VS Code `.vsix` installer script.
 - CI now runs Python tests on Linux, macOS, and Windows, and packages the VS Code `.vsix` on every push/PR.

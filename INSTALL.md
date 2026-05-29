@@ -23,6 +23,8 @@ This repo supports three user-facing clients from the same GitHub source, across
 - Python `tkinter` support for the floating window (`chibi-mcp --check` reports this). On Ubuntu/Debian system Python, install `python3-tk`; for pyenv Python, install `tk-dev` and rebuild Python.
 - `code` on PATH for the VS Code installer. In VS Code, run "Shell Command: Install 'code' command in PATH" if needed.
 
+If an install path fails, use [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for client-specific fixes and the issue report checklist.
+
 Typical `pipx` setup:
 
 ```bash
@@ -178,6 +180,7 @@ This runs the Python server checks, Claude/Codex plugin validation, desktop lint
 GitHub Actions also verifies:
 
 - Python server on Linux, macOS, and Windows
+- Windows PowerShell installer syntax
 - desktop build smoke tests on Linux, macOS, and Windows
 - VS Code `.vsix` packaging
 - Rust/Tauri formatting and linting
@@ -221,6 +224,6 @@ git push origin v1.1.1
 ```
 
 3. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.
-4. GitHub Actions publishes the GitHub Release and attaches the wheel, source archive, `.vsix`, and per-OS desktop artifacts.
+4. GitHub Actions publishes the GitHub Release and attaches the wheel, source archive, `.vsix`, per-OS desktop artifacts, and `SHA256SUMS.txt`.
 
 PyPI publishing is optional. Set the repository variable `PUBLISH_PYPI=true` only after PyPI Trusted Publishing is configured for this repo.

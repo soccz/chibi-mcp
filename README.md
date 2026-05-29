@@ -198,6 +198,8 @@ Claude Code hooks and the VS Code extension already use this bridge for small re
 
 ## Troubleshooting
 
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for the full Claude Code, Codex, VS Code, Linux, macOS, and Windows troubleshooting guide.
+
 ### `chibi-mcp` was installed but the command is not found
 
 Run:
@@ -300,13 +302,16 @@ xvfb-run -a make runtime-check
 GitHub Actions verifies:
 
 - Python on Linux, macOS, and Windows
+- Windows PowerShell installer syntax
 - VS Code `.vsix` packaging
 - desktop smoke builds on Linux, macOS, and Windows
 - Rust/Tauri formatting and linting
+- tagged release checksums
 
 Useful docs:
 
 - [INSTALL.md](INSTALL.md) — full install matrix
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — install and runtime fixes
 - [CONTRIBUTING.md](CONTRIBUTING.md) — contribution guide
 - [ASSET_RIGHTS.md](ASSET_RIGHTS.md) — official asset and pack provenance policy
 - [COMMERCIAL_STRATEGY.md](COMMERCIAL_STRATEGY.md) — expansion readiness and deferred monetization guardrails

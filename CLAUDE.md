@@ -17,6 +17,7 @@ The project now has an executable Python MCP server, Claude/Codex plugin metadat
 - `COMMERCIAL_STRATEGY.md` — commercial expansion candidates and guardrails.
 - `GITHUB_STAR_STRATEGY.md` — source-backed GitHub growth plan, topics, community surface, launch loop.
 - `INSTALL.md` — GitHub install matrix for Claude Code, Codex, and VS Code.
+- `docs/TROUBLESHOOTING.md` — user-facing install/runtime fixes and issue checklist.
 - `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/` — public community and trust surface.
 - `ASSET_RIGHTS.md`, `docs/IP_AND_RIGHTS.md` — official asset provenance, pack rights, and copycat response guardrails.
 - `server/` — Python MCP server package. Also ships the floating pet window (`chibi_mcp/window.py`), the `chibi-say` CLI used by hooks, and the `chibi-check` self-diagnostic.
@@ -34,6 +35,7 @@ Core commands:
 - Commercial-readiness CLIs: `chibi-audit`, `chibi-pack init/validate/preview <dir>`, `chibi-pack validate --submission <dir>`, `chibi-share --out share-card.png`, `chibi-share --preset social-preview --out social-preview.png`, `chibi-share --preset lineup --out starter-lineup.png`, `chibi-share --preset options --out option-showcase.png`
 - Claude plugin validation: `claude plugin validate .`
 - VS Code package: `./scripts/package-vscode.sh`
+- Release workflow: tagged GitHub Releases attach `SHA256SUMS.txt`; CI also parses Windows PowerShell installers.
 
 ## Critical rules for working in this repo
 

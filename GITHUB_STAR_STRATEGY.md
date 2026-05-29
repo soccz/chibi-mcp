@@ -106,9 +106,11 @@ Files that should exist before public launch:
 - `CODE_OF_CONDUCT.md`
 - `.github/ISSUE_TEMPLATE/bug_report.yml`
 - `.github/ISSUE_TEMPLATE/install_problem.yml`
+- `.github/ISSUE_TEMPLATE/feature_request.yml`
 - `.github/ISSUE_TEMPLATE/character_pack.yml`
 - `.github/ISSUE_TEMPLATE/showcase.yml`
 - `.github/PULL_REQUEST_TEMPLATE.md`
+- `docs/TROUBLESHOOTING.md`
 
 Why: GitHub's community profile checks for recommended files, and issue/PR templates standardize the information contributors provide.
 
@@ -140,7 +142,7 @@ Must stay visible:
 - ASSET_RIGHTS.md and `chibi-pack validate --submission` for pack provenance
 - no hidden paid gate in the open-source core
 - no embedded license secret or placeholder production key
-- release checksums later
+- release checksums attached to tagged GitHub Releases
 
 ---
 

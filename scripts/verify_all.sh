@@ -231,9 +231,13 @@ required = [
     "os: [ubuntu-latest, macos-latest, windows-latest]",
     "vscode-package:",
     "name: vscode (.vsix)",
+    "installer-syntax:",
+    "Parse PowerShell installers",
     "needs: [desktop-build, vscode-package]",
     "vars.PUBLISH_PYPI == 'true'",
     "artifacts/**/*.vsix",
+    "release-checksums/SHA256SUMS.txt",
+    "sha256sum",
 ]
 for item in required:
     assert item in workflow, item
@@ -243,7 +247,7 @@ PY
 echo "== GitHub issue forms =="
 (
   cd "$ROOT/vscode-ext"
-  node -e "const fs=require('fs'); const yaml=require('js-yaml'); for (const f of ['../.github/ISSUE_TEMPLATE/config.yml','../.github/ISSUE_TEMPLATE/bug_report.yml','../.github/ISSUE_TEMPLATE/install_problem.yml','../.github/ISSUE_TEMPLATE/character_pack.yml','../.github/ISSUE_TEMPLATE/showcase.yml']) { yaml.load(fs.readFileSync(f, 'utf8')); console.log('ok', f); }"
+  node -e "const fs=require('fs'); const yaml=require('js-yaml'); for (const f of ['../.github/ISSUE_TEMPLATE/config.yml','../.github/ISSUE_TEMPLATE/bug_report.yml','../.github/ISSUE_TEMPLATE/install_problem.yml','../.github/ISSUE_TEMPLATE/feature_request.yml','../.github/ISSUE_TEMPLATE/character_pack.yml','../.github/ISSUE_TEMPLATE/showcase.yml']) { yaml.load(fs.readFileSync(f, 'utf8')); console.log('ok', f); }"
 )
 
 echo "all checks passed"

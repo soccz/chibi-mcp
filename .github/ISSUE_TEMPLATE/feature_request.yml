@@ -1,0 +1,63 @@
+name: Feature request
+description: Suggest a free feature, client integration, character idea, or workflow improvement.
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: User goal
+      description: What should chibi-mcp help you do?
+      placeholder: "I want tteoki to react when ..."
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: Client or surface
+      options:
+        - Claude Code
+        - Codex
+        - VS Code
+        - Floating pet
+        - Character/options
+        - Creator pack tooling
+        - Install/release flow
+        - All clients
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Cross-platform
+        - Not platform-specific
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful version.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Link related projects, screenshots, or workflow examples.
+  - type: checkboxes
+    id: guardrails
+    attributes:
+      label: Guardrails
+      options:
+        - label: This can work without telemetry.
+          required: true
+        - label: This does not require a paid gate or license key.
+          required: true
+        - label: This should work across Linux, macOS, and Windows unless clearly explained above.
+          required: true
