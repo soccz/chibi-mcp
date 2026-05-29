@@ -1,6 +1,6 @@
 [project]
 name = "chibi-mcp"
-version = "1.1.1"
+version = "1.2.0"
 description = "MCP server for 치비 (chibi) — a Korean rice cake desktop pet that pops up a floating tk window (mood-tinted, live-updating, gacha-driven) in your Claude Code session"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -23,6 +23,7 @@ dependencies = [
     "psutil>=5.9.0",
     "websockets>=14.0",
     "Pillow>=10.0",
+    "pyobjc-framework-Cocoa>=10; sys_platform == 'darwin'",
 ]
 
 [project.urls]
@@ -40,6 +41,8 @@ dev = [
 
 [project.scripts]
 chibi-mcp = "chibi_mcp.__main__:main"
+chibi-say = "chibi_mcp.cli:say_main"
+chibi-check = "chibi_mcp.cli:check_main"
 
 [build-system]
 requires = ["hatchling"]

@@ -81,6 +81,9 @@ def reset_broadcaster_for_tests() -> None:
     _BROADCASTER = None
 
 
+_INBOUND_SAY_MAX_LEN = 200
+
+
 async def _handle_client(ws: ServerConnection) -> None:
     broadcaster = get_broadcaster()
     await broadcaster.register(ws)
@@ -90,9 +93,19 @@ async def _handle_client(ws: ServerConnection) -> None:
     await ws.send(json.dumps({"type": "state", "payload": state.snapshot()}))
 
     try:
-        async for _raw in ws:
-            # Desktop app may send pings or settings updates later; ignore for v0.1
-            pass
+        async for raw in ws:
+            # Inbound: a non-window client (chibi-say CLI, claude-code hooks)
+            # publishes a say event that we forward to all windows.
+            try:
+                msg = json.loads(raw)
+            except (json.JSONDecodeError, ValueError):
+                continue
+            if not isinstance(msg, dict):
+                continue
+            if msg.get("type") == "say" and isinstance(msg.get("text"), str):
+                text = msg["text"].replace("\n", " ").replace("\r", " ").strip()
+                if text:
+                    await broadcaster.broadcast({"type": "say", "text": text[:_INBOUND_SAY_MAX_LEN]})
     except ConnectionClosed:
         pass
     finally:

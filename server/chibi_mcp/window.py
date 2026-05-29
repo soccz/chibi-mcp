@@ -43,7 +43,20 @@ BOB_AMPLITUDE_PX = 4
 BOB_HZ = 0.6
 BOB_TICK_MS = 30
 
+IDLE_BUBBLE_MIN_MS = 4 * 60_000
+IDLE_BUBBLE_MAX_MS = 7 * 60_000
+
 SOUND_DIR = Path.home() / ".chibi-mcp" / "sounds"
+
+IDLE_PHRASES_BY_MOOD: dict[str, list[str]] = {
+    "calm":      ["말랑...", "심심해", "쉬자", "..."],
+    "happy":     ["굳굳", "오늘 잘되네", "ㅎㅎ"],
+    "joyful":    ["반짝", "오예", "엣헴"],
+    "panting":   ["헐 바쁘다", "잠깐만", "엥"],
+    "drowsy":    ["졸려", "충전해줘", "..."],
+    "lonely":    ["보고싶었어", "심심해", "어디갔어"],
+    "surprised": ["오?!", "헐", "잠시만"],
+}
 
 MOOD_LABELS: dict[str, tuple[str, str]] = {
     "calm": ("말랑", "😌"),
@@ -93,6 +106,53 @@ def _scale_to_fit(img: Image.Image, max_side: int) -> Image.Image:
         return img
     ratio = max_side / max(w, h)
     return img.resize((int(w * ratio), int(h * ratio)), Image.LANCZOS)
+
+
+def _load_image_for_mood(image_path: Path, mood: str) -> tuple[Image.Image, bool]:
+    """Use <stem>_<mood>.png if shipped alongside; else fall back to base PNG.
+
+    Returns (image, is_mood_variant). When True, the caller should NOT also
+    apply the procedural mood filter (the variant PNG already has expression).
+    """
+    variant = image_path.with_name(f"{image_path.stem}_{mood}.png")
+    if variant.exists():
+        return Image.open(variant).convert("RGBA"), True
+    return Image.open(image_path).convert("RGBA"), False
+
+
+def _macos_make_transparent(root: tk.Tk) -> bool:
+    """Use PyObjC to give the Tk window a truly clear NSWindow background.
+
+    Tk's `-transparent` attribute is unreliable on macOS — many versions
+    still render the window bg as solid. Reaching into the NSView/NSWindow
+    via objc fixes it for real on macOS 11+.
+
+    Returns True when applied. Safe no-op when pyobjc isn't installed or
+    not on darwin.
+    """
+    if sys.platform != "darwin":
+        return False
+    try:
+        import objc  # noqa: F401  — sanity-check pyobjc-core is importable
+        from AppKit import NSColor
+    except ImportError:
+        return False
+    try:
+        import objc as _objc
+
+        root.update_idletasks()
+        nsview_id = root.winfo_id()
+        nsview = _objc.objc_object(c_void_p=nsview_id)
+        nswindow = nsview.window()
+        if nswindow is None:
+            return False
+        nswindow.setOpaque_(False)
+        nswindow.setBackgroundColor_(NSColor.clearColor())
+        nswindow.setHasShadow_(False)
+        return True
+    except Exception as e:
+        log.debug("PyObjC transparency failed: %s", e)
+        return False
 
 
 # ── Procedural sounds ────────────────────────────────────────────────────────
@@ -244,6 +304,8 @@ class PetWindow:
             Image.open(image_path).convert("RGBA"), CANVAS_SIZE - 20
         )
         self._img_w, self._img_h = self.base_image.size
+        # Cache (mood → rendered RGBA at display size). Variants bypass filter.
+        self._mood_image_cache: dict[str, Image.Image] = {}
 
         self.event_queue: queue.Queue = queue.Queue(maxsize=64)
         self.stop_event = threading.Event()
@@ -287,6 +349,18 @@ class PetWindow:
             self.root.update_idletasks()
             self.root.attributes("-topmost", True)
 
+        # PyObjC: try a real clear NSWindow background on macOS. The Tk
+        # -transparent attribute alone is unreliable; this nukes the bg
+        # for real on macOS 11+ when pyobjc-framework-Cocoa is available.
+        self._macos_clear = False
+        if sys.platform == "darwin":
+            self._macos_clear = _macos_make_transparent(self.root)
+            if self._macos_clear:
+                self._transparent = True
+                # Drop the -alpha translucent fallback when we have true clear
+                with contextlib.suppress(tk.TclError):
+                    self.root.wm_attributes("-alpha", 1.0)
+
         # Total window: canvas + name label + mood label
         total_w = max(CANVAS_SIZE, self._img_w + 24)
         canvas_h = self._img_h + 28
@@ -314,7 +388,7 @@ class PetWindow:
             stipple="gray50",
         )
 
-        self._photo = ImageTk.PhotoImage(_apply_mood_filter(self.base_image, mood))
+        self._photo = ImageTk.PhotoImage(self._get_mood_image(mood))
         self._image_id = self.canvas.create_image(
             self._canvas_center[0],
             self._canvas_center[1],
@@ -386,16 +460,26 @@ class PetWindow:
 
     # ── Rendering ────────────────────────────────────────────────────────────
 
+    def _get_mood_image(self, mood: str) -> Image.Image:
+        cached = self._mood_image_cache.get(mood)
+        if cached is not None:
+            return cached
+        raw, is_variant = _load_image_for_mood(self.image_path, mood)
+        scaled = _scale_to_fit(raw, CANVAS_SIZE - 20)
+        # Variant PNGs (artist-drawn mood expressions) bypass the filter.
+        out = scaled if is_variant else _apply_mood_filter(scaled, mood)
+        self._mood_image_cache[mood] = out
+        return out
+
     def _render_image(self, mood: str, scale: tuple[float, float] | None = None) -> None:
-        img = self.base_image
+        img = self._get_mood_image(mood)
         if scale is not None:
             sx, sy = scale
             img = img.resize(
                 (max(1, int(img.width * sx)), max(1, int(img.height * sy))),
                 Image.LANCZOS,
             )
-        filtered = _apply_mood_filter(img, mood)
-        self._photo = ImageTk.PhotoImage(filtered)
+        self._photo = ImageTk.PhotoImage(img)
         self.canvas.itemconfigure(self._image_id, image=self._photo)
         self.current_mood = mood
 
@@ -438,8 +522,10 @@ class PetWindow:
         self.root.after(180, lambda: self._render_image(self.current_mood))
 
     def _slice_flash(self) -> None:
-        bright = ImageEnhance.Brightness(self.base_image).enhance(1.8)
-        self._photo = ImageTk.PhotoImage(_apply_mood_filter(bright, self.current_mood))
+        # Brighten whatever the current mood image is (variant or filtered base).
+        current = self._get_mood_image(self.current_mood)
+        bright = ImageEnhance.Brightness(current).enhance(1.6)
+        self._photo = ImageTk.PhotoImage(bright)
         self.canvas.itemconfigure(self._image_id, image=self._photo)
         self._drop_slice_piece()
         self._play_safe("slice")
@@ -493,6 +579,27 @@ class PetWindow:
     def _hide_bubble(self) -> None:
         self.bubble.pack_forget()
         self._bubble_hide_after = None
+
+    # ── Idle bubbles ─────────────────────────────────────────────────────────
+
+    def _schedule_idle_bubble(self) -> None:
+        if self.stop_event.is_set():
+            return
+        import random as _r
+
+        delay = _r.randint(IDLE_BUBBLE_MIN_MS, IDLE_BUBBLE_MAX_MS)
+        self.root.after(delay, self._idle_bubble_tick)
+
+    def _idle_bubble_tick(self) -> None:
+        if self.stop_event.is_set():
+            return
+        import random as _r
+
+        # Skip if a bubble is already showing — don't stack.
+        if self._bubble_hide_after is None:
+            pool = IDLE_PHRASES_BY_MOOD.get(self.current_mood, ["..."])
+            self.show_bubble(_r.choice(pool))
+        self._schedule_idle_bubble()
 
     def _play_safe(self, key: str) -> None:
         if not self.sounds_enabled:
@@ -555,6 +662,7 @@ class PetWindow:
             t.start()
         self.root.after(POLL_INTERVAL_MS, self._poll_events)
         self.root.after(BOB_TICK_MS, self._idle_bob_tick)
+        self._schedule_idle_bubble()
         self.root.mainloop()
 
     def shutdown(self) -> None:
