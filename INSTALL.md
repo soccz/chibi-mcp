@@ -81,7 +81,7 @@ VS Code:
 powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-vscode.ps1 | iex"
 ```
 
-The Claude/Codex scripts install or upgrade the `chibi-mcp` server with `pipx`, run `chibi-mcp --check`, then register the MCP server with the selected client. The VS Code scripts download the latest `.vsix` from GitHub Releases and install it with `code --install-extension`.
+The Claude/Codex scripts install `pipx` if needed, install or upgrade the `chibi-mcp` server, run `chibi-mcp --check`, then register the MCP server with the selected client. On macOS, if Homebrew Python is missing `_tkinter`, the bash scripts try to install the matching `python-tk@X.Y` package, reinstall the pipx app, and run the health check again. The VS Code scripts download the latest `.vsix` from GitHub Releases and install it with `code --install-extension`.
 
 ## Manual server install
 
@@ -110,6 +110,8 @@ brew install python-tk@3.14
 pipx reinstall chibi-mcp
 chibi-mcp --check
 ```
+
+The Claude/Codex bash installers do this macOS Tk repair automatically when possible. Set `CHIBI_SKIP_TK_REPAIR=1` before running the installer if you want a warning only.
 
 ## Codex
 
@@ -220,7 +222,7 @@ images, and hidden legacy brand-name leaks.
 For maintainer release-tag readiness after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.6
+make release-check TAG=v1.4.7
 ```
 
 See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
@@ -245,14 +247,14 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push `main`, then run:
 
 ```bash
-make release-check TAG=v1.4.6
+make release-check TAG=v1.4.7
 ```
 
 3. Push a tag:
 
 ```bash
-git tag v1.4.6
-git push origin v1.4.6
+git tag v1.4.7
+git push origin v1.4.7
 ```
 
 4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.

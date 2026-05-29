@@ -81,6 +81,18 @@ chibi-mcp --check
 
 If Homebrew changes the available formula name, run `brew search python-tk` and install the matching `python-tk@X.Y` package.
 
+The Claude/Codex bash installers attempt this repair automatically on macOS when `chibi-mcp --check` reports `tkinter: false`, then run `pipx reinstall chibi-mcp` and check again. To disable automatic Tk repair:
+
+```bash
+CHIBI_SKIP_TK_REPAIR=1 bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.sh)
+```
+
+On Linux, automatic `apt-get` Tk repair is off by default. To allow it:
+
+```bash
+CHIBI_AUTO_INSTALL_TK=1 bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.sh)
+```
+
 pyenv Python:
 
 1. Install OS Tk development packages such as `tk-dev`.

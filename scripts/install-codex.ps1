@@ -5,6 +5,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$script:PipxCommand = $null
+$script:PipxPrefix = @()
 
 if (-not $RepoUrl) {
     $RepoUrl = "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
@@ -20,6 +22,49 @@ function Require-Command($Name) {
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
         throw "missing required command: $Name"
     }
+}
+
+function Ensure-Pipx {
+    $pipx = Get-Command pipx -ErrorAction SilentlyContinue
+    if ($pipx) {
+        $script:PipxCommand = "pipx"
+        $script:PipxPrefix = @()
+        return
+    }
+
+    $pythonLauncher = Get-Command py -ErrorAction SilentlyContinue
+    if ($pythonLauncher) {
+        Write-Host "pipx not found; installing pipx with py -m pip"
+        & py -m pip install --user pipx
+        if ($LASTEXITCODE -ne 0) {
+            throw "pipx install failed"
+        }
+        $script:PipxCommand = "py"
+        $script:PipxPrefix = @("-m", "pipx")
+        return
+    }
+
+    $python = Get-Command python -ErrorAction SilentlyContinue
+    if ($python) {
+        Write-Host "pipx not found; installing pipx with python -m pip"
+        & python -m pip install --user pipx
+        if ($LASTEXITCODE -ne 0) {
+            throw "pipx install failed"
+        }
+        $script:PipxCommand = "python"
+        $script:PipxPrefix = @("-m", "pipx")
+        return
+    }
+
+    throw "missing required command: pipx, py, or python"
+}
+
+function Invoke-Pipx {
+    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$PipxArgs)
+    $allArgs = @()
+    $allArgs += $script:PipxPrefix
+    $allArgs += $PipxArgs
+    & $script:PipxCommand @allArgs
 }
 
 function Get-UserBase {
@@ -48,7 +93,7 @@ function Find-ChibiCommand {
         return $cmd.Source
     }
 
-    $pipxBin = (& pipx environment --value PIPX_BIN_DIR 2>$null)
+    $pipxBin = (Invoke-Pipx environment --value PIPX_BIN_DIR 2>$null)
     if ($LASTEXITCODE -ne 0) {
         $pipxBin = $null
     }
@@ -76,26 +121,37 @@ function Find-ChibiCommand {
     throw "chibi-mcp was installed, but the executable was not found on PATH. Run: pipx ensurepath"
 }
 
-Require-Command pipx
+Ensure-Pipx
 Require-Command codex
 
-$installed = (& pipx list --short 2>$null) -match '^chibi-mcp(\s|$)'
+$installed = (Invoke-Pipx list --short 2>$null) -match '^chibi-mcp(\s|$)'
 if ($installed) {
-    & pipx upgrade chibi-mcp
+    Invoke-Pipx upgrade chibi-mcp
     if ($LASTEXITCODE -ne 0) {
-        & pipx reinstall chibi-mcp
+        Invoke-Pipx reinstall chibi-mcp
     }
 } else {
-    & pipx install $RepoUrl
+    Invoke-Pipx install $RepoUrl
 }
 if ($LASTEXITCODE -ne 0) {
     throw "pipx install/upgrade failed"
 }
+Invoke-Pipx ensurepath *> $null
 
 $chibiCmd = Find-ChibiCommand
-& $chibiCmd --check
+$checkOutput = (& $chibiCmd --check)
+$checkJson = ($checkOutput -join "`n")
+Write-Host $checkJson
 if ($LASTEXITCODE -ne 0) {
     throw "chibi-mcp --check failed"
+}
+try {
+    $check = ($checkJson | ConvertFrom-Json)
+    if (-not $check.tkinter) {
+        Write-Warning "Python tkinter is unavailable. MCP tools work, but the floating pet window cannot open. Install Python with Tcl/Tk support, then run: pipx reinstall chibi-mcp"
+    }
+} catch {
+    Write-Warning "Could not parse chibi-mcp --check output."
 }
 
 & codex mcp get $McpName *> $null

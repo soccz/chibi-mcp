@@ -6,6 +6,7 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Made the Claude/Codex installers more self-healing: they install `pipx` when it is missing, suppress confusing `pipx ensurepath` noise, attempt macOS Homebrew Tk repair automatically in bash, reinstall the pipx app after Tk repair, and re-run the health check.
 - Added macOS Homebrew Python Tk troubleshooting for `_tkinter` import failures, including Python 3.14 `python-tk@3.14` guidance.
 - Claude/Codex install scripts now warn when `chibi-mcp --check` reports `tkinter: false` and print the matching Linux/macOS repair commands.
 - Replaced remaining non-ASCII name spelling in README, plugin metadata, command examples, installer output, and server descriptions with the ASCII `chibi` brand spelling.
