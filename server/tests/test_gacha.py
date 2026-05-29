@@ -148,3 +148,44 @@ def test_state_file_is_atomic_json():
     assert data["schema_version"] == state_mod.STATE_SCHEMA_VERSION
     assert "inventory" in data
     assert "tickets" in data
+
+
+def test_save_does_not_hold_lock_during_io(monkeypatch):
+    """Regression: state.save() used to do file I/O while holding self._lock.
+
+    After v1.3.1 the lock is released before _save_data runs. We verify by
+    having _save_data try to call a method that requires the lock — if save
+    were still holding it, this would deadlock.
+    """
+    s = TteokiState()
+    s.tickets = 1
+    s.pull_gacha(CATALOG)  # consume free pull
+    captured: list[bool] = []
+
+    original = state_mod.TteokiState._save_data
+
+    def spy(data):
+        # If lock is held by caller, this acquire would block forever.
+        # We try non-blocking acquire; should always succeed.
+        got = s._lock.acquire(blocking=False)
+        captured.append(got)
+        if got:
+            s._lock.release()
+        original(data)
+
+    monkeypatch.setattr(state_mod.TteokiState, "_save_data", staticmethod(spy))
+
+    # Trigger a save by pulling with a ticket (consumes ticket, calls save)
+    s.tickets = 1
+    r = s.pull_gacha(CATALOG)
+    assert r["drawn"] is not None
+    assert captured, "_save_data was not called"
+    assert all(captured), "lock was still held during _save_data"
+
+
+def test_invalid_character_id_rejected_by_set_active():
+    s = TteokiState()
+    s.pull_gacha(CATALOG)
+    r = s.set_active("../etc/passwd")
+    assert r["ok"] is False
+    assert "don't own" in r["reason"]

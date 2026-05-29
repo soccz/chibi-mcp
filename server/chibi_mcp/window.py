@@ -36,7 +36,8 @@ from PIL import Image, ImageEnhance, ImageTk
 log = logging.getLogger(__name__)
 
 CANVAS_SIZE = 240
-RECONNECT_BACKOFF_SECONDS = 2.0
+RECONNECT_BACKOFF_MIN_S = 1.0
+RECONNECT_BACKOFF_MAX_S = 30.0
 POLL_INTERVAL_MS = 80
 BUBBLE_VISIBLE_MS = 4000
 BOB_AMPLITUDE_PX = 4
@@ -71,6 +72,12 @@ MOOD_LABELS: dict[str, tuple[str, str]] = {
 
 # ── Mood → Pillow filter ─────────────────────────────────────────────────────
 
+# Each tuple: (brightness, saturation, tint_rgb_or_None, tint_alpha).
+#   brightness 1.0 = neutral; <1 darkens, >1 brightens.
+#   saturation 1.0 = neutral; 0 = grayscale, >1 amplifies color.
+#   tint_rgb is blended into RGB at `tint_alpha` while preserving the
+#     original alpha channel. None means no tint.
+#   tint_alpha 0.0 = no effect, ~0.35 = strongly tinted.
 MOOD_FILTERS: dict[str, tuple[float, float, tuple[int, int, int] | None, float]] = {
     "calm":      (1.00, 1.00, None,              0.00),
     "happy":     (1.15, 1.20, (255, 230, 180),   0.18),
@@ -266,18 +273,25 @@ def _ws_listener(url: str, event_queue: queue.Queue, stop_event: threading.Event
         log.warning("websockets sync client unavailable — window won't get live updates")
         return
 
+    backoff = RECONNECT_BACKOFF_MIN_S
     while not stop_event.is_set():
         try:
             with ws_connect(url, open_timeout=3) as conn:
+                backoff = RECONNECT_BACKOFF_MIN_S  # reset on successful connect
                 for raw in conn:
                     if stop_event.is_set():
                         return
-                    with contextlib.suppress(json.JSONDecodeError, queue.Full):
+                    try:
                         event_queue.put_nowait(json.loads(raw))
+                    except json.JSONDecodeError as e:
+                        log.debug("ws drop (bad json): %s", e)
+                    except queue.Full:
+                        log.debug("ws drop (queue full: %d)", event_queue.qsize())
         except Exception as e:
-            log.debug("ws reconnect after error: %s", e)
-        if stop_event.wait(RECONNECT_BACKOFF_SECONDS):
+            log.debug("ws reconnect in %.1fs after error: %s", backoff, e)
+        if stop_event.wait(backoff):
             return
+        backoff = min(RECONNECT_BACKOFF_MAX_S, backoff * 1.7)
 
 
 # ── Tk window ────────────────────────────────────────────────────────────────

@@ -174,8 +174,9 @@ chibi-mcp/
 
 The plugin/MCP path is the primary install path for Claude Code and Codex. Other clients stay available as user-facing surfaces:
 
-- **Tauri desktop app** (`desktop/`) — cross-platform pet window path for users who want a native desktop client.
-- **VS Code extension** (`vscode-ext/`) — optional sidebar experience. Tagged GitHub Releases package it as a downloadable `.vsix`.
+- **Floating pet window** — spawned by the Python MCP server via `open_pet_window` (frameless, always-on-top, mood-tinted, sound-reactive). Pure tkinter + Pillow; uses PyObjC for true transparency on macOS. No separate install — comes with `pipx install chibi-mcp`.
+- **VS Code extension** (`vscode-ext/`) — optional sidebar experience that also fires `chibi-say` bubbles into the floating window on save / task / debug events. Tagged GitHub Releases package it as a downloadable `.vsix`.
+- **Tauri desktop app** (`desktop/`) — legacy; kept archived for v0.1-v0.2 reference. Not part of the current install path.
 
 ## Community
 

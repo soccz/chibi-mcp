@@ -55,17 +55,23 @@ Trigger: "뽑기", "한 번 뽑아", "pull", `/chibi 뽑기`.
    - First pull of the calendar day is free.
    - Otherwise 1 ticket is spent.
    - Tickets auto-grow: +1 / 100 tool calls, +1 / 10 slices.
-2. If `drawn: null` and `reason: no free pull today, no tickets`: tell the user `next_free_in_seconds`. Suggest they keep coding (tickets accumulate automatically).
-3. If a character was drawn: announce `<name_ko> ★<rarity>` and (if window is open) it auto-celebrates via the say-bubble that the server broadcasts.
-4. Ask if they want to rename → `rename_character(id, nickname)`.
-5. If they want to switch their active 치비 → `set_active_character(id)` (window auto-reopens with the new character).
+2. Response shape (success):
+   `{ drawn: {id, name_ko, rarity, category}, was_free, tickets, owned_count, active_character_id, total_pulls }`
+   Response shape (no ticket and free already used today):
+   `{ drawn: null, reason: "no free pull today, no tickets", tickets, next_free_in_seconds }`
+3. If `drawn` is null: tell the user the hours+minutes until next free pull (compute from `next_free_in_seconds`). Suggest they keep coding (tickets accumulate automatically).
+4. If a character was drawn: announce `<name_ko> ★<rarity>` and (if window is open) it auto-celebrates via the say-bubble that the server broadcasts.
+5. Ask if they want to rename → `rename_character(id, nickname)`.
+6. If they want to switch their active 치비 → `set_active_character(id)` (window auto-reopens with the new character).
 
 ## Inventory / 보관함
 
 Trigger: "보관함", "내 컬렉션", `/chibi 보관함`.
 
+`get_inventory` returns the user's persisted state: `active_character_id`, `tickets`, `total_pulls`, `owned_count`, the `inventory` map ({id: {count, nickname, first_rolled_at}}), `last_free_pull_date`, `next_free_in_seconds`. `get_catalog` is the source of truth for the released full list (license-tier-filtered, never the persisted state).
+
 1. Call `get_inventory` for the owned set + ticket balance.
-2. Call `get_catalog` for the full released list.
+2. Call `get_catalog` for the full released list (NEVER infer from inventory alone — some characters may be in the catalog but unowned).
 3. Render a compact list grouped by category (떡 / 과일 / 치즈 / 만두 / 기타). Keep it short; show only owned names first, then "미보유 N종".
 4. Surface one status line: `티켓 N장 · 보유 K/T · 다음 무료뽑기 HH:MM`.
 
