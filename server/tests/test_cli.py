@@ -10,6 +10,7 @@ from PIL import Image
 from chibi_mcp import __version__
 from chibi_mcp.__main__ import _check, _ws_endpoint
 from chibi_mcp.commercial import (
+    _missing_project_files,
     build_trust_audit,
     init_pack,
     validate_pack,
@@ -51,6 +52,18 @@ def test_trust_audit_reports_local_first_defaults():
     assert readiness["readiness_files_missing"] == []
     assert readiness["pilot_feedback_template"] is True
     assert readiness["collaboration_template"] is True
+
+
+def test_project_readiness_missing_handles_windows_paths():
+    expected = [
+        "docs/PRODUCT_MARKET_READINESS.md",
+        ".github/ISSUE_TEMPLATE/team_pilot.yml",
+    ]
+    found = [
+        r"D:\a\chibi-mcp\chibi-mcp\docs\PRODUCT_MARKET_READINESS.md",
+        r"D:\a\chibi-mcp\chibi-mcp\.github\ISSUE_TEMPLATE\team_pilot.yml",
+    ]
+    assert _missing_project_files(expected, found) == []
 
 
 def test_pack_validate_accepts_minimal_creator_pack(tmp_path):

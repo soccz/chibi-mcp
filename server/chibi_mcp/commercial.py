@@ -295,11 +295,7 @@ def build_trust_audit() -> dict[str, Any]:
         ".github/ISSUE_TEMPLATE/collaboration_idea.yml",
     ]
     readiness_files = _find_project_files(readiness_expected)
-    readiness_missing = [
-        relative
-        for relative in readiness_expected
-        if not any(path.endswith(relative) for path in readiness_files)
-    ]
+    readiness_missing = _missing_project_files(readiness_expected, readiness_files)
     report = {
         "ok": bool(asset_dir and not free_assets_missing),
         "version": __version__,
@@ -1258,6 +1254,11 @@ def _find_project_files(relative_paths: list[str]) -> list[str]:
             if candidate.exists():
                 found.append(str(candidate))
     return sorted(set(found))
+
+
+def _missing_project_files(expected: list[str], found: list[str]) -> list[str]:
+    normalized_found = [path.replace("\\", "/") for path in found]
+    return [relative for relative in expected if not any(path.endswith(relative) for path in normalized_found)]
 
 
 def _pick_share_asset(asset_dir: Path, character_id: str | None) -> Path | None:
