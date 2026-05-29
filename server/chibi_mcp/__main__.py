@@ -52,8 +52,18 @@ async def _run_ws_optional(host: str, port: int) -> None:
 
 async def _run_concurrent(ws_enabled: bool = True) -> None:
     """Run MCP (stdio) and WebSocket server concurrently."""
+    log = logging.getLogger(__name__)
     host = os.environ.get("CHIBI_WS_HOST", DEFAULT_WS_HOST)
-    port = int(os.environ.get("CHIBI_WS_PORT", DEFAULT_WS_PORT))
+    port_raw = os.environ.get("CHIBI_WS_PORT", str(DEFAULT_WS_PORT))
+    try:
+        port = int(port_raw)
+        if not 1 <= port <= 65535:
+            raise ValueError("out of range")
+    except ValueError:
+        log.warning(
+            "invalid CHIBI_WS_PORT=%r; falling back to %d", port_raw, DEFAULT_WS_PORT
+        )
+        port = DEFAULT_WS_PORT
 
     ws_task = asyncio.create_task(_run_ws_optional(host=host, port=port)) if ws_enabled else None
     # FastMCP's run_stdio_async is the asyncio variant of mcp.run()
@@ -102,16 +112,21 @@ def _check() -> dict:
     assets_ok = False
     free_assets_missing: list[str] = []
     catalog_count = 0
+    catalog_error: str | None = None
     if asset_dir:
         meta_path = Path(asset_dir) / "meta.json"
         if meta_path.exists():
-            catalog = json.loads(meta_path.read_text(encoding="utf-8"))
+            try:
+                catalog = json.loads(meta_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+                catalog_error = f"{type(e).__name__}: {e}"
+                catalog = {"characters": []}
             chars = catalog.get("characters", [])
             catalog_count = len(chars)
             for ch in chars:
                 if ch.get("tier") == "free" and not (Path(asset_dir) / f"{ch['id']}.png").exists():
                     free_assets_missing.append(ch["id"])
-            assets_ok = not free_assets_missing
+            assets_ok = catalog_error is None and not free_assets_missing
 
     try:
         import tkinter  # noqa: F401

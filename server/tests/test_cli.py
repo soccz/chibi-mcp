@@ -7,7 +7,7 @@ from chibi_mcp.__main__ import _check
 
 
 def test_version_matches_release():
-    assert __version__ == "1.3.0"
+    assert __version__ == "1.3.1"
 
 
 def test_check_finds_packaged_assets():

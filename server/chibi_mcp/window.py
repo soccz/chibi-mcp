@@ -457,6 +457,9 @@ class PetWindow:
 
         # Idle bob state
         self._bob_phase = 0.0
+        # Track pending after() callbacks so shutdown can cancel them and
+        # avoid "invalid command name" errors firing on the destroyed root.
+        self._after_ids: set[str] = set()
 
     # ── Rendering ────────────────────────────────────────────────────────────
 
@@ -519,7 +522,7 @@ class PetWindow:
     def _squish(self, _event: tk.Event) -> None:
         self._render_image(self.current_mood, scale=(1.15, 0.6))
         self._play_safe("bubble")
-        self.root.after(180, lambda: self._render_image(self.current_mood))
+        self._after(180, lambda: self._render_image(self.current_mood))
 
     def _slice_flash(self) -> None:
         # Brighten whatever the current mood image is (variant or filtered base).
@@ -529,7 +532,7 @@ class PetWindow:
         self.canvas.itemconfigure(self._image_id, image=self._photo)
         self._drop_slice_piece()
         self._play_safe("slice")
-        self.root.after(140, lambda: self._render_image(self.current_mood))
+        self._after(140, lambda: self._render_image(self.current_mood))
 
     def _drop_slice_piece(self) -> None:
         cx = self._canvas_center[0]
@@ -665,8 +668,26 @@ class PetWindow:
         self._schedule_idle_bubble()
         self.root.mainloop()
 
+    def _after(self, ms: int, callback) -> str:
+        """tk.after wrapper that records the callback id for cancellation."""
+        aid = self.root.after(ms, lambda: self._run_after(aid, callback))
+        self._after_ids.add(aid)
+        return aid
+
+    def _run_after(self, aid: str, callback) -> None:
+        self._after_ids.discard(aid)
+        if self.stop_event.is_set():
+            return
+        callback()
+
     def shutdown(self) -> None:
         self.stop_event.set()
+        # Cancel any scheduled callbacks before destroying the root so they
+        # don't fire on a half-torn-down widget tree.
+        for aid in list(self._after_ids):
+            with contextlib.suppress(tk.TclError, ValueError):
+                self.root.after_cancel(aid)
+        self._after_ids.clear()
         with contextlib.suppress(tk.TclError):
             self.root.destroy()
 

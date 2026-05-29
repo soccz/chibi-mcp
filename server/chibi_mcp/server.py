@@ -6,6 +6,7 @@ import asyncio
 import contextlib
 import logging
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -13,8 +14,12 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 
-from .state import get_state
+from .state import _seconds_until_midnight, get_state
 from .ws_server import get_broadcaster
+
+# Character ids are tightly controlled — catalog-defined slugs only.
+# Any external string passed as `character_id` is validated against this.
+_CHAR_ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,40}$")
 
 log = logging.getLogger(__name__)
 
@@ -215,7 +220,14 @@ def get_catalog() -> dict:
         }
 
     meta_path = Path(asset_dir) / "meta.json"
-    catalog = json.loads(meta_path.read_text(encoding="utf-8"))
+    try:
+        catalog = json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+        return {
+            "error": f"meta.json unreadable at {meta_path}: {type(e).__name__}: {e}",
+            "asset_dir": asset_dir,
+            "characters": [],
+        }
     status = verify_license()
     filtered = filter_catalog_by_tier(catalog, status)
     return {
@@ -279,6 +291,9 @@ def open_pet_window(character_id: str | None = None) -> dict:
             Otherwise uses your active character; if no active, the first
             character in your catalog.
     """
+    if character_id and not _CHAR_ID_RE.match(character_id):
+        return {"opened": False, "reason": f"invalid character id: {character_id!r}"}
+
     catalog = get_catalog()
     chars = catalog.get("characters", [])
     if not chars:
@@ -303,7 +318,15 @@ def open_pet_window(character_id: str | None = None) -> dict:
     asset_dir = catalog.get("asset_dir")
     if not asset_dir:
         return {"opened": False, "reason": "asset_dir not configured"}
-    image_path = Path(asset_dir) / f"{ch['id']}.png"
+    # Defense in depth: even though character_id is matched against the
+    # catalog, prevent any path-traversal via a malformed id field.
+    safe_id = ch["id"]
+    if not _CHAR_ID_RE.match(safe_id):
+        return {"opened": False, "reason": f"unsafe character id: {safe_id!r}"}
+    image_path = (Path(asset_dir) / f"{safe_id}.png").resolve()
+    asset_root = Path(asset_dir).resolve()
+    if asset_root not in image_path.parents:
+        return {"opened": False, "reason": "image path escapes asset_dir"}
     if not image_path.exists():
         return {"opened": False, "reason": f"image not found: {image_path}"}
 
@@ -364,8 +387,11 @@ def open_pet_window(character_id: str | None = None) -> dict:
 
     _time.sleep(0.5)
     exit_code = proc.poll()
-    if exit_code is not None:
+    # The subprocess inherits the fd; we don't need to keep the Python file
+    # object open in this process. Close it either way.
+    with contextlib.suppress(OSError):
         log_fh.close()
+    if exit_code is not None:
         try:
             tail = log_path.read_text(encoding="utf-8", errors="replace")[-2000:]
         except OSError:
@@ -469,7 +495,7 @@ def get_inventory() -> dict:
         "owned_count": len(state.inventory),
         "inventory": state.inventory,
         "last_free_pull_date": state.last_free_pull_date,
-        "next_free_in_seconds": _seconds_until_local_midnight(),
+        "next_free_in_seconds": _seconds_until_midnight(),
         "summary": snap,
     }
 
@@ -504,9 +530,3 @@ def add_ticket(n: int = 1) -> dict:
     return state.grant_tickets(n)
 
 
-def _seconds_until_local_midnight() -> int:
-    from datetime import datetime as _dt
-
-    now = _dt.now()
-    seconds_today = now.hour * 3600 + now.minute * 60 + now.second
-    return max(0, 86400 - seconds_today)

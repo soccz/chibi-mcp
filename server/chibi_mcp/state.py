@@ -83,11 +83,22 @@ class TteokiState:
         }
 
     def save(self) -> None:
-        """Persist to ~/.chibi-mcp/state.json. Safe to call from locked sections."""
+        """Persist to ~/.chibi-mcp/state.json.
+
+        Snapshots data while briefly holding the lock, then writes the file
+        without it — so file I/O doesn't block other state mutations.
+        """
+        with self._lock:
+            data = self._persisted_dict()
+        self._save_data(data)
+
+    @staticmethod
+    def _save_data(data: dict) -> None:
+        """Write a pre-snapshotted dict. Caller must NOT hold the lock."""
         try:
             STATE_DIR.mkdir(parents=True, exist_ok=True)
             tmp = STATE_FILE.with_suffix(".json.tmp")
-            tmp.write_text(json.dumps(self._persisted_dict(), indent=2), encoding="utf-8")
+            tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
             tmp.replace(STATE_FILE)
         except OSError as e:
             log.warning("state save failed: %s", e)
@@ -112,6 +123,7 @@ class TteokiState:
 
     def record_call(self, force_slice: bool = False) -> dict:
         """Increment call counters. Auto-grants tickets at milestones."""
+        save_data: dict | None = None
         with self._lock:
             self.call_count += 1
             self.calls_since_slice += 1
@@ -132,9 +144,9 @@ class TteokiState:
                     ticket_grants += TICKETS_PER_10_SLICES
 
             if ticket_grants:
-                self.save()
+                save_data = self._persisted_dict()
 
-            return {
+            result = {
                 "call_count": self.call_count,
                 "calls_since_slice": self.calls_since_slice,
                 "slices_today": self.slices_today,
@@ -142,6 +154,10 @@ class TteokiState:
                 "ticket_grants": ticket_grants,
                 "tickets": self.tickets,
             }
+
+        if save_data is not None:
+            self._save_data(save_data)
+        return result
 
     # ── Gacha ────────────────────────────────────────────────────────────────
 
@@ -203,9 +219,8 @@ class TteokiState:
             if not self.active_character_id:
                 self.active_character_id = pick["id"]
 
-            self.save()
-
-            return {
+            save_data = self._persisted_dict()
+            result = {
                 "drawn": {
                     "id": pick["id"],
                     "name_ko": pick.get("name_ko"),
@@ -219,31 +234,40 @@ class TteokiState:
                 "total_pulls": self.total_pulls,
             }
 
+        self._save_data(save_data)
+        return result
+
     def set_active(self, character_id: str) -> dict:
         with self._lock:
             if character_id not in self.inventory:
                 return {"ok": False, "reason": f"you don't own {character_id!r}"}
             self.active_character_id = character_id
-            self.save()
-            return {"ok": True, "active_character_id": character_id}
+            save_data = self._persisted_dict()
+            result = {"ok": True, "active_character_id": character_id}
+        self._save_data(save_data)
+        return result
 
     def rename(self, character_id: str, nickname: str) -> dict:
         with self._lock:
             if character_id not in self.inventory:
                 return {"ok": False, "reason": f"you don't own {character_id!r}"}
             self.inventory[character_id]["nickname"] = nickname[:40]
-            self.save()
-            return {
+            save_data = self._persisted_dict()
+            result = {
                 "ok": True,
                 "character_id": character_id,
                 "nickname": self.inventory[character_id]["nickname"],
             }
+        self._save_data(save_data)
+        return result
 
     def grant_tickets(self, n: int) -> dict:
         with self._lock:
             self.tickets += int(n)
-            self.save()
-            return {"tickets": self.tickets}
+            save_data = self._persisted_dict()
+            result = {"tickets": self.tickets}
+        self._save_data(save_data)
+        return result
 
     # ── Mood derivation ──────────────────────────────────────────────────────
 
@@ -312,18 +336,24 @@ def _seconds_until_midnight() -> int:
     return max(0, 86400 - seconds_today)
 
 
-# Module-level singleton
+# Module-level singleton + init lock (avoids TOCTOU when two threads
+# request state simultaneously during cold start).
 _STATE: TteokiState | None = None
+_STATE_INIT_LOCK = Lock()
 
 
 def get_state() -> TteokiState:
     global _STATE
     if _STATE is None:
-        _STATE = TteokiState()
-        _STATE.load()
+        with _STATE_INIT_LOCK:
+            if _STATE is None:
+                inst = TteokiState()
+                inst.load()
+                _STATE = inst
     return _STATE
 
 
 def reset_state_for_tests() -> None:
     global _STATE
-    _STATE = None
+    with _STATE_INIT_LOCK:
+        _STATE = None

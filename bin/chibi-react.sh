@@ -27,7 +27,9 @@ if command -v jq >/dev/null 2>&1; then
   tool="$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null || true)"
   exit_code="$(printf '%s' "$input" | jq -r '.tool_response.exit_code // 0' 2>/dev/null || true)"
 else
-  tool="$(printf '%s' "$input" | sed -n 's/.*"tool_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+  # POSIX-safe extract: use literal space/tab class instead of [[:space:]]
+  # so Git Bash / busybox sed without POSIX char classes still work.
+  tool="$(printf '%s' "$input" | sed -n 's/.*"tool_name"[ 	]*:[ 	]*"\([^"]*\)".*/\1/p' | head -1)"
   exit_code=0
 fi
 

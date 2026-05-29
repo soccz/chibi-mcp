@@ -134,6 +134,11 @@ class PetViewProvider implements vscode.WebviewViewProvider {
     ) {}
 
     private view?: vscode.WebviewView;
+    // Guard against rapid double-click races: gacha load/modify/save isn't
+    // atomic, so two clicks before saveInventory() resolves would double-
+    // spend the ticket but only grant one character. Block until the prior
+    // pull's save callback has run.
+    private _gachaInProgress = false;
 
     resolveWebviewView(webviewView: vscode.WebviewView): void {
         this.view = webviewView;
@@ -162,10 +167,14 @@ class PetViewProvider implements vscode.WebviewViewProvider {
     }
 
     private runGacha(inv: Inventory): void {
+        if (this._gachaInProgress) {
+            return;
+        }
         if (inv.tickets <= 0) {
             this.view?.webview.postMessage({ type: "toast", text: "뽑기권이 없어요" });
             return;
         }
+        this._gachaInProgress = true;
         inv.tickets -= 1;
         const ch = drawGacha(this.catalog);
         const duplicate = Boolean(inv.owned[ch.id]);
@@ -177,14 +186,20 @@ class PetViewProvider implements vscode.WebviewViewProvider {
             };
             if (!inv.active_id) inv.active_id = ch.id;
         }
-        saveInventory(this.context, inv).then(() => {
-            this.view?.webview.postMessage({
-                type: "gacha-result",
-                character: ch,
-                duplicate,
-                inventory: inv,
-            });
-        });
+        saveInventory(this.context, inv).then(
+            () => {
+                this._gachaInProgress = false;
+                this.view?.webview.postMessage({
+                    type: "gacha-result",
+                    character: ch,
+                    duplicate,
+                    inventory: inv,
+                });
+            },
+            () => {
+                this._gachaInProgress = false;
+            },
+        );
     }
 
     private selectActive(inv: Inventory, id: string): void {
