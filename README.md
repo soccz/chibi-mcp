@@ -25,7 +25,7 @@ xvfb-run -a make public-beta-check
 Release-tag preflight after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.9
+make release-check TAG=v1.4.10
 ```
 
 See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist, [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging, and the remaining manual demo assets.
@@ -37,6 +37,8 @@ See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no
 - A VS Code sidebar extension packaged as a `.vsix`.
 - 8 starter characters and 12 free option layers.
 - Gacha, inventory, rename, active character, and option selection tools.
+- Floating-window controls for inventory, option customization, gacha pulls,
+  and close actions.
 - Mood based on CPU, RAM, battery, and idle time.
 - Slice cycle: every N tool calls, chibi gets sliced.
 - `chibi-say`, a tiny CLI for making the pet show speech bubbles from scripts.

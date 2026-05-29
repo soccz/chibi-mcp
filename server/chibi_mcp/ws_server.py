@@ -16,6 +16,7 @@ import asyncio
 import contextlib
 import json
 import logging
+from collections.abc import Callable
 
 from websockets.asyncio.server import ServerConnection, serve
 from websockets.exceptions import ConnectionClosed
@@ -66,6 +67,7 @@ class ChibiBroadcaster:
 
 
 _BROADCASTER: ChibiBroadcaster | None = None
+_ACTION_HANDLER: Callable[[dict], dict] | None = None
 
 
 def get_broadcaster() -> ChibiBroadcaster:
@@ -79,6 +81,12 @@ def reset_broadcaster_for_tests() -> None:
     """Test helper — DO NOT call from runtime code."""
     global _BROADCASTER
     _BROADCASTER = None
+
+
+def set_action_handler(handler: Callable[[dict], dict] | None) -> None:
+    """Register the server-side handler for desktop-window actions."""
+    global _ACTION_HANDLER
+    _ACTION_HANDLER = handler
 
 
 _INBOUND_SAY_MAX_LEN = 200
@@ -106,6 +114,16 @@ async def _handle_client(ws: ServerConnection) -> None:
                 text = msg["text"].replace("\n", " ").replace("\r", " ").strip()
                 if text:
                     await broadcaster.broadcast({"type": "say", "text": text[:_INBOUND_SAY_MAX_LEN]})
+            elif msg.get("type") == "action" and _ACTION_HANDLER is not None:
+                try:
+                    result = _ACTION_HANDLER(msg)
+                except Exception:
+                    log.exception("window action failed")
+                    await broadcaster.broadcast({"type": "say", "text": "액션 실패"})
+                    continue
+                if isinstance(result, dict) and result.get("ok") is False:
+                    reason = str(result.get("reason") or "실패")
+                    await broadcaster.broadcast({"type": "say", "text": reason[:_INBOUND_SAY_MAX_LEN]})
     except ConnectionClosed:
         pass
     finally:

@@ -6,6 +6,11 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Replaced the floating window's black fallback surface with a light panel and
+  fixed the macOS transparency helper so chibi does not appear inside a black box.
+- Added floating-window controls for inventory, option customization, gacha
+  pulls, and close actions, routed through localhost WebSocket actions back to
+  the MCP server instead of writing state directly.
 - Fixed the Claude slash command instructions so `/chibi-mcp:chibi 뽑기` handles arguments directly instead of trying to call an unknown `/chibi` command.
 - Expanded built-in local ASMR-style sounds: squish, slice, normal gacha, rare gacha, option brush, and bubble pop are generated as free local wav files with no network or paid sound packs.
 - Expanded installer self-repair beyond macOS: Linux bash installers now try Tk repair across `apt`, `dnf`, `yum`, `pacman`, `zypper`, and `apk`; Windows PowerShell installers can bootstrap Python with `winget` before installing `pipx`.

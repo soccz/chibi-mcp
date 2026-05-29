@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from chibi_mcp import server as server_mod
 from chibi_mcp import state as state_mod
 from chibi_mcp.server import (
     MAX_SAY_LEN,
+    _handle_window_action,
     _resolve_asset_dir,
     _sanitize_say,
     _window_runtime_issue,
@@ -83,6 +85,7 @@ def test_options_catalog_exposes_free_layers():
 def test_set_active_options_persists_selection(tmp_path, monkeypatch):
     monkeypatch.setattr(state_mod, "STATE_DIR", tmp_path)
     monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "state.json")
+    monkeypatch.setattr(server_mod, "_WINDOW_PID_FILE", tmp_path / "window.pid")
     reset_state_for_tests()
     try:
         result = set_active_options(["jocheong_drip", "sugar_beads"])
@@ -94,6 +97,35 @@ def test_set_active_options_persists_selection(tmp_path, monkeypatch):
         assert get_state().active_option_ids == []
     finally:
         reset_state_for_tests()
+
+
+def test_window_action_routes_option_changes(tmp_path, monkeypatch):
+    monkeypatch.setattr(state_mod, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "state.json")
+    monkeypatch.setattr(server_mod, "_WINDOW_PID_FILE", tmp_path / "window.pid")
+    reset_state_for_tests()
+    try:
+        result = _handle_window_action(
+            {
+                "type": "action",
+                "action": "set_active_options",
+                "option_ids": ["honey_glaze"],
+            }
+        )
+        assert result["ok"] is True
+        assert get_state().active_option_ids == ["honey_glaze"]
+
+        result = _handle_window_action({"type": "action", "action": "clear_active_options"})
+        assert result["ok"] is True
+        assert get_state().active_option_ids == []
+    finally:
+        reset_state_for_tests()
+
+
+def test_window_action_rejects_unknown_action():
+    result = _handle_window_action({"type": "action", "action": "not_real"})
+    assert result["ok"] is False
+    assert "unknown window action" in result["reason"]
 
 
 def test_window_runtime_issue_reports_missing_tkinter(monkeypatch):

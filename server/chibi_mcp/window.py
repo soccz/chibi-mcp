@@ -29,6 +29,7 @@ import sys
 import threading
 import tkinter as tk
 import wave
+from ctypes import c_void_p
 from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageTk
@@ -36,6 +37,13 @@ from PIL import Image, ImageEnhance, ImageTk
 log = logging.getLogger(__name__)
 
 CANVAS_SIZE = 240
+PANEL_BG = "#fff8ef"
+PANEL_BG_2 = "#fff1df"
+PANEL_BORDER = "#e7c9a6"
+TEXT_FG = "#2a211a"
+MUTED_FG = "#806f62"
+ACCENT_BG = "#ffe0b8"
+ACCENT_BG_ACTIVE = "#f7bd72"
 RECONNECT_BACKOFF_MIN_S = 1.0
 RECONNECT_BACKOFF_MAX_S = 30.0
 POLL_INTERVAL_MS = 80
@@ -150,7 +158,7 @@ def _macos_make_transparent(root: tk.Tk) -> bool:
 
         root.update_idletasks()
         nsview_id = root.winfo_id()
-        nsview = _objc.objc_object(c_void_p=nsview_id)
+        nsview = _objc.objc_object(c_void_p=c_void_p(nsview_id))
         nswindow = nsview.window()
         if nswindow is None:
             return False
@@ -387,6 +395,53 @@ def _ws_listener(url: str, event_queue: queue.Queue, stop_event: threading.Event
         backoff = min(RECONNECT_BACKOFF_MAX_S, backoff * 1.7)
 
 
+def _send_ws_action(url: str | None, message: dict, event_queue: queue.Queue) -> None:
+    """Send one small desktop action to the MCP WebSocket server."""
+    if not url:
+        event_queue.put({"type": "say", "text": "서버 연결이 필요해"})
+        return
+    try:
+        from websockets.sync.client import connect as ws_connect
+    except ImportError:
+        event_queue.put({"type": "say", "text": "websockets 설치가 필요해"})
+        return
+
+    try:
+        with ws_connect(url, open_timeout=3) as conn:
+            conn.send(json.dumps(message, ensure_ascii=False))
+    except Exception as exc:
+        log.debug("window action send failed: %s", exc)
+        event_queue.put({"type": "say", "text": "서버에 연결하지 못했어"})
+
+
+def _load_json_file(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return {}
+
+
+def _load_persisted_state() -> dict:
+    return _load_json_file(Path.home() / ".chibi-mcp" / "state.json")
+
+
+def _load_catalog(asset_dir: Path | None) -> dict:
+    if asset_dir is None:
+        return {}
+    return _load_json_file(asset_dir / "meta.json")
+
+
+def _released_items(catalog: dict, key: str) -> list[dict]:
+    items = catalog.get(key)
+    if not isinstance(items, list):
+        return []
+    return [
+        item
+        for item in items
+        if isinstance(item, dict) and not item.get("locked") and item.get("tier") == "free"
+    ]
+
+
 # ── Tk window ────────────────────────────────────────────────────────────────
 
 
@@ -398,6 +453,9 @@ class PetWindow:
         rarity: int,
         mood: str,
         option_paths: list[Path] | None = None,
+        asset_dir: Path | None = None,
+        character_id: str | None = None,
+        active_option_ids: list[str] | None = None,
         frameless: bool = True,
         sounds: bool = True,
     ):
@@ -406,6 +464,12 @@ class PetWindow:
         self.rarity = rarity
         self.current_mood = mood
         self.option_paths = option_paths or []
+        self.asset_dir = asset_dir
+        self.character_id = character_id
+        self.active_option_ids = active_option_ids or []
+        self.catalog = _load_catalog(asset_dir)
+        self.ws_url: str | None = None
+        self.drawer_mode: str | None = None
         self.frameless = frameless
         self.sounds_enabled = sounds
 
@@ -432,24 +496,15 @@ class PetWindow:
         self.root.title(f"chibi — {name}")
         self.root.attributes("-topmost", True)
 
-        # Transparency on macOS
+        # Transparency on macOS is only used when we can prove it actually
+        # cleared the NSWindow. Otherwise use a light panel, never a black box.
         self._transparent = False
         if sys.platform == "darwin":
-            try:
-                self.root.wm_attributes("-transparent", True)
-                self._transparent = True
-            except tk.TclError:
-                pass
-            # Translucent fallback if -transparent doesn't really clear bg
             with contextlib.suppress(tk.TclError):
-                self.root.wm_attributes("-alpha", 0.96)
+                self.root.wm_attributes("-transparent", True)
 
-        bg = "systemTransparent" if self._transparent else "#1a1a1a"
-        try:
-            self.root.configure(bg=bg)
-        except tk.TclError:
-            bg = "#1a1a1a"
-            self.root.configure(bg=bg)
+        bg = PANEL_BG
+        self.root.configure(bg=bg)
 
         # Frameless mode
         if self.frameless:
@@ -467,6 +522,9 @@ class PetWindow:
             self._macos_clear = _macos_make_transparent(self.root)
             if self._macos_clear:
                 self._transparent = True
+                bg = "systemTransparent"
+                with contextlib.suppress(tk.TclError):
+                    self.root.configure(bg=bg)
                 # Drop the -alpha translucent fallback when we have true clear
                 with contextlib.suppress(tk.TclError):
                     self.root.wm_attributes("-alpha", 1.0)
@@ -493,7 +551,7 @@ class PetWindow:
             shadow_y - 5,
             self._canvas_center[0] + shadow_w // 2,
             shadow_y + 5,
-            fill="#000000",
+            fill="#d8c1aa",
             outline="",
             stipple="gray50",
         )
@@ -506,8 +564,8 @@ class PetWindow:
             anchor="center",
         )
 
-        fg = "#222222" if self._transparent else "#ffffff"
-        meta_fg = "#555555" if self._transparent else "#aaaaaa"
+        fg = TEXT_FG
+        meta_fg = MUTED_FG
 
         stars = "★" * rarity + "☆" * max(0, 5 - rarity)
         self.name_label = tk.Label(
@@ -538,12 +596,36 @@ class PetWindow:
         )
         self.progress_label.pack(pady=(0, 8))
 
+        self.toolbar = tk.Frame(self.root, bg=bg)
+        self.toolbar.pack(pady=(0, 8))
+        self.inventory_button = self._make_button(
+            self.toolbar, "보관함", lambda: self._toggle_drawer("inventory")
+        )
+        self.inventory_button.pack(side="left", padx=3)
+        self.options_button = self._make_button(
+            self.toolbar, "옵션", lambda: self._toggle_drawer("options")
+        )
+        self.options_button.pack(side="left", padx=3)
+        self.pull_button = self._make_button(self.toolbar, "뽑기", self._pull_from_window)
+        self.pull_button.pack(side="left", padx=3)
+        self.close_button = self._make_button(self.toolbar, "닫기", self.shutdown)
+        self.close_button.pack(side="left", padx=3)
+
+        self.drawer = tk.Frame(
+            self.root,
+            bg=PANEL_BG_2,
+            highlightthickness=1,
+            highlightbackground=PANEL_BORDER,
+            padx=8,
+            pady=8,
+        )
+
         # Speech bubble
         self.bubble = tk.Label(
             self.root,
             text="",
-            bg="#ffffe0" if self._transparent else "#ffffff",
-            fg="#222222",
+            bg="#fffdf7",
+            fg=TEXT_FG,
             font=("Helvetica", 10),
             wraplength=total_w - 30,
             padx=10,
@@ -639,6 +721,155 @@ class PetWindow:
         if tickets is not None:
             parts.append(f"티켓 {tickets}")
         self.progress_label.configure(text=" · ".join(parts))
+
+    # ── Built-in controls ───────────────────────────────────────────────────
+
+    def _make_button(self, parent: tk.Misc, text: str, command) -> tk.Button:
+        return tk.Button(
+            parent,
+            text=text,
+            command=command,
+            bg=ACCENT_BG,
+            activebackground=ACCENT_BG_ACTIVE,
+            fg=TEXT_FG,
+            activeforeground=TEXT_FG,
+            relief="flat",
+            borderwidth=0,
+            highlightthickness=0,
+            padx=9,
+            pady=4,
+            font=("Helvetica", 9, "bold"),
+        )
+
+    def _toggle_drawer(self, mode: str) -> None:
+        if self.drawer_mode == mode and self.drawer.winfo_ismapped():
+            self.drawer.pack_forget()
+            self.drawer_mode = None
+            return
+        self.drawer_mode = mode
+        self._render_drawer()
+        if not self.drawer.winfo_ismapped():
+            self.drawer.pack(pady=(0, 8), padx=10, fill="x")
+
+    def _render_drawer(self) -> None:
+        for child in self.drawer.winfo_children():
+            child.destroy()
+        if self.drawer_mode == "inventory":
+            self._render_inventory_drawer()
+        elif self.drawer_mode == "options":
+            self._render_options_drawer()
+
+    def _drawer_header(self, text: str) -> None:
+        tk.Label(
+            self.drawer,
+            text=text,
+            bg=PANEL_BG_2,
+            fg=TEXT_FG,
+            font=("Helvetica", 10, "bold"),
+        ).pack(anchor="w", pady=(0, 6))
+
+    def _render_inventory_drawer(self) -> None:
+        state = _load_persisted_state()
+        inventory = state.get("inventory") if isinstance(state.get("inventory"), dict) else {}
+        active_id = state.get("active_character_id") or self.character_id
+        tickets = int(state.get("tickets", 0) or 0)
+        characters = _released_items(self.catalog, "characters")
+        by_id = {str(ch.get("id")): ch for ch in characters}
+        owned_ids = [cid for cid in inventory if cid in by_id]
+        if active_id in by_id and active_id not in owned_ids:
+            owned_ids.insert(0, str(active_id))
+
+        self._drawer_header(f"보관함 · {len(inventory)}종 · 티켓 {tickets}")
+        if not owned_ids:
+            tk.Label(
+                self.drawer,
+                text="아직 보유 캐릭터가 없어",
+                bg=PANEL_BG_2,
+                fg=MUTED_FG,
+                font=("Helvetica", 9),
+            ).pack(anchor="w", pady=(0, 6))
+            self._make_button(self.drawer, "오늘 무료 뽑기", self._pull_from_window).pack(anchor="w")
+            return
+
+        for cid in owned_ids[:8]:
+            ch = by_id[cid]
+            inv = inventory.get(cid) if isinstance(inventory.get(cid), dict) else {}
+            count = int(inv.get("count", 0) or 0)
+            rarity = int(ch.get("rarity", 2) or 2)
+            prefix = "✓ " if cid == active_id else ""
+            count_text = f" x{count}" if count else " 미보유"
+            text = f"{prefix}{ch.get('name_ko') or cid} ★{rarity}{count_text}"
+            btn = self._make_button(
+                self.drawer,
+                text,
+                lambda character_id=cid: self._send_action(
+                    "set_active_character", character_id=character_id
+                ),
+            )
+            btn.configure(anchor="w", width=24, bg=ACCENT_BG_ACTIVE if cid == active_id else ACCENT_BG)
+            if count <= 0:
+                btn.configure(state="disabled")
+            btn.pack(anchor="w", fill="x", pady=2)
+
+    def _render_options_drawer(self) -> None:
+        state = _load_persisted_state()
+        selected = state.get("active_option_ids")
+        if not isinstance(selected, list):
+            selected = self.active_option_ids
+        selected_ids = {str(option_id) for option_id in selected}
+        options = _released_items(self.catalog, "options")
+
+        self._drawer_header("옵션 · 최대 3개")
+        self._option_vars: dict[str, tk.IntVar] = {}
+        grid = tk.Frame(self.drawer, bg=PANEL_BG_2)
+        grid.pack(fill="x")
+        for idx, option in enumerate(options[:12]):
+            option_id = str(option.get("id") or "")
+            var = tk.IntVar(value=1 if option_id in selected_ids else 0)
+            self._option_vars[option_id] = var
+            cb = tk.Checkbutton(
+                grid,
+                text=str(option.get("name_ko") or option_id),
+                variable=var,
+                bg=PANEL_BG_2,
+                fg=TEXT_FG,
+                activebackground=PANEL_BG_2,
+                activeforeground=TEXT_FG,
+                selectcolor=PANEL_BG,
+                anchor="w",
+                font=("Helvetica", 8),
+            )
+            cb.grid(row=idx // 2, column=idx % 2, sticky="w", padx=(0, 8), pady=1)
+
+        actions = tk.Frame(self.drawer, bg=PANEL_BG_2)
+        actions.pack(anchor="w", pady=(8, 0))
+        self._make_button(actions, "적용", self._apply_options_from_drawer).pack(side="left", padx=(0, 6))
+        self._make_button(actions, "해제", lambda: self._send_action("clear_active_options")).pack(
+            side="left"
+        )
+
+    def _apply_options_from_drawer(self) -> None:
+        selected = [
+            option_id
+            for option_id, var in getattr(self, "_option_vars", {}).items()
+            if int(var.get()) == 1
+        ]
+        if len(selected) > 3:
+            self.show_bubble("옵션은 3개까지")
+            return
+        self._send_action("set_active_options", option_ids=selected)
+
+    def _pull_from_window(self) -> None:
+        self.show_bubble("뽑는 중...")
+        self._send_action("pull_gacha")
+
+    def _send_action(self, action: str, **payload) -> None:
+        message = {"type": "action", "action": action, **payload}
+        threading.Thread(
+            target=_send_ws_action,
+            args=(self.ws_url, message, self.event_queue),
+            daemon=True,
+        ).start()
 
     # ── Animations ───────────────────────────────────────────────────────────
 
@@ -785,7 +1016,13 @@ class PetWindow:
             if mood and mood != self.current_mood:
                 self._render_image(mood)
                 self._update_mood_label(mood)
+            gacha = payload.get("gacha") or {}
+            active_options = gacha.get("active_option_ids")
+            if isinstance(active_options, list):
+                self.active_option_ids = [str(option_id) for option_id in active_options]
             self._update_progress_label(payload)
+            if self.drawer_mode and self.drawer.winfo_ismapped():
+                self._render_drawer()
         elif kind == "slice":
             self._slice_flash()
         elif kind == "say":
@@ -798,6 +1035,7 @@ class PetWindow:
     # ── Lifecycle ────────────────────────────────────────────────────────────
 
     def start(self, ws_url: str | None) -> None:
+        self.ws_url = ws_url
         if ws_url:
             t = threading.Thread(
                 target=_ws_listener,
@@ -844,6 +1082,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rarity", type=int, default=2)
     parser.add_argument("--mood", default="calm")
     parser.add_argument("--option-image", action="append", default=[], help="Transparent option PNG")
+    parser.add_argument("--active-option-id", action="append", default=[], help="Selected option id")
+    parser.add_argument("--asset-dir", default=None, help="Directory containing assets/meta.json")
+    parser.add_argument("--character-id", default=None, help="Current catalog character id")
     parser.add_argument("--ws", default=None, help="WebSocket URL for live updates")
     parser.add_argument(
         "--no-frameless", action="store_true",
@@ -866,6 +1107,10 @@ def main(argv: list[str] | None = None) -> int:
     if missing_options:
         print(f"option image not found: {missing_options[0]}", file=sys.stderr)
         return 1
+    asset_dir = Path(args.asset_dir).expanduser().resolve() if args.asset_dir else None
+    if asset_dir is not None and not (asset_dir / "meta.json").exists():
+        print(f"asset meta not found: {asset_dir / 'meta.json'}", file=sys.stderr)
+        return 1
 
     win = PetWindow(
         image_path,
@@ -873,6 +1118,9 @@ def main(argv: list[str] | None = None) -> int:
         args.rarity,
         args.mood,
         option_paths=option_paths,
+        asset_dir=asset_dir,
+        character_id=args.character_id,
+        active_option_ids=args.active_option_id,
         frameless=not args.no_frameless,
         sounds=not args.no_sounds,
     )

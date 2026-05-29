@@ -15,7 +15,7 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 from .state import _seconds_until_midnight, get_state
-from .ws_server import get_broadcaster
+from .ws_server import get_broadcaster, set_action_handler
 
 # Catalog ids are tightly controlled — catalog-defined slugs only.
 # Any external string passed as a character/option id is validated against this.
@@ -51,6 +51,8 @@ def _fire_and_forget(coro) -> bool:
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
+        with contextlib.suppress(Exception):
+            coro.close()
         return False
     task = loop.create_task(coro)
     _PENDING_TASKS.add(task)
@@ -88,6 +90,11 @@ def _broadcast_sound(name: str) -> bool:
         return False
     broadcaster = get_broadcaster()
     return _fire_and_forget(broadcaster.broadcast({"type": "sound", "name": name}))
+
+
+def _broadcast_say(text: str) -> bool:
+    broadcaster = get_broadcaster()
+    return _fire_and_forget(broadcaster.broadcast({"type": "say", "text": _sanitize_say(text)}))
 
 
 @mcp.tool()
@@ -486,9 +493,15 @@ def open_pet_window(character_id: str | None = None) -> dict:
         mood,
         "--ws",
         f"ws://127.0.0.1:{os.environ.get('CHIBI_WS_PORT', '9876')}",
+        "--asset-dir",
+        str(asset_dir),
+        "--character-id",
+        ch["id"],
     ]
     for _option_id, option_path in option_images:
         command.extend(["--option-image", str(option_path)])
+    for option_id in snap["gacha"].get("active_option_ids", []):
+        command.extend(["--active-option-id", str(option_id)])
 
     proc = subprocess.Popen(command, **popen_kwargs)
 
@@ -647,3 +660,31 @@ def add_ticket(n: int = 1) -> dict:
         raise ValueError("n must be between 1 and 100")
     state = get_state()
     return state.grant_tickets(n)
+
+
+def _handle_window_action(message: dict) -> dict:
+    """Run actions requested by the floating window toolbar.
+
+    The window never edits ~/.chibi-mcp/state.json directly. It sends a small
+    localhost WebSocket action and this MCP server reuses the same validated
+    tool paths that Claude/Codex use.
+    """
+    action = str(message.get("action") or "").strip()
+    if action == "pull_gacha":
+        result = pull_gacha()
+        return {"ok": result.get("drawn") is not None, **result}
+    if action == "set_active_character":
+        character_id = str(message.get("character_id") or "").strip()
+        return set_active_character(character_id)
+    if action == "set_active_options":
+        option_ids = message.get("option_ids")
+        if not isinstance(option_ids, list):
+            return {"ok": False, "reason": "option_ids must be a list"}
+        return set_active_options([str(option_id) for option_id in option_ids])
+    if action == "clear_active_options":
+        return clear_active_options()
+    _broadcast_say("알 수 없는 창 액션")
+    return {"ok": False, "reason": f"unknown window action: {action!r}"}
+
+
+set_action_handler(_handle_window_action)
