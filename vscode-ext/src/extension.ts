@@ -1,11 +1,16 @@
-// tteoki VS Code extension — chibi-mcp v0.2.
+// tteoki VS Code extension — chibi-mcp.
 // Renders the gacha pet in a sidebar webview. Uses VS Code globalState for
 // inventory persistence, and listens to file save / debug start / problems
 // counters to drive simple mood cues.
+//
+// Also bridges VS Code editor events (save, task start/end, debug
+// start/stop) to the floating chibi window via the `chibi-say` CLI, when
+// installed. Safe no-op when `chibi-say` isn't on PATH.
 
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+import { spawn } from "child_process";
 
 interface Character {
     id: string;
@@ -83,6 +88,41 @@ function drawGacha(catalog: Catalog): Character {
 
 function rarityStars(n: number): string {
     return "★".repeat(n) + "☆".repeat(5 - n);
+}
+
+// ── chibi-say bridge ────────────────────────────────────────────────────────
+// Floats a speech bubble in the chibi window (if running). Throttled to
+// avoid bubble spam. Silent no-op when chibi-say not on PATH.
+
+const CHIBI_SAY_SAMPLE_RATE = 0.4; // ~40% of events fire a bubble
+const PHRASE_COOLDOWN_MS = 6000;
+let _lastSayAt = 0;
+
+function chibiSay(text: string): void {
+    if (!text) return;
+    const enabled = vscode.workspace
+        .getConfiguration("chibiMcp")
+        .get<boolean>("sayBridge.enabled", true);
+    if (!enabled) return;
+    if (Math.random() > CHIBI_SAY_SAMPLE_RATE) return;
+    const now = Date.now();
+    if (now - _lastSayAt < PHRASE_COOLDOWN_MS) return;
+    _lastSayAt = now;
+    try {
+        const child = spawn("chibi-say", [text], {
+            stdio: "ignore",
+            detached: true,
+            shell: false,
+        });
+        child.unref();
+        child.on("error", () => {/* silent — chibi-say not installed */});
+    } catch {
+        // ignore
+    }
+}
+
+function pickPhrase(list: readonly string[]): string {
+    return list[Math.floor(Math.random() * list.length)];
 }
 
 class PetViewProvider implements vscode.WebviewViewProvider {
@@ -347,6 +387,27 @@ export function activate(context: vscode.ExtensionContext) {
                     provider.grantTicket("오늘의 출석"),
                 );
             }
+            chibiSay(pickPhrase(["쓰자!", "또 한 줄~", "타이핑 가즈아", "굳"]));
+        }),
+
+        // Tasks (run task / build / test)
+        vscode.tasks.onDidStartTask(() => {
+            chibiSay(pickPhrase(["한 줄 박자", "터미널 ON", "가즈아"]));
+        }),
+        vscode.tasks.onDidEndTaskProcess((e) => {
+            if (e.exitCode === 0) {
+                chibiSay(pickPhrase(["굳!", "✨", "돌아간다"]));
+            } else {
+                chibiSay(pickPhrase(["시무룩", "에에...", "또 실패…"]));
+            }
+        }),
+
+        // Debug
+        vscode.debug.onDidStartDebugSession(() => {
+            chibiSay(pickPhrase(["디버그 가즈아", "버그 잡자", "엣헴"]));
+        }),
+        vscode.debug.onDidTerminateDebugSession(() => {
+            chibiSay(pickPhrase(["수고", "끝", "휴"]));
         }),
     );
 

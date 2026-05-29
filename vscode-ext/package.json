@@ -2,7 +2,7 @@
   "name": "chibi-mcp",
   "displayName": "tteoki (chibi-mcp)",
   "description": "Korean rice cake desktop pet for VS Code. Gacha-collect 29 squishy characters that react to your coding session.",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "publisher": "soccz",
   "license": "MIT",
   "engines": {
@@ -49,7 +49,17 @@
         "command": "chibiMcp.reset",
         "title": "tteoki: 보관함 초기화"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "tteoki",
+      "properties": {
+        "chibiMcp.sayBridge.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Fire `chibi-say` speech bubbles in the floating chibi window when you save, run tasks, or debug. Requires `chibi-say` on PATH (installed with the chibi-mcp Python package)."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

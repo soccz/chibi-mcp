@@ -109,6 +109,49 @@ See [COMMERCIAL_STRATEGY.md](COMMERCIAL_STRATEGY.md) for the commercial expansio
 | `pet_say(text)` | Speech bubble (text sanitized to 200 chars) |
 | `slice_now` | Force a slice event |
 | `set_slice_interval(n)` | Change slice cadence (default 10) |
+| `pull_gacha` | Pull one character (1 free/day, else 1 ticket) |
+| `get_inventory` | Owned characters + ticket balance |
+| `set_active_character(id)` | Switch the active 치비 |
+| `rename_character(id, nickname)` | Rename a 치비 you own |
+| `open_pet_window` / `close_pet_window` | Spawn or close the floating tk window |
+| `get_catalog` / `get_license_status` | Catalog (license-filtered) + tier status |
+| `add_ticket(n)` | Manual ticket grant (debug / promo) |
+
+## Anywhere bridge — `chibi-say`
+
+The Python package ships a tiny CLI alongside the MCP server:
+
+```bash
+chibi-say "굳!"
+chibi-say "build broke 🥺"
+```
+
+It opens a one-shot WebSocket connection to the running chibi server (`ws://127.0.0.1:9876` by default) and publishes a speech bubble that pops up below your floating 치비. Silent no-op when nothing is running, so it's safe to drop into any script.
+
+**Pre-wired in:**
+
+- **Claude Code** — `hooks/hooks.json` fires `chibi-say` on `PreToolUse` / `PostToolUse` for `Write|Edit|Bash|Read` (throttled ~30% so you don't get a bubble on every keystroke).
+- **VS Code extension** — calls `chibi-say` on file save, task start/end, and debug start/stop (throttled). Disable via the `chibiMcp.sayBridge.enabled` setting.
+
+**Roll your own** — any tool that runs a shell command can talk to your 치비:
+
+```bash
+# Git post-commit hook (.git/hooks/post-commit)
+#!/usr/bin/env bash
+chibi-say "🎉 commit!"
+
+# Makefile target
+build:
+	npm run build && chibi-say "build 굳!" || chibi-say "build 시무룩"
+
+# CI script reaction
+./run_tests.sh && chibi-say "초록 ✨" || chibi-say "빨강 🥺"
+
+# Shell prompt finisher (zsh — runs after every command)
+precmd() { [ $? -ne 0 ] && chibi-say "음..."; }
+```
+
+Codex CLI users: `chibi-say` works the same as anywhere else, but Codex doesn't yet have a documented hook system to auto-wire — invoke it from your scripts or use the same git/Makefile patterns above.
 
 ## Layout (for contributors)
 
