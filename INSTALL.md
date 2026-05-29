@@ -20,7 +20,7 @@ This repo supports three user-facing clients from the same GitHub source, across
 - Python 3.12+
 - `pipx` on your PATH
 - A real desktop session if you want the floating pet window
-- Python `tkinter` support for the floating window (`chibi-mcp --check` reports this). On Ubuntu/Debian system Python, install `python3-tk`; for pyenv Python, install `tk-dev` and rebuild Python.
+- Python `tkinter` support for the floating window (`chibi-mcp --check` reports this). On Ubuntu/Debian system Python, install `python3-tk`; on macOS Homebrew Python, install the matching `python-tk@X.Y` package such as `python-tk@3.14`; for pyenv Python, install `tk-dev` and rebuild Python.
 - `code` on PATH for the VS Code installer. In VS Code, run "Shell Command: Install 'code' command in PATH" if needed.
 
 If an install path fails, use [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for client-specific fixes and the issue report checklist.
@@ -100,6 +100,14 @@ pipx upgrade chibi-mcp
 Verify the install:
 
 ```bash
+chibi-mcp --check
+```
+
+On macOS, if `python3 -m tkinter` fails with `ModuleNotFoundError: No module named '_tkinter'`, install the matching Homebrew Tk package, then reinstall:
+
+```bash
+brew install python-tk@3.14
+pipx reinstall chibi-mcp
 chibi-mcp --check
 ```
 
@@ -212,7 +220,7 @@ images, and hidden legacy brand-name leaks.
 For maintainer release-tag readiness after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.5
+make release-check TAG=v1.4.6
 ```
 
 See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
@@ -237,14 +245,14 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push `main`, then run:
 
 ```bash
-make release-check TAG=v1.4.5
+make release-check TAG=v1.4.6
 ```
 
 3. Push a tag:
 
 ```bash
-git tag v1.4.5
-git push origin v1.4.5
+git tag v1.4.6
+git push origin v1.4.6
 ```
 
 4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.

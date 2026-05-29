@@ -25,7 +25,7 @@ xvfb-run -a make public-beta-check
 Release-tag preflight after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.5
+make release-check TAG=v1.4.6
 ```
 
 See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist, [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging, and the remaining manual demo assets.
@@ -252,6 +252,14 @@ Install tkinter on Ubuntu/Debian:
 
 ```bash
 sudo apt-get install -y python3-tk
+```
+
+On macOS Homebrew Python 3.14, if `python3 -m tkinter` says `_tkinter` is missing:
+
+```bash
+brew install python-tk@3.14
+pipx reinstall chibi-mcp
+chibi-mcp --check
 ```
 
 ### VS Code `code` command is missing

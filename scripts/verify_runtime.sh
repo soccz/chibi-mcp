@@ -17,6 +17,7 @@ except Exception as exc:
     raise SystemExit(
         "fail: Python tkinter unavailable; open_pet_window cannot show a Tk window. "
         "Ubuntu/Debian system Python: sudo apt-get install -y python3-tk. "
+        "macOS Homebrew Python: install the matching python-tk@X.Y package, such as python-tk@3.14. "
         "pyenv Python: install tk-dev, then rebuild the Python version used by pipx. "
         f"({exc})"
     )

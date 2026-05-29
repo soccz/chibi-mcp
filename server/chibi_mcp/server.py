@@ -348,6 +348,8 @@ def _window_runtime_issue() -> dict | None:
             "error": str(exc),
             "next_step": (
                 "Ubuntu/Debian system Python: sudo apt-get install -y python3-tk. "
+                "macOS Homebrew Python: install the matching python-tk@X.Y package "
+                "(for example, brew install python-tk@3.14). "
                 "pyenv Python: install tk-dev, then rebuild the Python version used by pipx."
             ),
         }
@@ -502,7 +504,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
             "log_path": str(log_path),
             "hint": (
                 "macOS: ensure pipx is using a Python with tkinter "
-                "(python.org installer or `brew install python-tk@3.12`). "
+                "(python.org installer or the matching Homebrew `python-tk@X.Y` package). "
                 "Check with: python3 -c 'import tkinter'"
             ),
         }
@@ -633,4 +635,3 @@ def add_ticket(n: int = 1) -> dict:
         raise ValueError("n must be between 1 and 100")
     state = get_state()
     return state.grant_tickets(n)
-

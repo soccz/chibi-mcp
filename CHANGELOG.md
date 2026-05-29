@@ -6,6 +6,8 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Added macOS Homebrew Python Tk troubleshooting for `_tkinter` import failures, including Python 3.14 `python-tk@3.14` guidance.
+- Claude/Codex install scripts now warn when `chibi-mcp --check` reports `tkinter: false` and print the matching Linux/macOS repair commands.
 - Replaced remaining non-ASCII name spelling in README, plugin metadata, command examples, installer output, and server descriptions with the ASCII `chibi` brand spelling.
 - Extended the brand identity sanity check so legacy project names and non-ASCII `chibi` spellings cannot leak back into public files.
 - Added product-market readiness, team adoption, and pilot playbook docs to clarify commercial gaps before paid launch.

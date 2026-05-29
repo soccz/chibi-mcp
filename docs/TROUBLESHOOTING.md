@@ -64,6 +64,23 @@ Ubuntu/Debian system Python:
 sudo apt-get install -y python3-tk
 ```
 
+macOS Homebrew Python:
+
+```bash
+python3 --version
+python3 -m tkinter
+```
+
+If this fails with `ModuleNotFoundError: No module named '_tkinter'`, install the Tk package that matches your Homebrew Python minor version. For Python 3.14:
+
+```bash
+brew install python-tk@3.14
+pipx reinstall chibi-mcp
+chibi-mcp --check
+```
+
+If Homebrew changes the available formula name, run `brew search python-tk` and install the matching `python-tk@X.Y` package.
+
 pyenv Python:
 
 1. Install OS Tk development packages such as `tk-dev`.

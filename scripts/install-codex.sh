@@ -42,6 +42,25 @@ find_chibi_cmd() {
   exit 1
 }
 
+warn_if_tkinter_missing() {
+  local check_output="$1"
+  if printf '%s' "$check_output" | python3 -c 'import json, sys; raise SystemExit(0 if json.load(sys.stdin).get("tkinter") else 1)' >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local python_minor
+  python_minor="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || true)"
+  local brew_formula="python-tk"
+  if [ -n "$python_minor" ]; then
+    brew_formula="python-tk@$python_minor"
+  fi
+
+  echo "warning: Python tkinter is unavailable; MCP tools can run, but the floating pet window cannot open." >&2
+  echo "macOS Homebrew Python: brew install $brew_formula" >&2
+  echo "Ubuntu/Debian system Python: sudo apt-get install -y python3-tk" >&2
+  echo "After installing Tk, run: pipx reinstall chibi-mcp" >&2
+}
+
 if pipx list --short 2>/dev/null | awk '{print $1}' | grep -qx "chibi-mcp"; then
   pipx upgrade chibi-mcp || pipx reinstall chibi-mcp
 else
@@ -49,7 +68,9 @@ else
 fi
 
 CHIBI_CMD="$(find_chibi_cmd)"
-"$CHIBI_CMD" --check
+CHECK_OUTPUT="$("$CHIBI_CMD" --check)"
+printf '%s\n' "$CHECK_OUTPUT"
+warn_if_tkinter_missing "$CHECK_OUTPUT"
 
 if codex mcp get "$MCP_NAME" >/dev/null 2>&1; then
   echo "Codex MCP '$MCP_NAME' already exists."
