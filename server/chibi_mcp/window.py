@@ -304,6 +304,7 @@ class PetWindow:
         name: str,
         rarity: int,
         mood: str,
+        option_paths: list[Path] | None = None,
         frameless: bool = True,
         sounds: bool = True,
     ):
@@ -311,6 +312,7 @@ class PetWindow:
         self.name = name
         self.rarity = rarity
         self.current_mood = mood
+        self.option_paths = option_paths or []
         self.frameless = frameless
         self.sounds_enabled = sounds
 
@@ -320,6 +322,7 @@ class PetWindow:
         self._img_w, self._img_h = self.base_image.size
         # Cache (mood → rendered RGBA at display size). Variants bypass filter.
         self._mood_image_cache: dict[str, Image.Image] = {}
+        self._option_cache: dict[tuple[int, int], list[Image.Image]] = {}
 
         self.event_queue: queue.Queue = queue.Queue(maxsize=64)
         self.stop_event = threading.Event()
@@ -485,7 +488,30 @@ class PetWindow:
         scaled = _scale_to_fit(raw, CANVAS_SIZE - 20)
         # Variant PNGs (artist-drawn mood expressions) bypass the filter.
         out = scaled if is_variant else _apply_mood_filter(scaled, mood)
+        out = self._apply_option_layers(out)
         self._mood_image_cache[mood] = out
+        return out
+
+    def _apply_option_layers(self, img: Image.Image) -> Image.Image:
+        if not self.option_paths:
+            return img
+        size = img.size
+        overlays = self._option_cache.get(size)
+        if overlays is None:
+            overlays = []
+            for option_path in self.option_paths:
+                try:
+                    with Image.open(option_path) as raw:
+                        overlay = raw.convert("RGBA").resize(size, Image.LANCZOS)
+                        overlays.append(overlay)
+                except OSError as exc:
+                    log.warning("option image skipped: %s", exc)
+            self._option_cache[size] = overlays
+        if not overlays:
+            return img
+        out = img.copy()
+        for overlay in overlays:
+            out.alpha_composite(overlay)
         return out
 
     def _render_image(self, mood: str, scale: tuple[float, float] | None = None) -> None:
@@ -719,6 +745,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--name", default="치비")
     parser.add_argument("--rarity", type=int, default=2)
     parser.add_argument("--mood", default="calm")
+    parser.add_argument("--option-image", action="append", default=[], help="Transparent option PNG")
     parser.add_argument("--ws", default=None, help="WebSocket URL for live updates")
     parser.add_argument(
         "--no-frameless", action="store_true",
@@ -736,12 +763,18 @@ def main(argv: list[str] | None = None) -> int:
     if not image_path.exists():
         print(f"image not found: {image_path}", file=sys.stderr)
         return 1
+    option_paths = [Path(value).expanduser().resolve() for value in args.option_image]
+    missing_options = [path for path in option_paths if not path.exists()]
+    if missing_options:
+        print(f"option image not found: {missing_options[0]}", file=sys.stderr)
+        return 1
 
     win = PetWindow(
         image_path,
         args.name,
         args.rarity,
         args.mood,
+        option_paths=option_paths,
         frameless=not args.no_frameless,
         sounds=not args.no_sounds,
     )

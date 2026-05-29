@@ -42,6 +42,7 @@
 - `chibi-audit`로 로컬 신뢰 리포트 출력
 - `chibi-share`로 1080×1080 세션 공유 카드 생성
 - `chibi-share --preset lineup`으로 제공된 PNG 캐릭터 전체 라인업 생성
+- `chibi-share --preset options`로 조청·꿀·비즈 옵션 쇼케이스 생성
 - `chibi-pack validate/preview`로 크리에이터·팀 캐릭터팩 검증
 
 무료 코어는 줄이지 않는다. 이 제품은 신뢰와 귀여움이 먼저다.
@@ -55,6 +56,7 @@
 권장 모델:
 
 - Monthly free drop: 매월 1종 무료 공개
+- Monthly free option: 조청/꿀/비즈/스프링클 같은 작은 옵션 레이어 공개
 - Direct purchase pack: 정가로 구매하는 테마팩
 - Limited collab drop: 기간 한정 브랜드/작가 콜라보
 - Contributor drop: 오픈소스 기여자 전용 배지/캐릭터
@@ -72,7 +74,7 @@
 
 구조:
 
-- 공식 캐릭터 메타 스키마 공개
+- 공식 캐릭터/옵션 메타 스키마 공개
 - PNG pack + `meta.json` validator 제공
 - 작가별 pack을 GitHub Release나 웹 카탈로그로 배포
 - 수익 배분: creator 70 / platform 30 같은 단순 모델
@@ -80,7 +82,7 @@
 
 MVP:
 
-- `chibi character pack validate <dir>` CLI
+- `chibi-pack validate <dir>` CLI
 - pack preview HTML
 - GitHub issue template: character pack submission
 
@@ -92,7 +94,7 @@ chibi-pack validate ./my-pack
 chibi-pack preview ./my-pack
 ```
 
-`meta.json`의 `characters[]` 항목은 `id`, `name_ko`, `category`, `rarity`, `tier`, PNG 이미지로 검증된다. 이 단계는 marketplace 결제를 켜기 전에도 작가·팀·브랜드 pack 품질을 표준화한다.
+`meta.json`의 `characters[]` 항목은 `id`, `name_ko`, `category`, `rarity`, `tier`, PNG 이미지로 검증된다. `options[]` 항목은 `id`, `name_ko`, `category`, `tier`, PNG 이미지로 검증된다. 이 단계는 marketplace 결제를 켜기 전에도 작가·팀·브랜드 pack 품질을 표준화한다.
 
 ### 4. Team Edition
 
@@ -116,6 +118,7 @@ chibi-audit --json
 chibi-share --out sprint-card.png
 chibi-share --preset social-preview --out social-preview.png
 chibi-share --preset lineup --out starter-lineup.png
+chibi-share --preset options --out option-showcase.png
 ```
 
 팀 유료화 전에는 이 두 결과물을 sales asset으로 쓴다. `chibi-audit`는 no telemetry, localhost-only default, state path, asset catalog, hook/plugin files를 보여주고, `chibi-share`는 팀/스프린트/릴리스 공유 카드의 초기 형태가 된다.

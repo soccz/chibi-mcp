@@ -18,7 +18,7 @@ from chibi_mcp.commercial import (
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.2"
+    assert __version__ == "1.4.3"
 
 
 def test_check_finds_packaged_assets():
@@ -39,6 +39,8 @@ def test_trust_audit_reports_local_first_defaults():
     assert report["trust"]["telemetry"] == "none"
     assert report["trust"]["localhost_only_by_default"] is True
     assert report["trust"]["paid_core_gate"] == "none"
+    assert report["assets"]["option_count"] >= 4
+    assert report["assets"]["free_options_missing"] == []
 
 
 def test_pack_validate_accepts_minimal_creator_pack(tmp_path):
@@ -163,6 +165,31 @@ def test_pack_preview_writes_html(tmp_path):
     assert "preview_tteok.png" in html
 
 
+def test_pack_validate_accepts_option_only_pack(tmp_path):
+    option_dir = tmp_path / "options"
+    option_dir.mkdir()
+    Image.new("RGBA", (256, 256), (255, 180, 20, 180)).save(option_dir / "honey_glaze.png")
+    (tmp_path / "meta.json").write_text(
+        json.dumps(
+            {
+                "options": [
+                    {
+                        "id": "honey_glaze",
+                        "name_ko": "Honey Glaze",
+                        "category": "glaze",
+                        "tier": "creator",
+                        "image": "options/honey_glaze.png",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    result = validate_pack(tmp_path)
+    assert result["ok"] is True
+    assert result["options"][0]["id"] == "honey_glaze"
+
+
 def test_share_card_writes_png(tmp_path):
     out = tmp_path / "card.png"
     result = write_share_card(
@@ -200,6 +227,21 @@ def test_lineup_preview_writes_expected_size(tmp_path):
         title="tteoki starter lineup",
         subtitle="local MCP pet",
         preset="lineup",
+    )
+    assert result["ok"] is True
+    assert result["size"] == [1600, 900]
+    with Image.open(out) as image:
+        assert image.size == (1600, 900)
+
+
+def test_options_preview_writes_expected_size(tmp_path):
+    out = tmp_path / "option-showcase.png"
+    result = write_share_card(
+        out=out,
+        character_id="white_tteok",
+        title="tteoki options",
+        subtitle="honey, jocheong, beads",
+        preset="options",
     )
     assert result["ok"] is True
     assert result["size"] == [1600, 900]

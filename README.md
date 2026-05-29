@@ -20,6 +20,10 @@ Star this repo to follow monthly character drops, VS Code builds, creator packs,
   <img src="docs/screenshots/starter-lineup.png" alt="chibi-mcp starter character lineup" width="720">
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/option-showcase.png" alt="chibi-mcp free option layers including jocheong, honey, beads, and sprinkles" width="720">
+</p>
+
 ## Install from GitHub
 
 One-command installers:
@@ -85,6 +89,7 @@ chibi-pack preview ./my-pack         # write ./my-pack/preview.html
 chibi-share --out share-card.png     # generate a 1080x1080 session share card
 chibi-share --preset social-preview --out social-preview.png
 chibi-share --preset lineup --out starter-lineup.png
+chibi-share --preset options --out option-showcase.png
 ```
 
 Now ask your client:
@@ -93,10 +98,12 @@ Now ask your client:
 > "내 치비 보여줘"
 > "뽑기 한 번"
 > "보관함 열어"
+> "조청 드립 옵션 적용해줘"
 
 ## What you get
 
 - 🍡 **8 starter characters** released now (white_tteok, garaetteok_short, baekseolgi, mochi, green_grape, melon, cheddar, toast — all ★★)
+- 🍯 **4 free option layers** released now (jocheong_drip, honey_glaze, sugar_beads, rainbow_sprinkles)
 - 🔒 **21 more characters coming later** including the ★★★★★ rainbow series, all 떡 varieties, cheeses, fruits, mandu. Catalog shows them as "???" placeholders until release.
 - 🎟 **Gacha pulls** — weighted by rarity (1% / 5% / 24% / 70%)
 - 📦 **Collection** — see what you've got, switch active character, rename them
@@ -117,7 +124,7 @@ The remaining 21 characters are catalog placeholders for future drops; release t
 
 chibi-mcp is positioned as an **AI coding companion identity layer**: a local MCP pet that can grow into character drops, creator packs, team distribution, brand collaborations, and desk-culture goods without reducing the free core.
 
-The base product stays free: Pet / Notification / Widget / VTuber modes, MCP tools, system status, starter characters, and local state are not commercial gates. Paid options, if later approved, should be cosmetics, direct-purchase packs, team support, signed/offline bundles, collaborations, or physical goods.
+The base product stays free: Pet / Notification / Widget / VTuber modes, MCP tools, system status, starter characters, option layers, and local state are not commercial gates. Paid offerings, if later approved, should be cosmetics, direct-purchase packs, team support, signed/offline bundles, collaborations, or physical goods.
 
 See [COMMERCIAL_STRATEGY.md](COMMERCIAL_STRATEGY.md) for the commercial expansion plan and [GITHUB_STAR_STRATEGY.md](GITHUB_STAR_STRATEGY.md) for the source-backed GitHub growth plan.
 
@@ -138,6 +145,8 @@ The first commercial-product surfaces are already executable:
 | `pull_gacha` | Pull one character (1 free/day, else 1 ticket) |
 | `get_inventory` | Owned characters + ticket balance |
 | `set_active_character(id)` | Switch the active 치비 |
+| `get_options` | Free visual option layers such as 조청, honey, beads, sprinkles |
+| `set_active_options([ids])` / `clear_active_options` | Apply up to 3 free option layers |
 | `rename_character(id, nickname)` | Rename a 치비 you own |
 | `open_pet_window` / `close_pet_window` | Spawn or close the floating tk window |
 | `get_catalog` / `get_license_status` | Catalog (license-filtered) + tier status |
@@ -191,7 +200,7 @@ chibi-mcp/
 ├── COMMERCIAL_STRATEGY.md       # expansion model, revenue surfaces, guardrails
 ├── GITHUB_STAR_STRATEGY.md      # README, topics, community, launch loop
 ├── scripts/                     # install + verification scripts
-├── assets/                      # starter PNG assets + catalog meta.json
+├── assets/                      # starter PNG assets, option layers + catalog meta.json
 ├── server/                      # Python MCP server package
 └── server-rs/                   # (optional) Rust rewrite, same protocol
 ```

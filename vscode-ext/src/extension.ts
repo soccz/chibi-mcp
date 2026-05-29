@@ -20,8 +20,17 @@ interface Character {
     tier?: "free" | "upcoming";
 }
 
+interface OptionLayer {
+    id: string;
+    name_ko: string;
+    category: string;
+    tier?: "free" | "upcoming";
+    image?: string;
+}
+
 interface Catalog {
     characters: Character[];
+    options?: OptionLayer[];
 }
 
 interface OwnedEntry {
@@ -33,6 +42,7 @@ interface OwnedEntry {
 interface Inventory {
     owned: Record<string, OwnedEntry>;
     active_id: string | null;
+    active_options: string[];
     tickets: number;
     first_launch: boolean;
     last_daily: string | null;
@@ -45,6 +55,7 @@ function defaultInventory(): Inventory {
     return {
         owned: {},
         active_id: null,
+        active_options: [],
         tickets: 1, // welcome ticket
         first_launch: true,
         last_daily: null,
@@ -58,7 +69,9 @@ function loadCatalog(context: vscode.ExtensionContext): Catalog {
 }
 
 function loadInventory(context: vscode.ExtensionContext): Inventory {
-    return context.globalState.get<Inventory>("inventory") ?? defaultInventory();
+    const inv = context.globalState.get<Inventory>("inventory") ?? defaultInventory();
+    if (!Array.isArray(inv.active_options)) inv.active_options = [];
+    return inv;
 }
 
 function saveInventory(context: vscode.ExtensionContext, inv: Inventory) {
@@ -67,6 +80,10 @@ function saveInventory(context: vscode.ExtensionContext, inv: Inventory) {
 
 function releasedCharacters(catalog: Catalog): Character[] {
     return catalog.characters.filter((c) => c.tier === "free");
+}
+
+function releasedOptions(catalog: Catalog): OptionLayer[] {
+    return (catalog.options ?? []).filter((o) => o.tier === "free");
 }
 
 function drawGacha(catalog: Catalog): Character {
@@ -155,6 +172,8 @@ class PetViewProvider implements vscode.WebviewViewProvider {
             const inv = loadInventory(this.context);
             if (msg.type === "gacha") this.runGacha(inv);
             else if (msg.type === "select") this.selectActive(inv, msg.id);
+            else if (msg.type === "option-toggle") this.toggleOption(inv, msg.id);
+            else if (msg.type === "clear-options") this.clearOptions(inv);
             else if (msg.type === "rename") this.renameOne(inv, msg.id, msg.nickname);
             else if (msg.type === "ready") this.refresh();
         });
@@ -222,6 +241,26 @@ class PetViewProvider implements vscode.WebviewViewProvider {
         saveInventory(this.context, inv).then(() => this.refresh());
     }
 
+    private toggleOption(inv: Inventory, id: string): void {
+        const exists = releasedOptions(this.catalog).some((option) => option.id === id);
+        if (!exists) return;
+        const current = inv.active_options ?? [];
+        if (current.includes(id)) {
+            inv.active_options = current.filter((optionId) => optionId !== id);
+        } else if (current.length < 3) {
+            inv.active_options = [...current, id];
+        } else {
+            this.postToast("옵션은 최대 3개");
+            return;
+        }
+        saveInventory(this.context, inv).then(() => this.refresh());
+    }
+
+    private clearOptions(inv: Inventory): void {
+        inv.active_options = [];
+        saveInventory(this.context, inv).then(() => this.refresh());
+    }
+
     grantTicket(label: string): void {
         const inv = loadInventory(this.context);
         inv.tickets += 1;
@@ -242,9 +281,12 @@ class PetViewProvider implements vscode.WebviewViewProvider {
 :root { color-scheme: dark; }
 body { margin: 0; padding: 12px; font-family: var(--vscode-font-family); color: var(--vscode-foreground); }
 .pet { text-align: center; padding: 16px 0; }
-.pet img { max-width: 180px; height: auto; cursor: pointer; transition: transform 0.3s; }
-.pet img:hover { transform: scale(1.04); }
-.pet img.squish { animation: squish 0.45s ease-out 1; }
+.pet-stage { position: relative; width: 180px; height: 180px; margin: 0 auto; display: grid; place-items: center; }
+.pet-stage img { position: absolute; max-width: 180px; max-height: 180px; object-fit: contain; }
+#active-img { z-index: 1; cursor: pointer; transition: transform 0.3s; }
+#active-img:hover { transform: scale(1.04); }
+#active-img.squish { animation: squish 0.45s ease-out 1; }
+.pet-option { z-index: 2; pointer-events: none; }
 @keyframes squish { 0%,100%{transform:scaleX(1) scaleY(1)} 35%{transform:scaleX(1.18) scaleY(0.78)} 70%{transform:scaleX(0.95) scaleY(1.05)} }
 .pet .name { margin-top: 8px; font-weight: 600; }
 .pet .rarity { font-size: 11px; opacity: 0.7; margin-top: 2px; letter-spacing: 1px; }
@@ -254,10 +296,12 @@ body { margin: 0; padding: 12px; font-family: var(--vscode-font-family); color: 
 .actions button { flex: 1; padding: 7px; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; }
 .actions button:hover { background: var(--vscode-button-hoverBackground); }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 300px; overflow-y: auto; }
+.option-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
 .cell { background: var(--vscode-editor-inactiveSelectionBackground); border: 1.5px solid transparent; border-radius: 8px; padding: 6px 3px; text-align: center; cursor: pointer; transition: transform 0.12s; }
 .cell.owned:hover { transform: translateY(-1px); }
+.cell.option:hover { transform: translateY(-1px); }
 .cell.locked { opacity: 0.4; cursor: default; }
-.cell.active { border-color: var(--vscode-focusBorder); }
+.cell.active, .cell.option-active { border-color: var(--vscode-focusBorder); }
 .cell img { width: 48px; height: 48px; object-fit: contain; }
 .cell .locked-icon { width: 48px; height: 48px; line-height: 48px; color: var(--vscode-descriptionForeground); font-size: 20px; }
 .cell .cname { font-size: 10px; margin-top: 2px; }
@@ -270,7 +314,9 @@ h3 { margin: 12px 0 6px; font-size: 12px; opacity: 0.75; text-transform: upperca
 <body>
 <div id="root">
   <div class="pet">
-    <img id="active-img" src="" alt="">
+    <div class="pet-stage" id="active-stage">
+      <img id="active-img" src="" alt="">
+    </div>
     <div class="name" id="active-name">—</div>
     <div class="rarity" id="active-rarity"></div>
   </div>
@@ -280,7 +326,10 @@ h3 { margin: 12px 0 6px; font-size: 12px; opacity: 0.75; text-transform: upperca
   </div>
   <div class="actions">
     <button id="btn-gacha">🎟 뽑기</button>
+    <button id="btn-clear-options">옵션 해제</button>
   </div>
+  <h3>옵션</h3>
+  <div class="option-grid" id="option-grid"></div>
   <h3>내 친구들</h3>
   <div class="grid" id="grid"></div>
 </div>
@@ -306,19 +355,45 @@ function esc(value) {
 function render() {
   if (!catalog || !inventory) return;
   const ownedIds = Object.keys(inventory.owned);
+  const activeOptions = Array.isArray(inventory.active_options) ? inventory.active_options : [];
   document.getElementById("owned-count").textContent = ownedIds.length;
   document.getElementById("tickets").textContent = inventory.tickets;
   const active = inventory.active_id ? catalog.characters.find(c => c.id === inventory.active_id) : null;
   const img = document.getElementById("active-img");
+  const stage = document.getElementById("active-stage");
+  stage.querySelectorAll(".pet-option").forEach((node) => node.remove());
   if (active) {
     img.src = charsBase + "/" + active.id + ".png";
     document.getElementById("active-name").textContent = inventory.owned[active.id].nickname;
     document.getElementById("active-rarity").textContent = rarityStars(active.rarity);
+    for (const optionId of activeOptions) {
+      const option = (catalog.options || []).find(o => o.id === optionId);
+      if (!option) continue;
+      const optionImg = document.createElement("img");
+      optionImg.className = "pet-option";
+      optionImg.src = charsBase + "/" + (option.image || ("options/" + option.id + ".png"));
+      optionImg.alt = "";
+      stage.appendChild(optionImg);
+    }
   } else {
     img.removeAttribute("src");
     document.getElementById("active-name").textContent = "친구 없음";
     document.getElementById("active-rarity").textContent = "";
   }
+
+  const optionGrid = document.getElementById("option-grid");
+  optionGrid.innerHTML = "";
+  for (const option of (catalog.options || [])) {
+    if (option.tier !== "free") continue;
+    const active = activeOptions.includes(option.id);
+    const cell = document.createElement("div");
+    cell.className = "cell option " + (active ? "option-active" : "");
+    const src = charsBase + "/" + (option.image || ("options/" + option.id + ".png"));
+    cell.innerHTML = \`<img src="\${src}" alt="\${esc(option.name_ko)}"><div class="cname">\${esc(option.name_ko || option.id)}</div>\`;
+    cell.onclick = () => vscode.postMessage({ type: "option-toggle", id: option.id });
+    optionGrid.appendChild(cell);
+  }
+
   // grid
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
@@ -342,6 +417,10 @@ function render() {
 
 document.getElementById("btn-gacha").addEventListener("click", () => {
   vscode.postMessage({ type: "gacha" });
+});
+
+document.getElementById("btn-clear-options").addEventListener("click", () => {
+  vscode.postMessage({ type: "clear-options" });
 });
 
 document.getElementById("active-img").addEventListener("click", () => {

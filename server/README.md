@@ -42,6 +42,7 @@ chibi-pack preview ./my-pack
 chibi-share --out share-card.png
 chibi-share --preset social-preview --out social-preview.png
 chibi-share --preset lineup --out starter-lineup.png
+chibi-share --preset options --out option-showcase.png
 ```
 
 ## MCP tools
@@ -52,6 +53,8 @@ chibi-share --preset lineup --out starter-lineup.png
 | `pet_say(text)` | Make tteoki say something in a speech bubble. |
 | `slice_now` | Force a slice (resets the lengthen cycle, fires a slice event). |
 | `set_slice_interval(n)` | Change how often (every N Claude tool calls) the auto-slice fires. Default: 10. |
+| `get_options` | List free visual option layers such as jocheong, honey, beads, and sprinkles. |
+| `set_active_options([ids])` / `clear_active_options` | Apply or clear up to 3 free option layers. |
 
 ## WebSocket protocol (server → desktop)
 

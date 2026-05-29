@@ -232,5 +232,39 @@
       "tier": "upcoming",
       "locked": true
     }
+  ],
+  "options": [
+    {
+      "id": "jocheong_drip",
+      "name_ko": "조청 드립",
+      "category": "glaze",
+      "tier": "free",
+      "image": "options/jocheong_drip.png",
+      "description": "Warm rice syrup drips for garaetteok-style time flow."
+    },
+    {
+      "id": "honey_glaze",
+      "name_ko": "꿀 글레이즈",
+      "category": "glaze",
+      "tier": "free",
+      "image": "options/honey_glaze.png",
+      "description": "Glossy honey highlights for a softer dessert look."
+    },
+    {
+      "id": "sugar_beads",
+      "name_ko": "슈가 비즈",
+      "category": "topping",
+      "tier": "free",
+      "image": "options/sugar_beads.png",
+      "description": "Pastel candy beads inspired by artisan keycap inserts."
+    },
+    {
+      "id": "rainbow_sprinkles",
+      "name_ko": "레인보우 스프링클",
+      "category": "topping",
+      "tier": "free",
+      "image": "options/rainbow_sprinkles.png",
+      "description": "Small colorful sprinkles for share-card-friendly character variants."
+    }
   ]
 }

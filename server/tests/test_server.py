@@ -4,12 +4,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from chibi_mcp import state as state_mod
 from chibi_mcp.server import (
     MAX_SAY_LEN,
     _resolve_asset_dir,
     _sanitize_say,
     _window_runtime_issue,
+    clear_active_options,
+    get_options,
+    set_active_options,
 )
+from chibi_mcp.state import get_state, reset_state_for_tests
 
 
 def test_sanitize_short_text_passthrough():
@@ -52,6 +57,29 @@ def test_asset_dir_resolves_for_direct_mcp_installs():
     asset_dir = _resolve_asset_dir()
     assert asset_dir is not None
     assert (Path(asset_dir) / "meta.json").exists()
+
+
+def test_options_catalog_exposes_free_layers():
+    result = get_options()
+    ids = {option["id"] for option in result["options"]}
+    assert {"jocheong_drip", "honey_glaze", "sugar_beads", "rainbow_sprinkles"} <= ids
+    assert all(option["image_exists"] for option in result["options"])
+
+
+def test_set_active_options_persists_selection(tmp_path, monkeypatch):
+    monkeypatch.setattr(state_mod, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "state.json")
+    reset_state_for_tests()
+    try:
+        result = set_active_options(["jocheong_drip", "sugar_beads"])
+        assert result["ok"] is True
+        assert get_state().active_option_ids == ["jocheong_drip", "sugar_beads"]
+
+        result = clear_active_options()
+        assert result["ok"] is True
+        assert get_state().active_option_ids == []
+    finally:
+        reset_state_for_tests()
 
 
 def test_window_runtime_issue_reports_missing_tkinter(monkeypatch):

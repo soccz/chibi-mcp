@@ -123,9 +123,9 @@ def share_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, help="Output PNG path")
     parser.add_argument(
         "--preset",
-        choices=("square", "social-preview", "lineup"),
+        choices=("square", "social-preview", "lineup", "options"),
         default="square",
-        help="Card dimensions: square=1080x1080, social-preview=1280x640, lineup=1600x900",
+        help="Card dimensions: square=1080x1080, social-preview=1280x640, lineup/options=1600x900",
     )
     parser.add_argument("--character", default=None, help="Character id to render")
     parser.add_argument("--title", default="tteoki coding recap")
@@ -140,6 +140,7 @@ def share_main(argv: list[str] | None = None) -> int:
         "square": "share-card.png",
         "social-preview": "social-preview.png",
         "lineup": "starter-lineup.png",
+        "options": "option-showcase.png",
     }
     default_name = default_names[args.preset]
     out = args.out or (Path.home() / ".chibi-mcp" / default_name)
@@ -230,8 +231,20 @@ def build_trust_audit() -> dict[str, Any]:
                     image = _resolve_character_image(Path(asset_dir), character)
                     if image is None:
                         free_assets_missing.append(str(character.get("id", "<missing-id>")))
+            options = catalog.get("options", [])
+            free_options_missing = []
+            for option in options:
+                if option.get("tier") == "free":
+                    image = _resolve_character_image(Path(asset_dir), option, subdir="options")
+                    if image is None:
+                        free_options_missing.append(str(option.get("id", "<missing-id>")))
         except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             free_assets_missing.append("meta.json")
+            options = []
+            free_options_missing = ["meta.json"]
+    else:
+        options = []
+        free_options_missing = []
 
     entrypoints = {
         name: shutil.which(name)
@@ -265,7 +278,9 @@ def build_trust_audit() -> dict[str, Any]:
         "assets": {
             "asset_dir": asset_dir,
             "catalog_count": catalog_count,
+            "option_count": len(options),
             "free_assets_missing": free_assets_missing,
+            "free_options_missing": free_options_missing,
         },
         "entrypoints": entrypoints,
         "project_files": hook_files,
@@ -283,6 +298,7 @@ def validate_pack(pack_dir: Path) -> dict[str, Any]:
     errors: list[str] = []
     warnings: list[str] = []
     characters_out: list[dict[str, Any]] = []
+    options_out: list[dict[str, Any]] = []
 
     meta_path = pack_dir / "meta.json"
     if not pack_dir.exists():
@@ -297,9 +313,14 @@ def validate_pack(pack_dir: Path) -> dict[str, Any]:
     except OSError as exc:
         return _pack_result(pack_dir, errors=[f"cannot read meta.json: {exc}"])
 
-    characters = catalog.get("characters")
-    if not isinstance(characters, list) or not characters:
-        return _pack_result(pack_dir, errors=["meta.json must contain a non-empty characters list"])
+    characters = catalog.get("characters", [])
+    options = catalog.get("options", [])
+    if not isinstance(characters, list):
+        return _pack_result(pack_dir, errors=["meta.json characters must be a list"])
+    if not isinstance(options, list):
+        return _pack_result(pack_dir, errors=["meta.json options must be a list"])
+    if not characters and not options:
+        return _pack_result(pack_dir, errors=["meta.json must contain characters or options"])
 
     seen: set[str] = set()
     for index, character in enumerate(characters):
@@ -357,11 +378,60 @@ def validate_pack(pack_dir: Path) -> dict[str, Any]:
             }
         )
 
+    seen_options: set[str] = set()
+    for index, option in enumerate(options):
+        prefix = f"options[{index}]"
+        if not isinstance(option, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+
+        option_id = str(option.get("id", "")).strip()
+        if not CHARACTER_ID_RE.fullmatch(option_id):
+            errors.append(f"{prefix}.id must match {CHARACTER_ID_RE.pattern!r}")
+            continue
+        if option_id in seen_options:
+            errors.append(f"{prefix}.id duplicates {option_id!r}")
+        seen_options.add(option_id)
+
+        name = str(option.get("name_ko") or option.get("name") or "").strip()
+        if not name:
+            errors.append(f"{prefix}.name_ko is required")
+
+        category = str(option.get("category", "")).strip()
+        if not CATEGORY_RE.fullmatch(category):
+            errors.append(f"{prefix}.category must be a lowercase slug")
+
+        tier = str(option.get("tier", "creator")).strip()
+        if tier not in VALID_TIERS:
+            warnings.append(f"{prefix}.tier {tier!r} is unusual; expected one of {sorted(VALID_TIERS)}")
+
+        locked = bool(option.get("locked"))
+        image_path = _resolve_character_image(pack_dir, option, errors=errors, prefix=prefix, subdir="options")
+        if image_path is None:
+            if locked or tier == "upcoming":
+                warnings.append(f"{prefix} is locked/upcoming and has no image")
+            else:
+                errors.append(f"{prefix} image is missing; add image or options/{option_id}.png")
+        else:
+            _validate_png(prefix, image_path, errors, warnings)
+
+        options_out.append(
+            {
+                "id": option_id,
+                "name": name,
+                "category": category,
+                "tier": tier,
+                "locked": locked,
+                "image": str(image_path) if image_path else None,
+            }
+        )
+
     return _pack_result(
         pack_dir,
         errors=errors,
         warnings=warnings,
         characters=characters_out,
+        options=options_out,
     )
 
 
@@ -370,30 +440,11 @@ def write_pack_preview(validation: dict[str, Any], out: Path) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     cards = []
     for character in validation["characters"]:
-        image_path = character.get("image")
-        src = ""
-        if image_path:
-            src = os.path.relpath(image_path, out.parent)
-            media = f'  <img src="{html.escape(src)}" alt="{html.escape(character["id"])}">'
-        else:
-            media = '  <div class="placeholder">???</div>'
-        cards.append(
-            "\n".join(
-                [
-                    '<article class="card">',
-                    media,
-                    f'  <h2>{html.escape(character["name"] or character["id"])}</h2>',
-                    (
-                        "  <p>"
-                        f'{html.escape(character["id"])} · '
-                        f'{html.escape(character["category"])} · '
-                        f'★{int(character["rarity"])}'
-                        "</p>"
-                    ),
-                    "</article>",
-                ]
-            )
-        )
+        detail = f'{character["id"]} | {character["category"]} | star {int(character["rarity"])}'
+        cards.append(_pack_preview_card(character, out.parent, detail))
+    for option in validation.get("options", []):
+        detail = f'{option["id"]} | {option["category"]} | option'
+        cards.append(_pack_preview_card(option, out.parent, detail))
     body = "\n".join(cards)
     html_doc = f"""<!doctype html>
 <html lang="en">
@@ -486,6 +537,24 @@ def write_pack_preview(validation: dict[str, Any], out: Path) -> None:
     out.write_text(html_doc, encoding="utf-8")
 
 
+def _pack_preview_card(item: dict[str, Any], base_dir: Path, detail: str) -> str:
+    image_path = item.get("image")
+    if image_path:
+        src = os.path.relpath(image_path, base_dir)
+        media = f'  <img src="{html.escape(src)}" alt="{html.escape(item["id"])}">'
+    else:
+        media = '  <div class="placeholder">???</div>'
+    return "\n".join(
+        [
+            '<article class="card">',
+            media,
+            f'  <h2>{html.escape(item["name"] or item["id"])}</h2>',
+            f"  <p>{html.escape(detail)}</p>",
+            "</article>",
+        ]
+    )
+
+
 def write_share_card(
     *,
     out: Path,
@@ -510,7 +579,7 @@ def write_share_card(
 
     if preset == "social-preview":
         width, height = 1280, 640
-    elif preset == "lineup":
+    elif preset in {"lineup", "options"}:
         width, height = 1600, 900
     else:
         width = height = 1080
@@ -538,6 +607,21 @@ def write_share_card(
         )
     elif preset == "lineup":
         _draw_lineup_share_card(
+            image=image,
+            draw=draw,
+            asset_path=asset_path,
+            title=title,
+            subtitle=subtitle,
+            mood=mood,
+            counters=counters,
+            gacha=gacha,
+            title_font=title_font,
+            subtitle_font=subtitle_font,
+            metric_font=metric_font,
+            small_font=small_font,
+        )
+    elif preset == "options":
+        _draw_options_share_card(
             image=image,
             draw=draw,
             asset_path=asset_path,
@@ -649,7 +733,7 @@ def _draw_social_preview_card(
         ("tickets", str(gacha["tickets"])),
     ]
     x0 = 106
-    value_font = _load_font(27, bold=True)
+    value_font = _load_font(24, bold=True)
     for label, value in metrics:
         draw.rounded_rectangle((x0, 418, x0 + 150, 505), radius=16, fill="#f8fafc", outline="#dbeafe")
         draw.text((x0 + 16, 432), label, fill="#64748b", font=small_font)
@@ -742,9 +826,88 @@ def _draw_lineup_share_card(
     draw.text((116, height - 88), _fit_text(draw, footer, small_font, 1260), fill="#64748b", font=small_font)
 
 
-def _paste_pet(image: Image.Image, asset_path: Path, *, max_size: tuple[int, int], center: tuple[int, int]) -> None:
+def _draw_options_share_card(
+    *,
+    image: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    asset_path: Path,
+    title: str,
+    subtitle: str,
+    mood: str,
+    counters: dict[str, Any],
+    gacha: dict[str, Any],
+    title_font: ImageFont.ImageFont,
+    subtitle_font: ImageFont.ImageFont,
+    metric_font: ImageFont.ImageFont,
+    small_font: ImageFont.ImageFont,
+) -> None:
+    width, height = image.size
+    draw.rounded_rectangle(
+        (42, 42, width - 42, height - 42),
+        radius=34,
+        fill="#ffffff",
+        outline="#fed7aa",
+        width=4,
+    )
+    draw.rounded_rectangle((82, 78, 1080, 174), radius=22, fill="#0f766e")
+    draw.text((116, 96), _fit_text(draw, title, title_font, 900), fill="#ffffff", font=title_font)
+    draw.text((116, 206), _fit_text(draw, subtitle, subtitle_font, 1200), fill="#475569", font=subtitle_font)
+    draw.text((116, 268), "Free option layers: syrup, honey, beads, and sprinkles", fill="#1f2937", font=metric_font)
+    draw.text(
+        (116, 316),
+        f"calls {counters['calls_total']} | slices {counters['slices_today']} | mood {mood} | tickets {gacha['tickets']}",
+        fill="#64748b",
+        font=small_font,
+    )
+
+    options = _load_catalog_option_assets(asset_path.parent)[:4]
+    if not options:
+        options = [
+            {
+                "id": "none",
+                "name": "No options found",
+                "category": "option",
+                "image": None,
+            }
+        ]
+
+    start_x = 98
+    start_y = 390
+    tile_w = 332
+    tile_h = 332
+    gap_x = 34
+    label_font = _load_font(24, bold=True)
+    detail_font = _load_font(21)
+    for index, option in enumerate(options):
+        x = start_x + index * (tile_w + gap_x)
+        y = start_y
+        draw.rounded_rectangle((x, y, x + tile_w, y + tile_h), radius=20, fill="#f8fafc", outline="#dbeafe")
+        draw.ellipse((x + 56, y + 34, x + 276, y + 254), fill="#ffedd5", outline="#fed7aa", width=3)
+        option_paths = [option["image"]] if option.get("image") else []
+        _paste_pet(image, asset_path, max_size=(190, 190), center=(x + tile_w // 2, y + 144), option_paths=option_paths)
+        label = str(option["id"]).replace("_", " ")
+        draw.text((x + 34, y + 252), _fit_text(draw, label, label_font, 264), fill="#1f2937", font=label_font)
+        detail = f"{option['category']} | free option"
+        draw.text((x + 34, y + 288), _fit_text(draw, detail, detail_font, 264), fill="#0f766e", font=detail_font)
+
+    footer = f"chibi-mcp {__version__} | option layers are free cosmetics | no telemetry"
+    draw.text((116, height - 88), _fit_text(draw, footer, small_font, 1260), fill="#64748b", font=small_font)
+
+
+def _paste_pet(
+    image: Image.Image,
+    asset_path: Path,
+    *,
+    max_size: tuple[int, int],
+    center: tuple[int, int],
+    option_paths: list[Path] | None = None,
+) -> None:
     with Image.open(asset_path) as pet:
         pet = pet.convert("RGBA")
+        for option_path in option_paths or []:
+            with Image.open(option_path) as option:
+                overlay = option.convert("RGBA").resize(pet.size, Image.Resampling.LANCZOS)
+                pet.alpha_composite(overlay)
         pet.thumbnail(max_size, Image.Resampling.LANCZOS)
         x = center[0] - pet.width // 2
         y = center[1] - pet.height // 2
@@ -805,6 +968,44 @@ def _load_catalog_character_assets(asset_dir: Path) -> list[dict[str, Any]]:
     ]
 
 
+def _load_catalog_option_assets(asset_dir: Path) -> list[dict[str, Any]]:
+    asset_dir = asset_dir.resolve()
+    meta_path = asset_dir / "meta.json"
+    options: list[dict[str, Any]] = []
+    try:
+        catalog = json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        catalog = {"options": []}
+
+    for option in catalog.get("options", []):
+        if not isinstance(option, dict) or option.get("tier") != "free":
+            continue
+        image_path = _resolve_character_image(asset_dir, option, subdir="options")
+        if image_path is None:
+            continue
+        option_id = str(option.get("id", image_path.stem)).strip() or image_path.stem
+        options.append(
+            {
+                "id": option_id,
+                "name": str(option.get("name_ko") or option_id),
+                "category": str(option.get("category", "option")),
+                "image": image_path,
+            }
+        )
+
+    if options:
+        return options
+    return [
+        {
+            "id": path.stem,
+            "name": path.stem,
+            "category": "option",
+            "image": path,
+        }
+        for path in sorted((asset_dir / "options").glob("*.png"))
+    ]
+
+
 def _fit_text(
     draw: ImageDraw.ImageDraw,
     text: str,
@@ -839,7 +1040,9 @@ def _format_audit(report: dict[str, Any]) -> str:
             f"state_file: {report['trust']['state_file']}",
             f"asset_dir: {report['assets']['asset_dir']}",
             f"catalog_count: {report['assets']['catalog_count']}",
+            f"option_count: {report['assets']['option_count']}",
             f"free_assets_missing: {report['assets']['free_assets_missing']}",
+            f"free_options_missing: {report['assets']['free_options_missing']}",
             f"entrypoints_found: {found_entrypoints}",
             f"project_files_found: {found_files}",
         ]
@@ -851,6 +1054,7 @@ def _format_pack_validation(result: dict[str, Any]) -> str:
         f"pack: {result['pack_dir']}",
         f"ok: {result['ok']}",
         f"characters: {len(result['characters'])}",
+        f"options: {len(result['options'])}",
     ]
     for warning in result["warnings"]:
         lines.append(f"warning: {warning}")
@@ -865,6 +1069,7 @@ def _pack_result(
     errors: list[str] | None = None,
     warnings: list[str] | None = None,
     characters: list[dict[str, Any]] | None = None,
+    options: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     errors = errors or []
     return {
@@ -873,6 +1078,7 @@ def _pack_result(
         "errors": errors,
         "warnings": warnings or [],
         "characters": characters or [],
+        "options": options or [],
     }
 
 
@@ -882,6 +1088,7 @@ def _resolve_character_image(
     *,
     errors: list[str] | None = None,
     prefix: str = "character",
+    subdir: str = "characters",
 ) -> Path | None:
     image_value = character.get("image")
     candidates: list[Path] = []
@@ -896,7 +1103,7 @@ def _resolve_character_image(
     character_id = str(character.get("id", "")).strip()
     if character_id:
         candidates.append(pack_dir / f"{character_id}.png")
-        candidates.append(pack_dir / "characters" / f"{character_id}.png")
+        candidates.append(pack_dir / subdir / f"{character_id}.png")
     for candidate in candidates:
         resolved = candidate.resolve()
         if candidate.exists() and resolved.is_relative_to(pack_dir):

@@ -41,6 +41,7 @@ Star conversion에 필요한 시각 자료:
 - 1280x640 GitHub social preview image
 - 1080x1080 share card: "오늘 7도막 잘림"
 - 1600x900 starter lineup generated from the project PNG assets
+- 1600x900 option showcase generated from free topping/glaze PNG layers
 - VS Code sidebar screenshot
 - Claude Code `/chibi` screenshot
 - Codex terminal screenshot
@@ -49,9 +50,10 @@ Star conversion에 필요한 시각 자료:
 
 1. `assets/social-preview.png`
 2. `docs/screenshots/starter-lineup.png`
-3. `docs/demo.gif`
-4. `docs/screenshots/claude-code.png`
-5. `docs/screenshots/vscode-sidebar.png`
+3. `docs/screenshots/option-showcase.png`
+4. `docs/demo.gif`
+5. `docs/screenshots/claude-code.png`
+6. `docs/screenshots/vscode-sidebar.png`
 
 현재 실행 가능한 시작점:
 
@@ -59,10 +61,11 @@ Star conversion에 필요한 시각 자료:
 chibi-share --out docs/screenshots/share-card.png
 chibi-share --preset social-preview --out assets/social-preview.png
 chibi-share --preset lineup --out docs/screenshots/starter-lineup.png
+chibi-share --preset options --out docs/screenshots/option-showcase.png
 chibi-pack preview ./example-pack --out docs/screenshots/pack-preview.html
 ```
 
-실제 demo GIF는 수동 녹화가 필요하지만, share card, social preview, starter lineup, pack preview는 repo 안에서 즉시 생성 가능하다.
+실제 demo GIF는 수동 녹화가 필요하지만, share card, social preview, starter lineup, option showcase, pack preview는 repo 안에서 즉시 생성 가능하다.
 
 ### 3. Topics for Discovery
 
@@ -113,6 +116,7 @@ People star projects they want to come back to. chibi-mcp needs repeatable momen
 - "CI 실패 시무룩"
 - "release tag 반짝"
 - "월간 떡 drop"
+- "이번 달 옵션 토핑"
 - "contributor-only badge"
 
 The first paid-looking feature should not be paid. It should be a shareable, local-only artifact that proves the product is alive.

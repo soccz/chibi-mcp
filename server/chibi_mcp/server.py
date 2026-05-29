@@ -17,9 +17,10 @@ from fastmcp import FastMCP
 from .state import _seconds_until_midnight, get_state
 from .ws_server import get_broadcaster
 
-# Character ids are tightly controlled — catalog-defined slugs only.
-# Any external string passed as `character_id` is validated against this.
+# Catalog ids are tightly controlled — catalog-defined slugs only.
+# Any external string passed as a character/option id is validated against this.
 _CHAR_ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,40}$")
+MAX_ACTIVE_OPTIONS = 3
 
 log = logging.getLogger(__name__)
 
@@ -234,9 +235,94 @@ def get_catalog() -> dict:
         "tier": status.tier,
         "total_in_tier": len(filtered.get("characters", [])),
         "total_full": len(catalog.get("characters", [])),
+        "total_options": len(filtered.get("options", [])),
         "characters": filtered.get("characters", []),
+        "options": filtered.get("options", []),
         "asset_dir": asset_dir,
     }
+
+
+@mcp.tool()
+def get_options() -> dict:
+    """Return free visual option layers such as honey, jocheong, and beads."""
+    catalog = get_catalog()
+    asset_dir = catalog.get("asset_dir")
+    state = get_state()
+    options: list[dict] = []
+    if asset_dir:
+        for option in catalog.get("options", []):
+            option_id = str(option.get("id", "")).strip()
+            if not _CHAR_ID_RE.match(option_id):
+                continue
+            image_path = _resolve_catalog_image(asset_dir, option, "options")
+            options.append(
+                {
+                    **option,
+                    "image_exists": image_path is not None,
+                    "image_path": str(image_path) if image_path else None,
+                }
+            )
+    return {
+        "total": len(options),
+        "max_active": MAX_ACTIVE_OPTIONS,
+        "active_option_ids": list(state.active_option_ids),
+        "options": options,
+    }
+
+
+@mcp.tool()
+def set_active_options(option_ids: list[str]) -> dict:
+    """Choose up to three free visual option layers for the floating pet."""
+    if not isinstance(option_ids, list):
+        return {"ok": False, "reason": "option_ids must be a list"}
+    cleaned: list[str] = []
+    for option_id in option_ids:
+        option_id = str(option_id).strip()
+        if not option_id:
+            continue
+        if not _CHAR_ID_RE.match(option_id):
+            return {"ok": False, "reason": f"invalid option id: {option_id!r}"}
+        cleaned.append(option_id)
+    if len(cleaned) > MAX_ACTIVE_OPTIONS:
+        return {"ok": False, "reason": f"choose at most {MAX_ACTIVE_OPTIONS} active options"}
+
+    options = get_options()
+    available = {option["id"] for option in options["options"] if option.get("image_exists")}
+    state = get_state()
+    result = state.set_active_options(cleaned, available)
+    if result.get("ok") and _WINDOW_PID_FILE.exists():
+        try:
+            open_pet_window()
+        except Exception as e:
+            log.warning("window reopen after set_active_options failed: %s", e)
+    return result
+
+
+@mcp.tool()
+def clear_active_options() -> dict:
+    """Remove all visual option layers from the floating pet."""
+    return set_active_options([])
+
+
+def _resolve_catalog_image(asset_dir: str, item: dict, subdir: str) -> Path | None:
+    asset_root = Path(asset_dir).resolve()
+    item_id = str(item.get("id", "")).strip()
+    candidates: list[Path] = []
+    image_value = item.get("image")
+    if image_value:
+        explicit = (asset_root / str(image_value)).resolve()
+        if explicit != asset_root and asset_root in explicit.parents:
+            candidates.append(explicit)
+        else:
+            return None
+    if item_id:
+        candidates.append(asset_root / f"{item_id}.png")
+        candidates.append(asset_root / subdir / f"{item_id}.png")
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved.exists() and resolved != asset_root and asset_root in resolved.parents:
+            return resolved
+    return None
 
 
 def _kill_existing_window() -> None:
@@ -323,12 +409,23 @@ def open_pet_window(character_id: str | None = None) -> dict:
     safe_id = ch["id"]
     if not _CHAR_ID_RE.match(safe_id):
         return {"opened": False, "reason": f"unsafe character id: {safe_id!r}"}
-    image_path = (Path(asset_dir) / f"{safe_id}.png").resolve()
-    asset_root = Path(asset_dir).resolve()
-    if asset_root not in image_path.parents:
-        return {"opened": False, "reason": "image path escapes asset_dir"}
-    if not image_path.exists():
-        return {"opened": False, "reason": f"image not found: {image_path}"}
+    image_path = _resolve_catalog_image(asset_dir, ch, "characters")
+    if image_path is None:
+        return {"opened": False, "reason": f"image not found for {safe_id!r}"}
+
+    options_by_id = {
+        option["id"]: option
+        for option in catalog.get("options", [])
+        if isinstance(option, dict) and _CHAR_ID_RE.match(str(option.get("id", "")))
+    }
+    option_images: list[tuple[str, Path]] = []
+    for option_id in snap["gacha"].get("active_option_ids", []):
+        option = options_by_id.get(option_id)
+        if not option:
+            continue
+        option_path = _resolve_catalog_image(asset_dir, option, "options")
+        if option_path:
+            option_images.append((option_id, option_path))
 
     runtime_issue = _window_runtime_issue()
     if runtime_issue:
@@ -337,6 +434,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
             "character": ch["id"],
             "name_ko": ch.get("name_ko") or ch["id"],
             "image": str(image_path),
+            "options": [option_id for option_id, _path in option_images],
         }
 
     # Prefer the user-given nickname if any
@@ -362,24 +460,25 @@ def open_pet_window(character_id: str | None = None) -> dict:
     else:
         popen_kwargs["start_new_session"] = True
 
-    proc = subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "chibi_mcp.window",
-            "--image",
-            str(image_path),
-            "--name",
-            nickname,
-            "--rarity",
-            str(ch.get("rarity", 2)),
-            "--mood",
-            mood,
-            "--ws",
-            f"ws://127.0.0.1:{os.environ.get('CHIBI_WS_PORT', '9876')}",
-        ],
-        **popen_kwargs,
-    )
+    command = [
+        sys.executable,
+        "-m",
+        "chibi_mcp.window",
+        "--image",
+        str(image_path),
+        "--name",
+        nickname,
+        "--rarity",
+        str(ch.get("rarity", 2)),
+        "--mood",
+        mood,
+        "--ws",
+        f"ws://127.0.0.1:{os.environ.get('CHIBI_WS_PORT', '9876')}",
+    ]
+    for _option_id, option_path in option_images:
+        command.extend(["--option-image", str(option_path)])
+
+    proc = subprocess.Popen(command, **popen_kwargs)
 
     # Tk import failures, missing display, etc. show up in the first 500ms.
     # If the subprocess is already dead by then, surface the tail of its log.
@@ -419,6 +518,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
         "rarity": ch.get("rarity"),
         "mood": mood,
         "image": str(image_path),
+        "options": [option_id for option_id, _path in option_images],
         "log_path": str(log_path),
     }
 
@@ -533,5 +633,4 @@ def add_ticket(n: int = 1) -> dict:
         raise ValueError("n must be between 1 and 100")
     state = get_state()
     return state.grant_tickets(n)
-
 

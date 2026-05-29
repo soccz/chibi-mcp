@@ -1,13 +1,13 @@
-name: Character pack proposal
-description: Propose a new tteoki character or creator pack.
-title: "[Character]: "
+name: Character/option pack proposal
+description: Propose a new tteoki character, option layer, or creator pack.
+title: "[Pack]: "
 labels: ["character-pack", "idea"]
 body:
   - type: input
     id: name
     attributes:
-      label: Character name
-      placeholder: "e.g. injeolmi, honey-garaetteok, mint-mochi"
+      label: Character or option name
+      placeholder: "e.g. injeolmi, honey-garaetteok, jocheong-drip, sugar-beads"
     validations:
       required: true
   - type: dropdown
@@ -20,6 +20,7 @@ body:
         - Cheese
         - Bread/toast
         - Mandu
+        - Option layer
         - Collaboration
         - Other
     validations:
@@ -28,7 +29,7 @@ body:
     id: concept
     attributes:
       label: Concept
-      description: Shape, colors, expression, motion, sound idea.
+      description: Shape, colors, expression, option layer position, motion, sound idea.
     validations:
       required: true
   - type: textarea

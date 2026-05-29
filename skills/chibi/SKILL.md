@@ -1,6 +1,6 @@
 ---
 name: chibi
-description: Floating 치비 (chibi) desktop pet with real gacha, inventory, live mood. Use whenever the user mentions 치비, chibi, 가래떡, 떡, 슬랑이, 뽑기, 보관함, pet, or types /chibi. Talks to the chibi MCP server (open_pet_window, pull_gacha, get_inventory, set_active_character, rename_character, pet_say, slice_now, get_pet_state).
+description: Floating 치비 (chibi) desktop pet with real gacha, inventory, live mood, and free option layers. Use whenever the user mentions 치비, chibi, 가래떡, 떡, 슬랑이, 뽑기, 보관함, 옵션, pet, or types /chibi. Talks to the chibi MCP server (open_pet_window, pull_gacha, get_inventory, get_options, set_active_options, clear_active_options, set_active_character, rename_character, pet_say, slice_now, get_pet_state).
 ---
 
 # 치비 (chibi) — Korean rice cake desktop pet
@@ -21,6 +21,7 @@ Claude is the primary client. Treat this skill as a small companion workflow, no
 
 - `get_pet_state` — mood (calm/happy/joyful/panting/drowsy/lonely/surprised) + system metrics + counters + active character id + ticket count.
 - `get_catalog` — released character list (8 starter characters now; upcoming placeholders hidden).
+- `get_options` — released free option layers (jocheong/honey/beads/sprinkles).
 - `get_inventory` — owned characters, ticket balance, total pulls, seconds until next free pull.
 - `get_license_status` — current open-source catalog access status.
 
@@ -80,6 +81,15 @@ Trigger: "보관함", "내 컬렉션", `/chibi 보관함`.
 - `slice_now` — manual slice on request ("잘라줘", "썰어줘").
 - `set_slice_interval(n)` — change cadence (default 10).
 - The window flashes when a slice fires (no need for you to announce it).
+
+## Options / 옵션
+
+Triggers: "옵션", "조청 올려", "꿀 발라", "비즈 붙여", "토핑 바꿔".
+
+1. Call `get_options` to list available free option layers.
+2. Call `set_active_options([ids])` with up to 3 ids, for example `["jocheong_drip", "sugar_beads"]`.
+3. Use `clear_active_options` when the user wants a plain character again.
+4. Keep the reply short: `조청 드립 + 슈가 비즈 적용.`
 
 ## Speech bubble
 

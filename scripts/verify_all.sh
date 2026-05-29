@@ -23,6 +23,7 @@ echo "== Python server =="
   fi
   python -m chibi_mcp --check
   python - <<'PY'
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -36,19 +37,44 @@ with TemporaryDirectory() as tmp:
     assert pack_main(["init", str(pack)]) == 0
     assert pack_main(["validate", str(pack)]) == 0
     assert pack_main(["preview", str(pack)]) == 0
+    option_pack = root / "option-pack"
+    (option_pack / "options").mkdir(parents=True)
+    Image.new("RGBA", (256, 256), (255, 180, 20, 180)).save(option_pack / "options" / "honey_glaze.png")
+    (option_pack / "meta.json").write_text(
+        json.dumps(
+            {
+                "options": [
+                    {
+                        "id": "honey_glaze",
+                        "name_ko": "Honey Glaze",
+                        "category": "glaze",
+                        "tier": "creator",
+                        "image": "options/honey_glaze.png",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert pack_main(["validate", str(option_pack)]) == 0
+    assert pack_main(["preview", str(option_pack)]) == 0
     assert audit_main([]) == 0
 
     share = root / "share.png"
     social = root / "social.png"
     lineup = root / "lineup.png"
+    options = root / "options.png"
     assert share_main(["--out", str(share)]) == 0
     assert share_main(["--preset", "social-preview", "--out", str(social)]) == 0
     assert share_main(["--preset", "lineup", "--out", str(lineup)]) == 0
+    assert share_main(["--preset", "options", "--out", str(options)]) == 0
     with Image.open(share) as image:
         assert image.size == (1080, 1080)
     with Image.open(social) as image:
         assert image.size == (1280, 640)
     with Image.open(lineup) as image:
+        assert image.size == (1600, 900)
+    with Image.open(options) as image:
         assert image.size == (1600, 900)
 
 print("commercial cli smoke ok")
@@ -65,6 +91,7 @@ required = {
     "assets/social-preview.png": (1280, 640),
     "docs/screenshots/share-card.png": (1080, 1080),
     "docs/screenshots/starter-lineup.png": (1600, 900),
+    "docs/screenshots/option-showcase.png": (1600, 900),
 }
 for rel, expected in required.items():
     path = Path(rel)

@@ -114,7 +114,9 @@ def _check() -> dict:
     asset_dir = _resolve_asset_dir()
     assets_ok = False
     free_assets_missing: list[str] = []
+    free_options_missing: list[str] = []
     catalog_count = 0
+    option_count = 0
     catalog_error: str | None = None
     if asset_dir:
         meta_path = Path(asset_dir) / "meta.json"
@@ -125,11 +127,17 @@ def _check() -> dict:
                 catalog_error = f"{type(e).__name__}: {e}"
                 catalog = {"characters": []}
             chars = catalog.get("characters", [])
+            options = catalog.get("options", [])
             catalog_count = len(chars)
+            option_count = len(options)
             for ch in chars:
                 if ch.get("tier") == "free" and not (Path(asset_dir) / f"{ch['id']}.png").exists():
                     free_assets_missing.append(ch["id"])
-            assets_ok = catalog_error is None and not free_assets_missing
+            for option in options:
+                image = option.get("image") or f"options/{option.get('id')}.png"
+                if option.get("tier") == "free" and not (Path(asset_dir) / str(image)).exists():
+                    free_options_missing.append(option.get("id", "<missing-id>"))
+            assets_ok = catalog_error is None and not free_assets_missing and not free_options_missing
 
     try:
         import tkinter  # noqa: F401
@@ -143,7 +151,9 @@ def _check() -> dict:
         "version": __version__,
         "asset_dir": asset_dir,
         "catalog_count": catalog_count,
+        "option_count": option_count,
         "free_assets_missing": free_assets_missing,
+        "free_options_missing": free_options_missing,
         "tkinter": tkinter_ok,
         "ws_default": f"ws://{DEFAULT_WS_HOST}:{DEFAULT_WS_PORT}",
     }

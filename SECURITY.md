@@ -23,7 +23,7 @@ chibi-audit
 chibi-pack validate ./my-pack
 ```
 
-Character pack images are expected to stay inside the pack directory; explicit image paths that escape the pack are rejected by `chibi-pack validate`.
+Character and option pack images are expected to stay inside the pack directory; explicit image paths that escape the pack are rejected by `chibi-pack validate`.
 
 ## Reporting a Vulnerability
 

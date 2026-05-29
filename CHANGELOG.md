@@ -2,6 +2,17 @@
 
 All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condensed.
 
+## v1.4.3 — 2026-05-29
+
+Free visual option layers for higher character completeness.
+
+- Added honey, jocheong, sugar bead, and rainbow sprinkle transparent option PNGs.
+- Added MCP tools: `get_options`, `set_active_options`, and `clear_active_options`.
+- Floating pet window now composites up to three active option layers over the base character.
+- VS Code extension 0.5.1 shows option toggles and overlays option PNGs on the active pet.
+- `chibi-share --preset options` generates a 1600x900 option showcase image.
+- Pack validation and previews now support top-level `options[]` entries.
+
 ## v1.4.2 — 2026-05-29
 
 Launch visual polish using the provided PNG character assets.

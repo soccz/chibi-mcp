@@ -31,8 +31,8 @@ def verify_license() -> LicenseStatus:
 def filter_catalog_by_tier(catalog: dict, status: LicenseStatus) -> dict:
     """Return released characters from the catalog.
 
-    `catalog` is the raw meta.json structure: { "characters": [ {id, name_ko, ...,
-    tier: "free"|"upcoming"} ] }.
+    `catalog` is the raw meta.json structure: { "characters": [ ... ],
+    "options": [ ... ] } with tier metadata.
 
     `status` is accepted for API compatibility. The current open-source build
     returns released free characters only; upcoming placeholders are never
@@ -41,4 +41,5 @@ def filter_catalog_by_tier(catalog: dict, status: LicenseStatus) -> dict:
     return {
         **catalog,
         "characters": [c for c in catalog["characters"] if c.get("tier") == "free"],
+        "options": [o for o in catalog.get("options", []) if o.get("tier") == "free"],
     }

@@ -22,14 +22,14 @@ The project now has an executable Python MCP server, Claude/Codex plugin metadat
 - `hooks/`, `bin/` — Claude Code plugin hooks bridge: `hooks/hooks.json` fires `bin/chibi-react.sh` on PreToolUse / PostToolUse, which forwards a contextual phrase via `chibi-say` to the floating window.
 - `vscode-ext/` — VS Code extension packaging path. As of 0.5.0 also calls `chibi-say` on save / task / debug events.
 - `desktop/` — legacy Tauri client; archival only.
-- `assets/` and `server/chibi_mcp/assets/` — starter PNG characters and metadata.
+- `assets/` and `server/chibi_mcp/assets/` — starter PNG characters, free option layer PNGs, and metadata.
 
 Core commands:
 
 - Full verification: `make check` or `./scripts/verify_all.sh`
 - Python tests: `cd server && python -m pytest -q`
 - Server health check: `cd server && python -m chibi_mcp --check`
-- Commercial-readiness CLIs: `chibi-audit`, `chibi-pack init/validate/preview <dir>`, `chibi-share --out share-card.png`, `chibi-share --preset social-preview --out social-preview.png`, `chibi-share --preset lineup --out starter-lineup.png`
+- Commercial-readiness CLIs: `chibi-audit`, `chibi-pack init/validate/preview <dir>`, `chibi-share --out share-card.png`, `chibi-share --preset social-preview --out social-preview.png`, `chibi-share --preset lineup --out starter-lineup.png`, `chibi-share --preset options --out option-showcase.png`
 - Claude plugin validation: `claude plugin validate .`
 - VS Code package: `./scripts/package-vscode.sh`
 

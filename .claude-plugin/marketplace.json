@@ -1,7 +1,7 @@
 {
   "name": "chibi-mcp",
   "metadata": {
-    "description": "Claude Code plugins for tteoki, a Korean rice cake MCP pet with gacha, live mood, and slice events."
+    "description": "Claude Code plugins for tteoki, a Korean rice cake MCP pet with gacha, free option layers, live mood, and slice events."
   },
   "owner": {
     "name": "soccz",
@@ -11,7 +11,7 @@
     {
       "name": "chibi",
       "source": "./",
-      "description": "치비 — Korean rice cake desktop pet for Claude Code. Gacha-collect squishy characters; they react to your session and get sliced every N tool calls."
+      "description": "치비 — Korean rice cake desktop pet for Claude Code. Gacha-collect squishy characters, apply free option layers, and get sliced every N tool calls."
     }
   ]
 }

@@ -45,7 +45,7 @@ TICKETS_PER_10_SLICES = 1
 # Persistence
 STATE_DIR = Path.home() / ".chibi-mcp"
 STATE_FILE = STATE_DIR / "state.json"
-STATE_SCHEMA_VERSION = 1
+STATE_SCHEMA_VERSION = 2
 
 
 @dataclass
@@ -65,6 +65,7 @@ class TteokiState:
 
     # Persisted state
     active_character_id: str | None = None
+    active_option_ids: list[str] = field(default_factory=list)
     inventory: dict[str, dict] = field(default_factory=dict)
     tickets: int = 0
     last_free_pull_date: str | None = None  # ISO date
@@ -76,6 +77,7 @@ class TteokiState:
         return {
             "schema_version": STATE_SCHEMA_VERSION,
             "active_character_id": self.active_character_id,
+            "active_option_ids": self.active_option_ids,
             "inventory": self.inventory,
             "tickets": self.tickets,
             "last_free_pull_date": self.last_free_pull_date,
@@ -121,6 +123,7 @@ class TteokiState:
             return
         with self._lock:
             self.active_character_id = data.get("active_character_id")
+            self.active_option_ids = _clean_option_ids(data.get("active_option_ids"))
             self.inventory = data.get("inventory") or {}
             self.tickets = int(data.get("tickets", 0))
             self.last_free_pull_date = data.get("last_free_pull_date")
@@ -254,6 +257,25 @@ class TteokiState:
         self._save_data(save_data)
         return result
 
+    def set_active_options(self, option_ids: list[str], available_ids: set[str]) -> dict:
+        cleaned: list[str] = []
+        for option_id in option_ids:
+            option_id = str(option_id).strip()
+            if not option_id:
+                continue
+            if option_id not in available_ids:
+                return {"ok": False, "reason": f"unknown option: {option_id!r}"}
+            if option_id not in cleaned:
+                cleaned.append(option_id)
+        if len(cleaned) > 3:
+            return {"ok": False, "reason": "choose at most 3 active options"}
+        with self._lock:
+            self.active_option_ids = cleaned
+            save_data = self._persisted_dict()
+            result = {"ok": True, "active_option_ids": list(self.active_option_ids)}
+        self._save_data(save_data)
+        return result
+
     def rename(self, character_id: str, nickname: str) -> dict:
         with self._lock:
             if character_id not in self.inventory:
@@ -329,6 +351,7 @@ class TteokiState:
                 },
                 "gacha": {
                     "active_character_id": self.active_character_id,
+                    "active_option_ids": list(self.active_option_ids),
                     "tickets": self.tickets,
                     "total_pulls": self.total_pulls,
                     "owned_count": len(self.inventory),
@@ -341,6 +364,17 @@ def _seconds_until_midnight() -> int:
     now = datetime.now()
     seconds_today = now.hour * 3600 + now.minute * 60 + now.second
     return max(0, 86400 - seconds_today)
+
+
+def _clean_option_ids(raw: object) -> list[str]:
+    if not isinstance(raw, list):
+        return []
+    cleaned: list[str] = []
+    for value in raw:
+        option_id = str(value).strip()
+        if option_id and option_id not in cleaned:
+            cleaned.append(option_id)
+    return cleaned[:3]
 
 
 # Module-level singleton + init lock (avoids TOCTOU when two threads

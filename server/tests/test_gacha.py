@@ -77,6 +77,7 @@ def test_persistence_roundtrip(tmp_path, monkeypatch):
     s = TteokiState()
     s.tickets = 7
     s.active_character_id = "white_tteok"
+    s.active_option_ids = ["jocheong_drip", "sugar_beads"]
     s.inventory = {"white_tteok": {"count": 2, "nickname": "흰떡이"}}
     s.save()
 
@@ -84,6 +85,7 @@ def test_persistence_roundtrip(tmp_path, monkeypatch):
     s2.load()
     assert s2.tickets == 7
     assert s2.active_character_id == "white_tteok"
+    assert s2.active_option_ids == ["jocheong_drip", "sugar_beads"]
     assert s2.inventory["white_tteok"]["nickname"] == "흰떡이"
 
 
@@ -139,6 +141,18 @@ def test_set_active_after_owning():
         r = s.set_active(new_active)
         assert r["ok"] is True
         assert s.active_character_id == new_active
+
+
+def test_set_active_options_requires_known_options():
+    s = TteokiState()
+    available = {"jocheong_drip", "honey_glaze", "sugar_beads"}
+    result = s.set_active_options(["jocheong_drip", "sugar_beads"], available)
+    assert result["ok"] is True
+    assert s.active_option_ids == ["jocheong_drip", "sugar_beads"]
+
+    result = s.set_active_options(["unknown_option"], available)
+    assert result["ok"] is False
+    assert "unknown option" in result["reason"]
 
 
 def test_state_file_is_atomic_json():
