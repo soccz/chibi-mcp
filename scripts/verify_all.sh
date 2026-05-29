@@ -78,7 +78,7 @@ with TemporaryDirectory() as tmp:
         repo_root / "examples" / "packs" / "team-sprint",
     ]
     for example in examples:
-        assert pack_main(["validate", str(example)]) == 0
+        assert pack_main(["validate", str(example), "--submission"]) == 0
         assert pack_main(["preview", str(example), "--out", str(root / f"{example.name}.html")]) == 0
 
     share = root / "share.png"

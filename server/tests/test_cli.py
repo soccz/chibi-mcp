@@ -72,6 +72,30 @@ def test_pack_validate_accepts_minimal_creator_pack(tmp_path):
     assert result["characters"][0]["id"] == "custom_tteok"
 
 
+def test_pack_submission_validation_requires_rights_metadata(tmp_path):
+    Image.new("RGBA", (256, 256), (255, 240, 210, 255)).save(tmp_path / "custom_tteok.png")
+    (tmp_path / "meta.json").write_text(
+        json.dumps(
+            {
+                "characters": [
+                    {
+                        "id": "custom_tteok",
+                        "name_ko": "Custom Tteok",
+                        "category": "tteok",
+                        "rarity": 3,
+                        "tier": "creator",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    result = validate_pack(tmp_path, submission=True)
+    assert result["ok"] is False
+    assert "meta.json license is required for submissions" in result["errors"]
+    assert "meta.json source_rights is required for submissions" in result["errors"]
+
+
 def test_pack_init_scaffolds_valid_pack(tmp_path):
     pack_dir = tmp_path / "pack"
     result = init_pack(
@@ -85,6 +109,10 @@ def test_pack_init_scaffolds_valid_pack(tmp_path):
     validation = validate_pack(pack_dir)
     assert validation["ok"] is True
     assert validation["characters"][0]["id"] == "starter_tteok"
+    submission_validation = validate_pack(pack_dir, submission=True)
+    assert submission_validation["ok"] is False
+    assert "meta.json license is required for submissions" in submission_validation["errors"]
+    assert "meta.json source_rights is required for submissions" in submission_validation["errors"]
 
 
 def test_sample_commercial_packs_validate():
@@ -92,7 +120,7 @@ def test_sample_commercial_packs_validate():
         ROOT / "examples" / "packs" / "spring-hwajeon",
         ROOT / "examples" / "packs" / "team-sprint",
     ]:
-        result = validate_pack(pack_dir)
+        result = validate_pack(pack_dir, submission=True)
         assert result["ok"] is True
         assert len(result["characters"]) == 1
         assert len(result["options"]) == 1

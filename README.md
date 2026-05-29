@@ -253,6 +253,12 @@ chibi-pack validate ./my-pack
 chibi-pack preview ./my-pack
 ```
 
+Before a public pack proposal, fill in `license` and `source_rights`, then run:
+
+```bash
+chibi-pack validate --submission ./my-pack
+```
+
 Runnable examples from a clone:
 
 ```bash
@@ -270,6 +276,8 @@ See [docs/CREATOR_PACKS.md](docs/CREATOR_PACKS.md).
 - `chibi-audit` prints the local trust report.
 - No paid gates or license keys.
 - Security reports: see [SECURITY.md](SECURITY.md).
+- Asset and pack rights: see [ASSET_RIGHTS.md](ASSET_RIGHTS.md) and
+  [docs/IP_AND_RIGHTS.md](docs/IP_AND_RIGHTS.md).
 
 ```bash
 chibi-audit
@@ -300,6 +308,7 @@ Useful docs:
 
 - [INSTALL.md](INSTALL.md) — full install matrix
 - [CONTRIBUTING.md](CONTRIBUTING.md) — contribution guide
+- [ASSET_RIGHTS.md](ASSET_RIGHTS.md) — official asset and pack provenance policy
 - [COMMERCIAL_STRATEGY.md](COMMERCIAL_STRATEGY.md) — expansion readiness and deferred monetization guardrails
 - [GITHUB_STAR_STRATEGY.md](GITHUB_STAR_STRATEGY.md) — launch and repository growth plan
 - [docs/LAUNCH_KIT.md](docs/LAUNCH_KIT.md) — launch/distribution copy
@@ -310,4 +319,5 @@ Useful docs:
 
 ## License
 
-MIT.
+Code is MIT. Asset provenance and pack submission rules are documented in
+[ASSET_RIGHTS.md](ASSET_RIGHTS.md).

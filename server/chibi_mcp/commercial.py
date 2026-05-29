@@ -63,6 +63,11 @@ def pack_main(argv: list[str] | None = None) -> int:
     validate = sub.add_parser("validate", help="Validate a pack directory")
     validate.add_argument("pack_dir", type=Path)
     validate.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+    validate.add_argument(
+        "--submission",
+        action="store_true",
+        help="Require license and source_rights metadata for public submissions",
+    )
 
     preview = sub.add_parser("preview", help="Write a static HTML pack preview")
     preview.add_argument("pack_dir", type=Path)
@@ -82,12 +87,16 @@ def pack_main(argv: list[str] | None = None) -> int:
         if result["ok"]:
             print(f"created: {result['pack_dir']}")
             print("next: chibi-pack validate " + result["pack_dir"])
+            print(
+                "submit: fill license/source_rights, then chibi-pack validate --submission "
+                + result["pack_dir"]
+            )
         else:
             print(result["error"], file=sys.stderr)
         return 0 if result["ok"] else 1
 
     if args.command == "validate":
-        result = validate_pack(args.pack_dir)
+        result = validate_pack(args.pack_dir, submission=args.submission)
         if args.json:
             print(json.dumps(result, ensure_ascii=False, indent=2))
         else:
@@ -195,6 +204,8 @@ def init_pack(
 
     image_dir.mkdir(parents=True, exist_ok=True)
     meta = {
+        "license": "draft",
+        "source_rights": "TODO: replace before public submission with artwork source, license, and permission.",
         "characters": [
             {
                 "id": character_id,
@@ -293,7 +304,7 @@ def build_trust_audit() -> dict[str, Any]:
     return report
 
 
-def validate_pack(pack_dir: Path) -> dict[str, Any]:
+def validate_pack(pack_dir: Path, *, submission: bool = False) -> dict[str, Any]:
     pack_dir = pack_dir.expanduser().resolve()
     errors: list[str] = []
     warnings: list[str] = []
@@ -321,6 +332,16 @@ def validate_pack(pack_dir: Path) -> dict[str, Any]:
         return _pack_result(pack_dir, errors=["meta.json options must be a list"])
     if not characters and not options:
         return _pack_result(pack_dir, errors=["meta.json must contain characters or options"])
+
+    license_value = str(catalog.get("license") or "").strip()
+    rights_value = str(catalog.get("source_rights") or catalog.get("rights") or "").strip()
+    if submission:
+        if _missing_submission_value(license_value):
+            errors.append("meta.json license is required for submissions")
+        if _missing_submission_value(rights_value):
+            errors.append("meta.json source_rights is required for submissions")
+    elif _missing_submission_value(rights_value):
+        warnings.append("meta.json source_rights is recommended for public submissions")
 
     seen: set[str] = set()
     for index, character in enumerate(characters):
@@ -432,11 +453,20 @@ def validate_pack(pack_dir: Path) -> dict[str, Any]:
         warnings=warnings,
         characters=characters_out,
         options=options_out,
+        metadata={
+            "license": license_value,
+            "source_rights": rights_value,
+            "submission": submission,
+        },
     )
 
 
 def write_pack_preview(validation: dict[str, Any], out: Path) -> None:
     pack_dir = Path(validation["pack_dir"])
+    metadata = validation.get("metadata") or {}
+    license_text = str(metadata.get("license") or "missing")
+    rights_value = str(metadata.get("source_rights") or "")
+    rights_text = "source rights provided" if not _missing_submission_value(rights_value) else "source rights missing"
     out.parent.mkdir(parents=True, exist_ok=True)
     cards = []
     for character in validation["characters"]:
@@ -528,6 +558,7 @@ def write_pack_preview(validation: dict[str, Any], out: Path) -> None:
 <header>
   <h1>chibi pack preview</h1>
   <p class="meta">{html.escape(str(pack_dir))}</p>
+  <p class="meta">license: {html.escape(license_text)} | {html.escape(rights_text)}</p>
 </header>
 <main>
 {body}
@@ -1054,12 +1085,18 @@ def _format_audit(report: dict[str, Any]) -> str:
 
 
 def _format_pack_validation(result: dict[str, Any]) -> str:
+    metadata = result.get("metadata") or {}
     lines = [
         f"pack: {result['pack_dir']}",
         f"ok: {result['ok']}",
         f"characters: {len(result['characters'])}",
         f"options: {len(result['options'])}",
     ]
+    if metadata:
+        lines.append(f"license: {metadata.get('license') or '<missing>'}")
+        rights_value = str(metadata.get("source_rights") or "")
+        rights_line = "source_rights: present" if not _missing_submission_value(rights_value) else "source_rights: <missing>"
+        lines.append(rights_line)
     for warning in result["warnings"]:
         lines.append(f"warning: {warning}")
     for error in result["errors"]:
@@ -1074,6 +1111,7 @@ def _pack_result(
     warnings: list[str] | None = None,
     characters: list[dict[str, Any]] | None = None,
     options: list[dict[str, Any]] | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     errors = errors or []
     return {
@@ -1083,7 +1121,17 @@ def _pack_result(
         "warnings": warnings or [],
         "characters": characters or [],
         "options": options or [],
+        "metadata": metadata or {},
     }
+
+
+def _missing_submission_value(value: str) -> bool:
+    normalized = value.strip().lower()
+    return (
+        not normalized
+        or normalized in {"todo", "tbd", "draft", "replace-me"}
+        or "replace before public submission" in normalized
+    )
 
 
 def _resolve_character_image(

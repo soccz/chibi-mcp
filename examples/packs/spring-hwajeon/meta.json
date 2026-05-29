@@ -2,6 +2,7 @@
   "name": "Spring Hwajeon Sample Pack",
   "description": "A creator-pack example showing one seasonal character and one option layer.",
   "license": "sample-only",
+  "source_rights": "Generated for the chibi-mcp sample pack; no third-party characters, logos, or brands.",
   "characters": [
     {
       "id": "spring_hwajeon",

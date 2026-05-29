@@ -36,7 +36,7 @@ body:
     id: source_rights
     attributes:
       label: Source and rights
-      description: Confirm that artwork is original or that you have permission to submit it.
+      description: Confirm the artwork source, license, and permission to submit it. Public packs must pass `chibi-pack validate --submission`.
     validations:
       required: true
   - type: checkboxes
@@ -45,6 +45,10 @@ body:
       label: Checklist
       options:
         - label: I will not submit copyrighted third-party characters or logos without permission.
+          required: true
+        - label: I can provide source/provenance files or permission records if maintainers request them.
+          required: true
+        - label: I will not imply that my fork, pack, or variant is an official chibi-mcp release unless maintainers approve it.
           required: true
         - label: The proposal is safe for a general developer audience.
           required: true

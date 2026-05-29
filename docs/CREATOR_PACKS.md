@@ -17,10 +17,10 @@ This is a commercial-readiness surface, not a paid gate. The base app, MCP tools
 ## Runnable Examples
 
 ```bash
-chibi-pack validate examples/packs/spring-hwajeon
+chibi-pack validate --submission examples/packs/spring-hwajeon
 chibi-pack preview examples/packs/spring-hwajeon --out /tmp/spring-preview.html
 
-chibi-pack validate examples/packs/team-sprint
+chibi-pack validate --submission examples/packs/team-sprint
 chibi-pack preview examples/packs/team-sprint --out /tmp/team-preview.html
 ```
 
@@ -44,16 +44,27 @@ my-pack/
 - `characters[]`: `id`, `name_ko`, `category`, `rarity`, `tier`, `image`
 - `options[]`: `id`, `name_ko`, `category`, `tier`, `image`
 
+Public submissions also require top-level rights fields:
+
+```json
+{
+  "license": "original-submission",
+  "source_rights": "Original artwork by <name>, submitted with permission for chibi-mcp review."
+}
+```
+
 IDs must be lowercase slugs. PNGs should be transparent, square, and at least 128×128. The official starter assets use 512×512.
 
 ## Submission Checklist
 
 - Artwork is original, commissioned, or permissioned.
+- `meta.json` includes `license` and `source_rights`.
 - No copyrighted third-party characters, logos, or mascots without rights.
+- No misleading claim that the pack, fork, or variant is an official project release.
 - PNG background is transparent.
 - Character is readable at 80px, because the VS Code sidebar and share cards use small previews.
 - Option layer works over the default `garaetteok_short` body.
-- Pack passes `chibi-pack validate <dir>`.
+- Pack passes `chibi-pack validate --submission <dir>`.
 - Preview HTML is attached to the issue or PR.
 
 ## Review Labels
@@ -75,9 +86,12 @@ Use these labels when triaging a pack proposal:
 - Do not add paid packs, checkout, Sponsors tiers, license keys, or creator revenue share yet.
 - Do not add telemetry to measure pack usage.
 - Keep any future sponsor credit inside catalog/README/release notes, not as workflow interruption, and only after approval.
+- Keep creator submissions rights-safe: require `license`, `source_rights`, and provenance files when needed.
 
 ## Source Notes
 
 - Claude Code plugin marketplaces support distributing plugins to teams and communities: https://code.claude.com/docs/en/plugin-marketplaces
 - Claude plugin submission is surfaced through the community plugin directory and Claude Code marketplace: https://claude.com/docs/plugins/submit
 - GitHub issue forms standardize creator submissions: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
+- U.S. Copyright Office explains that copyright protects original expression but not facts, ideas, systems, or methods of operation: https://copyright.gov/help/faq/faq-protect.html
+- GitHub DMCA policy documents takedown and counter-notice handling: https://docs.github.com/github/site-policy/dmca-takedown-policy

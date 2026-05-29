@@ -11,7 +11,9 @@ Commercial-readiness polish without enabling paid gates.
 - CI now runs Python tests on Linux, macOS, and Windows, and packages the VS Code `.vsix` on every push/PR.
 - Added runnable creator/team sample packs under `examples/packs/`.
 - Added `docs/CREATOR_PACKS.md` and `docs/LAUNCH_KIT.md` for creator submissions, team pack positioning, and launch channel readiness.
-- `verify_all.sh` and tests now validate the sample packs.
+- Added `ASSET_RIGHTS.md` and `docs/IP_AND_RIGHTS.md` for asset provenance, copycat response, and rights-review guardrails.
+- `chibi-pack validate --submission` now requires `license` and `source_rights` metadata for public pack submissions.
+- `verify_all.sh` and tests now validate the sample packs in submission mode.
 
 ## v1.4.4 — 2026-05-29
 

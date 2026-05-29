@@ -22,6 +22,7 @@
 13. **상업화 기반 기능까지 진행** (사용자 요청 2026-05-29) — 데모/공유, 정식 배포 준비, 캐릭터팩 SDK, 신뢰 리포트, 팀 에디션 준비를 무료 코어 위에 추가
 14. **옵션 이미지 계열 추가** (사용자 요청 2026-05-29) — 꿀, 조청, 비즈/스프링클에서 시작해 연유, 콩가루, 흑임자, 팥, 꽃잎, 레진 별, 말차, 매콤 소스까지 무료 시각 옵션 레이어를 캐릭터 위에 합성 가능하게 추가
 15. **사업성 강화** (사용자 요청 2026-05-29) — 결제 게이트 없이 creator/team pack 예시, launch kit, pack submission guide, 배포 채널 근거 문서를 추가해 상업화 준비도를 높임
+16. **카피·이미지 저작권 대비** (사용자 요청 2026-05-30) — 오픈소스 코드 확산은 유지하되 공식 이미지/브랜드/팩 제출은 출처·권리 메타데이터, 검수 문서, 제출 검증기로 방어
 
 ---
 
@@ -56,6 +57,7 @@
 | **무료 옵션 레이어** | 12종 추가: `jocheong_drip`, `honey_glaze`, `sugar_beads`, `rainbow_sprinkles`, `condensed_milk`, `kinako_dust`, `black_sesame`, `red_bean_bits`, `flower_petals`, `resin_stars`, `matcha_powder`, `spicy_sauce`. 본체 기능을 잠그지 않는 무료 코스메틱 기반 |
 | **상업 샘플팩** | `examples/packs/spring-hwajeon`, `examples/packs/team-sprint` 추가. creator/team pack 제출과 검증 흐름을 실행 가능한 예시로 제공 |
 | **크로스플랫폼 설치** | Linux/macOS bash installer + Windows PowerShell installer + VS Code `.vsix` installer 제공. CI는 Python/desktop을 Linux·macOS·Windows에서 검증 |
+| **이미지/브랜드 권리 가드레일** | `ASSET_RIGHTS.md`, `docs/IP_AND_RIGHTS.md`, `chibi-pack validate --submission` 추가. 공개 pack은 `license`와 `source_rights` 필요 |
 
 ## 아직 사용자 결정 대기
 
@@ -115,3 +117,9 @@ GitHub star 성장 전략: [GITHUB_STAR_STRATEGY.md](GITHUB_STAR_STRATEGY.md).
 
 ### 기존 데스크탑 펫 (참고·차별점 확보용)
 - [Kilkakon Shimeji-ee](https://kilkakon.com/shimeji/), [shimejis.xyz](https://shimejis.xyz/) — 2010년대 픽셀 스타일. chibi-mcp는 SVG 벡터 + ASMR 사운드로 차별
+
+### 저작권·상표·플랫폼 정책
+- [U.S. Copyright Office — What Does Copyright Protect?](https://copyright.gov/help/faq/faq-protect.html) — 저작권은 원본 표현을 보호하지만 아이디어·사실·시스템·운영 방법은 보호하지 않음
+- [USPTO — Trademark Basics](https://www.uspto.gov/trademarks/basics), [Trademark Process](https://www.uspto.gov/trademarks/basics/trademark-process) — 브랜드명·로고 보호는 상표 검토 영역
+- [GitHub DMCA Takedown Policy](https://docs.github.com/github/site-policy/dmca-takedown-policy) — GitHub 내 저작권 침해 신고·반박 절차
+- [Creative Commons Licenses](https://creativecommons.org/share-your-work/use-remix/cc-licenses/) — 공개 에셋 라이선스 선택지 참고

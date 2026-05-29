@@ -137,6 +137,7 @@ Must stay visible:
 - `chibi-audit`
 - localhost-only WebSocket default
 - SECURITY.md with reporting path
+- ASSET_RIGHTS.md and `chibi-pack validate --submission` for pack provenance
 - no hidden paid gate in the open-source core
 - no embedded license secret or placeholder production key
 - release checksums later

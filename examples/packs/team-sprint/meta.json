@@ -2,6 +2,7 @@
   "name": "Team Sprint Sample Pack",
   "description": "A team-pack example for private mascot skins, release rituals, and admin review.",
   "license": "sample-only",
+  "source_rights": "Generated for the chibi-mcp sample pack; no third-party characters, logos, or brands.",
   "characters": [
     {
       "id": "team_sprint_tteok",

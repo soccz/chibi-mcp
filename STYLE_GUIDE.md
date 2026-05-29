@@ -182,7 +182,7 @@ Then download the desktop app: [Releases](#)
 - 🎵 슬라임 ASMR 사운드 (선택)
 - ⚡ CPU/RAM/배터리 표정으로 표시
 - 🔌 Claude Code · Codex MCP 호환
-- 🆓 100% 무료 · MIT 라이센스
+- 🆓 100% 무료 · 코드 MIT · 에셋 권리 문서화
 
 ## 4 Modes (all free)
 
@@ -211,7 +211,8 @@ Then download the desktop app: [Releases](#)
 
 ## License
 
-MIT
+Code: MIT
+Assets and pack submissions: see ASSET_RIGHTS.md
 ```
 
 ---

@@ -82,11 +82,12 @@
 - PNG pack + `meta.json` validator 제공
 - 작가별 pack을 GitHub Release나 웹 카탈로그로 배포
 - 수익 배분/판매는 지금 정하지 않는다. 현재는 무료 제출·검수·preview 흐름만 만든다.
-- 검수 기준: 투명 배경 PNG, 128/256/512, 저작권 확인, NSFW 금지
+- 검수 기준: 투명 배경 PNG, 128/256/512, `license`와 `source_rights`, 저작권 확인, NSFW 금지
 
 MVP:
 
 - `chibi-pack validate <dir>` CLI
+- `chibi-pack validate --submission <dir>` rights gate
 - pack preview HTML
 - GitHub issue template: character pack submission
 
@@ -95,9 +96,10 @@ MVP:
 ```bash
 chibi-pack init ./my-pack
 chibi-pack validate ./my-pack
+chibi-pack validate --submission ./my-pack
 chibi-pack preview ./my-pack
-chibi-pack validate examples/packs/spring-hwajeon
-chibi-pack validate examples/packs/team-sprint
+chibi-pack validate --submission examples/packs/spring-hwajeon
+chibi-pack validate --submission examples/packs/team-sprint
 ```
 
 `meta.json`의 `characters[]` 항목은 `id`, `name_ko`, `category`, `rarity`, `tier`, PNG 이미지로 검증된다. `options[]` 항목은 `id`, `name_ko`, `category`, `tier`, PNG 이미지로 검증된다. 이 단계는 marketplace 결제를 켜기 전에도 작가·팀·브랜드 pack 품질을 표준화한다.
@@ -306,6 +308,7 @@ Success signal:
 | Too many clients, shallow product | Claude Code remains primary; Codex/VS Code are distribution surfaces |
 | Cute but not useful | keep system state, calls, slices, CI/dev rituals visible |
 | Artist content quality variance | pack validator + visual review checklist |
+| Copycat or unclear asset rights | `ASSET_RIGHTS.md`, source/provenance metadata, `chibi-pack validate --submission`, DMCA evidence checklist |
 | Brand collab feels like ads | no sponsor placement for now; future credit only in catalog/share card if approved |
 
 ---

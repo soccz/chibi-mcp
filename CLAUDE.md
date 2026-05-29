@@ -18,6 +18,7 @@ The project now has an executable Python MCP server, Claude/Codex plugin metadat
 - `GITHUB_STAR_STRATEGY.md` — source-backed GitHub growth plan, topics, community surface, launch loop.
 - `INSTALL.md` — GitHub install matrix for Claude Code, Codex, and VS Code.
 - `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/` — public community and trust surface.
+- `ASSET_RIGHTS.md`, `docs/IP_AND_RIGHTS.md` — official asset provenance, pack rights, and copycat response guardrails.
 - `server/` — Python MCP server package. Also ships the floating pet window (`chibi_mcp/window.py`), the `chibi-say` CLI used by hooks, and the `chibi-check` self-diagnostic.
 - `hooks/`, `bin/` — Claude Code plugin hooks bridge: `hooks/hooks.json` fires `bin/chibi-react.sh` on PreToolUse / PostToolUse, which forwards a contextual phrase via `chibi-say` to the floating window.
 - `scripts/install-*.sh`, `scripts/install-*.ps1` — Linux/macOS bash and Windows PowerShell install paths for Claude Code, Codex, and VS Code.
@@ -30,7 +31,7 @@ Core commands:
 - Full verification: `make check` or `./scripts/verify_all.sh`
 - Python tests: `cd server && python -m pytest -q`
 - Server health check: `cd server && python -m chibi_mcp --check`
-- Commercial-readiness CLIs: `chibi-audit`, `chibi-pack init/validate/preview <dir>`, `chibi-share --out share-card.png`, `chibi-share --preset social-preview --out social-preview.png`, `chibi-share --preset lineup --out starter-lineup.png`, `chibi-share --preset options --out option-showcase.png`
+- Commercial-readiness CLIs: `chibi-audit`, `chibi-pack init/validate/preview <dir>`, `chibi-pack validate --submission <dir>`, `chibi-share --out share-card.png`, `chibi-share --preset social-preview --out social-preview.png`, `chibi-share --preset lineup --out starter-lineup.png`, `chibi-share --preset options --out option-showcase.png`
 - Claude plugin validation: `claude plugin validate .`
 - VS Code package: `./scripts/package-vscode.sh`
 

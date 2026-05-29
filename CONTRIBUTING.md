@@ -42,13 +42,16 @@ Character pack proposals should include:
 
 - transparent PNG assets
 - `meta.json` entry
+- top-level `license` and `source_rights` fields in `meta.json`
 - clear source/ownership statement
+- source/provenance files if maintainers request them during review
 - no copyrighted third-party character, logo, or brand use without permission
+- no misleading claim that a fork, pack, or variant is an official project release
 - no NSFW content
 
-Use [docs/CREATOR_PACKS.md](docs/CREATOR_PACKS.md) as the submission guide. Runnable examples live under `examples/packs/`, and validation is:
+Use [docs/CREATOR_PACKS.md](docs/CREATOR_PACKS.md) and [ASSET_RIGHTS.md](ASSET_RIGHTS.md) as the submission guide. Runnable examples live under `examples/packs/`, and validation is:
 
 ```bash
-chibi-pack validate examples/packs/spring-hwajeon
-chibi-pack validate examples/packs/team-sprint
+chibi-pack validate --submission examples/packs/spring-hwajeon
+chibi-pack validate --submission examples/packs/team-sprint
 ```
