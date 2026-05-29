@@ -25,7 +25,7 @@ xvfb-run -a make public-beta-check
 Release-tag preflight after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.7
+make release-check TAG=v1.4.8
 ```
 
 See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist, [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging, and the remaining manual demo assets.
@@ -263,6 +263,8 @@ chibi-mcp --check
 ```
 
 The Claude/Codex one-command installers now attempt this macOS Tk repair automatically and re-run `chibi-mcp --check`.
+
+Linux installers also attempt Tk repair through common package managers, and Windows PowerShell installers can bootstrap Python/pipx before running the same health check.
 
 ### VS Code `code` command is missing
 

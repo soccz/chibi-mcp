@@ -81,16 +81,26 @@ chibi-mcp --check
 
 If Homebrew changes the available formula name, run `brew search python-tk` and install the matching `python-tk@X.Y` package.
 
-The Claude/Codex bash installers attempt this repair automatically on macOS when `chibi-mcp --check` reports `tkinter: false`, then run `pipx reinstall chibi-mcp` and check again. To disable automatic Tk repair:
+The Claude/Codex bash installers attempt Tk repair automatically when `chibi-mcp --check` reports `tkinter: false`, then run `pipx reinstall chibi-mcp` and check again. Supported automatic repair paths:
+
+- macOS Homebrew: `python-tk@X.Y`
+- Ubuntu/Debian: `python3-tk`
+- Fedora/RHEL: `python3-tkinter`
+- Arch: `tk`
+- openSUSE: `python3-tk`
+- Alpine: `py3-tkinter`
+
+To disable automatic Tk repair:
 
 ```bash
 CHIBI_SKIP_TK_REPAIR=1 bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.sh)
 ```
 
-On Linux, automatic `apt-get` Tk repair is off by default. To allow it:
+On Windows, the PowerShell installers try to install `pipx` automatically. If Python itself is missing and `winget` is available, they try to install Python first. If `tkinter` is still false after install, install or repair Python with Tcl/Tk support, then run:
 
-```bash
-CHIBI_AUTO_INSTALL_TK=1 bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.sh)
+```powershell
+pipx reinstall chibi-mcp
+chibi-mcp --check
 ```
 
 pyenv Python:

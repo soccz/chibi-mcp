@@ -24,12 +24,49 @@ function Require-Command($Name) {
     }
 }
 
+function Update-SessionPath {
+    $currentPath = $env:Path
+    $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    $paths = @()
+    if ($currentPath) {
+        $paths += $currentPath
+    }
+    if ($machinePath) {
+        $paths += $machinePath
+    }
+    if ($userPath) {
+        $paths += $userPath
+    }
+    if ($paths.Count -gt 0) {
+        $env:Path = ($paths -join ";")
+    }
+}
+
+function Install-PythonWithWinget {
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        return $false
+    }
+
+    Write-Host "Python not found; installing Python with winget"
+    & winget install --exact --id Python.Python.3.13 --accept-package-agreements --accept-source-agreements
+    if ($LASTEXITCODE -ne 0) {
+        return $false
+    }
+    Update-SessionPath
+    return $true
+}
+
 function Ensure-Pipx {
     $pipx = Get-Command pipx -ErrorAction SilentlyContinue
     if ($pipx) {
         $script:PipxCommand = "pipx"
         $script:PipxPrefix = @()
         return
+    }
+
+    if (-not (Get-Command py -ErrorAction SilentlyContinue) -and -not (Get-Command python -ErrorAction SilentlyContinue)) {
+        [void](Install-PythonWithWinget)
     }
 
     $pythonLauncher = Get-Command py -ErrorAction SilentlyContinue

@@ -49,6 +49,16 @@ pipx_run() {
   "${PIPX_CMD[@]}" "$@"
 }
 
+run_privileged() {
+  if [ "$(id -u 2>/dev/null || echo 1)" = "0" ]; then
+    "$@"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    return 1
+  fi
+}
+
 setup_python
 setup_pipx
 need codex
@@ -111,7 +121,32 @@ print_tkinter_help() {
   echo "warning: Python tkinter is unavailable; MCP tools can run, but the floating pet window cannot open." >&2
   echo "macOS Homebrew Python: brew install $brew_formula" >&2
   echo "Ubuntu/Debian system Python: sudo apt-get install -y python3-tk" >&2
+  echo "Fedora/RHEL: sudo dnf install -y python3-tkinter" >&2
+  echo "Arch: sudo pacman -S --noconfirm tk" >&2
+  echo "openSUSE: sudo zypper --non-interactive install python3-tk" >&2
   echo "After installing Tk, run: pipx reinstall chibi-mcp" >&2
+}
+
+repair_linux_tkinter() {
+  if [ "$(uname -s)" != "Linux" ]; then
+    return 1
+  fi
+
+  if command -v apt-get >/dev/null 2>&1; then
+    run_privileged apt-get update && run_privileged apt-get install -y python3-tk
+  elif command -v dnf >/dev/null 2>&1; then
+    run_privileged dnf install -y python3-tkinter
+  elif command -v yum >/dev/null 2>&1; then
+    run_privileged yum install -y python3-tkinter
+  elif command -v pacman >/dev/null 2>&1; then
+    run_privileged pacman -Sy --noconfirm tk
+  elif command -v zypper >/dev/null 2>&1; then
+    run_privileged zypper --non-interactive install python3-tk
+  elif command -v apk >/dev/null 2>&1; then
+    run_privileged apk add py3-tkinter
+  else
+    return 1
+  fi
 }
 
 repair_tkinter_if_possible() {
@@ -132,10 +167,18 @@ repair_tkinter_if_possible() {
     fi
   fi
 
-  if [ "${CHIBI_AUTO_INSTALL_TK:-0}" = "1" ] && command -v apt-get >/dev/null 2>&1 && command -v sudo >/dev/null 2>&1; then
-    echo "Attempting Linux Tk repair: sudo apt-get install -y python3-tk" >&2
-    sudo apt-get update
-    sudo apt-get install -y python3-tk
+  if [ "$(uname -s)" = "Linux" ]; then
+    echo "Attempting Linux Tk repair with the detected package manager" >&2
+    if repair_linux_tkinter; then
+      pipx_run reinstall chibi-mcp || pipx_run install --force "$REPO_URL"
+      return 0
+    fi
+  fi
+
+  if [ "${CHIBI_AUTO_INSTALL_TK:-0}" = "1" ] && command -v apt-get >/dev/null 2>&1; then
+    echo "Attempting fallback Linux Tk repair: apt-get install -y python3-tk" >&2
+    run_privileged apt-get update
+    run_privileged apt-get install -y python3-tk
     pipx_run reinstall chibi-mcp || pipx_run install --force "$REPO_URL"
     return 0
   fi

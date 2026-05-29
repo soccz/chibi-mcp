@@ -203,6 +203,40 @@ if violations:
 print("brand identity ok")
 PY
 
+echo "== Installer self-healing sanity =="
+ROOT="$ROOT" python - <<'PY'
+import os
+from pathlib import Path
+
+root = Path(os.environ["ROOT"])
+shared_required = [
+    "setup_pipx",
+    "repair_linux_tkinter",
+    "python3-tkinter",
+    "pacman -Sy --noconfirm tk",
+    "zypper --non-interactive install python3-tk",
+    "apk add py3-tkinter",
+    "brew install",
+]
+for rel in ["scripts/install-claude.sh", "scripts/install-codex.sh"]:
+    text = (root / rel).read_text(encoding="utf-8")
+    missing = [item for item in shared_required if item not in text]
+    assert not missing, f"{rel} missing {missing}"
+
+windows_required = [
+    "Install-PythonWithWinget",
+    "winget install --exact --id Python.Python.3.13",
+    "Ensure-Pipx",
+    "ConvertFrom-Json",
+]
+for rel in ["scripts/install-claude.ps1", "scripts/install-codex.ps1"]:
+    text = (root / rel).read_text(encoding="utf-8")
+    missing = [item for item in windows_required if item not in text]
+    assert not missing, f"{rel} missing {missing}"
+
+print("installer self-healing ok")
+PY
+
 echo "== Claude plugin =="
 if command -v claude >/dev/null 2>&1; then
   if command -v timeout >/dev/null 2>&1; then
