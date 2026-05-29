@@ -41,6 +41,7 @@ chibi-pack validate ./my-pack
 chibi-pack preview ./my-pack
 chibi-share --out share-card.png
 chibi-share --preset social-preview --out social-preview.png
+chibi-share --preset lineup --out starter-lineup.png
 ```
 
 ## MCP tools

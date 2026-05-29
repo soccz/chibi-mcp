@@ -2,6 +2,14 @@
 
 All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condensed.
 
+## v1.4.2 — 2026-05-29
+
+Launch visual polish using the provided PNG character assets.
+
+- `chibi-share --preset lineup` generates a 1600x900 starter lineup image from the local catalog.
+- README now shows generated social preview and starter lineup assets above install instructions.
+- `verify_all.sh` now checks committed launch image assets and lineup share-card generation.
+
 ## v1.4.1 — 2026-05-29
 
 Commercial helper polish.

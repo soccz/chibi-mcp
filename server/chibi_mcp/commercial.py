@@ -123,9 +123,9 @@ def share_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, help="Output PNG path")
     parser.add_argument(
         "--preset",
-        choices=("square", "social-preview"),
+        choices=("square", "social-preview", "lineup"),
         default="square",
-        help="Card dimensions: square=1080x1080, social-preview=1280x640",
+        help="Card dimensions: square=1080x1080, social-preview=1280x640, lineup=1600x900",
     )
     parser.add_argument("--character", default=None, help="Character id to render")
     parser.add_argument("--title", default="tteoki coding recap")
@@ -136,7 +136,12 @@ def share_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     args = parser.parse_args(argv)
 
-    default_name = "social-preview.png" if args.preset == "social-preview" else "share-card.png"
+    default_names = {
+        "square": "share-card.png",
+        "social-preview": "social-preview.png",
+        "lineup": "starter-lineup.png",
+    }
+    default_name = default_names[args.preset]
     out = args.out or (Path.home() / ".chibi-mcp" / default_name)
     out = out.expanduser().resolve()
     result = write_share_card(
@@ -505,6 +510,8 @@ def write_share_card(
 
     if preset == "social-preview":
         width, height = 1280, 640
+    elif preset == "lineup":
+        width, height = 1600, 900
     else:
         width = height = 1080
     image = Image.new("RGB", (width, height), "#fff7ed")
@@ -516,6 +523,21 @@ def write_share_card(
 
     if preset == "social-preview":
         _draw_social_preview_card(
+            image=image,
+            draw=draw,
+            asset_path=asset_path,
+            title=title,
+            subtitle=subtitle,
+            mood=mood,
+            counters=counters,
+            gacha=gacha,
+            title_font=title_font,
+            subtitle_font=subtitle_font,
+            metric_font=metric_font,
+            small_font=small_font,
+        )
+    elif preset == "lineup":
+        _draw_lineup_share_card(
             image=image,
             draw=draw,
             asset_path=asset_path,
@@ -575,8 +597,8 @@ def _draw_square_share_card(
     width, _height = image.size
     draw.rounded_rectangle((58, 58, 1022, 1022), radius=36, fill="#ffffff", outline="#fed7aa", width=4)
     draw.rounded_rectangle((86, 86, 994, 188), radius=22, fill="#0f766e")
-    draw.text((120, 106), title[:48], fill="#ffffff", font=title_font)
-    draw.text((122, 200), subtitle[:82], fill="#475569", font=subtitle_font)
+    draw.text((120, 106), _fit_text(draw, title, title_font, 820), fill="#ffffff", font=title_font)
+    draw.text((122, 200), _fit_text(draw, subtitle, subtitle_font, 835), fill="#475569", font=subtitle_font)
 
     draw.ellipse((280, 285, 800, 805), fill="#ffedd5", outline="#f59e0b", width=6)
     _paste_pet(image, asset_path, max_size=(430, 430), center=(width // 2, 530))
@@ -591,11 +613,11 @@ def _draw_square_share_card(
     for label, value in metrics:
         draw.rounded_rectangle((x0, 835, x0 + 190, 925), radius=18, fill="#f8fafc", outline="#dbeafe")
         draw.text((x0 + 18, 850), label, fill="#64748b", font=small_font)
-        draw.text((x0 + 18, 878), value[:12], fill="#1f2937", font=metric_font)
+        draw.text((x0 + 18, 878), _fit_text(draw, value, metric_font, 154), fill="#1f2937", font=metric_font)
         x0 += 215
 
     footer = f"chibi-mcp {__version__} | no telemetry | localhost-first"
-    draw.text((120, 956), footer, fill="#64748b", font=small_font)
+    draw.text((120, 956), _fit_text(draw, footer, small_font, 840), fill="#64748b", font=small_font)
 
 
 def _draw_social_preview_card(
@@ -615,8 +637,8 @@ def _draw_social_preview_card(
 ) -> None:
     draw.rounded_rectangle((40, 40, 1240, 600), radius=30, fill="#ffffff", outline="#fed7aa", width=4)
     draw.rounded_rectangle((76, 78, 742, 168), radius=20, fill="#0f766e")
-    draw.text((108, 94), title[:34], fill="#ffffff", font=title_font)
-    draw.text((106, 194), subtitle[:70], fill="#475569", font=subtitle_font)
+    draw.text((108, 94), _fit_text(draw, title, title_font, 595), fill="#ffffff", font=title_font)
+    draw.text((106, 194), _fit_text(draw, subtitle, subtitle_font, 690), fill="#475569", font=subtitle_font)
     draw.text((106, 270), "Claude Code / Codex / VS Code", fill="#1f2937", font=metric_font)
     draw.text((108, 318), "local-first MCP pet | no telemetry | creator packs", fill="#64748b", font=small_font)
 
@@ -627,15 +649,97 @@ def _draw_social_preview_card(
         ("tickets", str(gacha["tickets"])),
     ]
     x0 = 106
+    value_font = _load_font(27, bold=True)
     for label, value in metrics:
-        draw.rounded_rectangle((x0, 418, x0 + 140, 505), radius=16, fill="#f8fafc", outline="#dbeafe")
+        draw.rounded_rectangle((x0, 418, x0 + 150, 505), radius=16, fill="#f8fafc", outline="#dbeafe")
         draw.text((x0 + 16, 432), label, fill="#64748b", font=small_font)
-        draw.text((x0 + 16, 462), value[:10], fill="#1f2937", font=metric_font)
+        draw.text((x0 + 16, 464), _fit_text(draw, value, value_font, 118), fill="#1f2937", font=value_font)
         x0 += 160
 
     draw.ellipse((805, 92, 1175, 462), fill="#ffedd5", outline="#f59e0b", width=6)
     _paste_pet(image, asset_path, max_size=(315, 315), center=(990, 277))
-    draw.text((812, 510), f"chibi-mcp {__version__}", fill="#64748b", font=small_font)
+    characters = _load_catalog_character_assets(asset_path.parent)[:6]
+    for index, character in enumerate(characters):
+        x = 812 + index * 60
+        y = 482
+        draw.rounded_rectangle((x, y, x + 48, y + 48), radius=14, fill="#fff7ed", outline="#fed7aa")
+        _paste_pet(image, character["image"], max_size=(42, 42), center=(x + 24, y + 24))
+    draw.text((812, 548), f"chibi-mcp {__version__}", fill="#64748b", font=small_font)
+
+
+def _draw_lineup_share_card(
+    *,
+    image: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    asset_path: Path,
+    title: str,
+    subtitle: str,
+    mood: str,
+    counters: dict[str, Any],
+    gacha: dict[str, Any],
+    title_font: ImageFont.ImageFont,
+    subtitle_font: ImageFont.ImageFont,
+    metric_font: ImageFont.ImageFont,
+    small_font: ImageFont.ImageFont,
+) -> None:
+    width, height = image.size
+    draw.rounded_rectangle(
+        (42, 42, width - 42, height - 42),
+        radius=34,
+        fill="#ffffff",
+        outline="#fed7aa",
+        width=4,
+    )
+    draw.rounded_rectangle((82, 78, 1034, 174), radius=22, fill="#0f766e")
+    draw.text((116, 96), _fit_text(draw, title, title_font, 860), fill="#ffffff", font=title_font)
+    draw.text((116, 206), _fit_text(draw, subtitle, subtitle_font, 1200), fill="#475569", font=subtitle_font)
+    draw.text((116, 268), "8 free starter PNG characters from the local catalog", fill="#1f2937", font=metric_font)
+    draw.text(
+        (116, 316),
+        f"calls {counters['calls_total']} | slices {counters['slices_today']} | mood {mood} | tickets {gacha['tickets']}",
+        fill="#64748b",
+        font=small_font,
+    )
+
+    characters = _load_catalog_character_assets(asset_path.parent)[:8]
+    if not characters:
+        characters = [
+            {
+                "id": asset_path.stem,
+                "name": asset_path.stem,
+                "category": "character",
+                "rarity": 2,
+                "image": asset_path,
+            }
+        ]
+
+    label_font = _load_font(23, bold=True)
+    detail_font = _load_font(22)
+    start_x = 86
+    start_y = 388
+    tile_w = 340
+    tile_h = 190
+    gap_x = 28
+    gap_y = 34
+    for index, character in enumerate(characters):
+        row, col = divmod(index, 4)
+        x = start_x + col * (tile_w + gap_x)
+        y = start_y + row * (tile_h + gap_y)
+        draw.rounded_rectangle((x, y, x + tile_w, y + tile_h), radius=18, fill="#f8fafc", outline="#dbeafe")
+        draw.ellipse((x + 22, y + 30, x + 132, y + 140), fill="#ffedd5", outline="#fed7aa", width=3)
+        _paste_pet(image, character["image"], max_size=(102, 102), center=(x + 77, y + 85))
+        text_x = x + 154
+        max_text_width = tile_w - 176
+        label = str(character["id"]).replace("_", " ")
+        if label.endswith(" short"):
+            label = label.removesuffix(" short")
+        draw.text((text_x, y + 48), _fit_text(draw, label, label_font, max_text_width), fill="#1f2937", font=label_font)
+        detail = f"{character['category']} | star {character['rarity']}"
+        draw.text((text_x, y + 92), _fit_text(draw, detail, detail_font, max_text_width), fill="#64748b", font=detail_font)
+        draw.text((text_x, y + 128), "free starter", fill="#0f766e", font=detail_font)
+
+    footer = f"chibi-mcp {__version__} | generated from local PNG assets | no telemetry | localhost-first"
+    draw.text((116, height - 88), _fit_text(draw, footer, small_font, 1260), fill="#64748b", font=small_font)
 
 
 def _paste_pet(image: Image.Image, asset_path: Path, *, max_size: tuple[int, int], center: tuple[int, int]) -> None:
@@ -659,6 +763,64 @@ def _write_starter_pack_png(image_path: Path, *, label: str) -> None:
     font = _load_font(28, bold=True)
     draw.text((112, 382), label[:18], fill="#0f766e", font=font)
     image.save(image_path, "PNG")
+
+
+def _load_catalog_character_assets(asset_dir: Path) -> list[dict[str, Any]]:
+    asset_dir = asset_dir.resolve()
+    meta_path = asset_dir / "meta.json"
+    characters: list[dict[str, Any]] = []
+    try:
+        catalog = json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        catalog = {"characters": []}
+
+    for character in catalog.get("characters", []):
+        if not isinstance(character, dict) or character.get("tier") != "free":
+            continue
+        image_path = _resolve_character_image(asset_dir, character)
+        if image_path is None:
+            continue
+        character_id = str(character.get("id", image_path.stem)).strip() or image_path.stem
+        characters.append(
+            {
+                "id": character_id,
+                "name": str(character.get("name_ko") or character_id),
+                "category": str(character.get("category", "character")),
+                "rarity": int(character.get("rarity", 2)),
+                "image": image_path,
+            }
+        )
+
+    if characters:
+        return characters
+    return [
+        {
+            "id": path.stem,
+            "name": path.stem,
+            "category": "character",
+            "rarity": 2,
+            "image": path,
+        }
+        for path in sorted(asset_dir.glob("*.png"))
+    ]
+
+
+def _fit_text(
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    font: ImageFont.ImageFont,
+    max_width: int,
+) -> str:
+    text = str(text)
+    if draw.textlength(text, font=font) <= max_width:
+        return text
+    suffix = "..."
+    trimmed = text
+    while trimmed and draw.textlength(trimmed.rstrip() + suffix, font=font) > max_width:
+        trimmed = trimmed[:-1]
+    if not trimmed:
+        return suffix
+    return trimmed.rstrip() + suffix
 
 
 def _format_audit(report: dict[str, Any]) -> str:

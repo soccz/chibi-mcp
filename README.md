@@ -12,6 +12,14 @@
 
 Star this repo to follow monthly character drops, VS Code builds, creator packs, and the no-telemetry MCP pet roadmap.
 
+<p align="center">
+  <img src="assets/social-preview.png" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/starter-lineup.png" alt="chibi-mcp starter character lineup" width="720">
+</p>
+
 ## Install from GitHub
 
 One-command installers:
@@ -76,6 +84,7 @@ chibi-pack validate ./my-pack        # validate a creator/team character pack
 chibi-pack preview ./my-pack         # write ./my-pack/preview.html
 chibi-share --out share-card.png     # generate a 1080x1080 session share card
 chibi-share --preset social-preview --out social-preview.png
+chibi-share --preset lineup --out starter-lineup.png
 ```
 
 Now ask your client:
@@ -101,7 +110,7 @@ The remaining 21 characters are catalog placeholders for future drops; release t
 - **Immediate dopamine** — one-command install, then a visible pet reacts to your coding session.
 - **Local-first trust** — no telemetry, localhost-only runtime, explicit `chibi-mcp --check`.
 - **AI-native surface** — Claude Code plugin, Codex plugin metadata, MCP server, and VS Code `.vsix` from one repo.
-- **Share loop** — "today's slices", character pulls, and future 1080x1080 share cards are built for screenshots.
+- **Share loop** — "today's slices", starter lineups, character pulls, and local share cards are built for screenshots.
 - **Open content loop** — character packs and creator submissions are planned around transparent metadata, not a closed store.
 
 ## Product Strategy

@@ -65,7 +65,7 @@
 | 팀/조직용 유료 지원 | `[미정 — 팀 설치 수요 확인 후 결정]` |
 | 브랜드 콜라보·물리 굿즈 | `[미정 — 파트너/수요 확인 후 결정]` |
 | GitHub topics 실제 설정 | `[GitHub repo settings에서 수동 설정 필요]` |
-| social preview 이미지 업로드 | `[GitHub repo settings에서 수동 업로드 필요]` |
+| social preview 이미지 업로드 | `assets/social-preview.png` 생성됨. GitHub repo settings 업로드는 수동 필요 |
 
 ---
 

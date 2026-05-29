@@ -40,16 +40,39 @@ with TemporaryDirectory() as tmp:
 
     share = root / "share.png"
     social = root / "social.png"
+    lineup = root / "lineup.png"
     assert share_main(["--out", str(share)]) == 0
     assert share_main(["--preset", "social-preview", "--out", str(social)]) == 0
+    assert share_main(["--preset", "lineup", "--out", str(lineup)]) == 0
     with Image.open(share) as image:
         assert image.size == (1080, 1080)
     with Image.open(social) as image:
         assert image.size == (1280, 640)
+    with Image.open(lineup) as image:
+        assert image.size == (1600, 900)
 
 print("commercial cli smoke ok")
 PY
 )
+
+echo "== Launch image assets =="
+python - <<'PY'
+from pathlib import Path
+
+from PIL import Image
+
+required = {
+    "assets/social-preview.png": (1280, 640),
+    "docs/screenshots/share-card.png": (1080, 1080),
+    "docs/screenshots/starter-lineup.png": (1600, 900),
+}
+for rel, expected in required.items():
+    path = Path(rel)
+    assert path.exists(), rel
+    with Image.open(path) as image:
+        assert image.size == expected, (rel, image.size, expected)
+print("launch image assets ok")
+PY
 
 echo "== Claude plugin =="
 if command -v claude >/dev/null 2>&1; then

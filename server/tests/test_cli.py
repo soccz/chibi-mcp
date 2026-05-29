@@ -18,7 +18,7 @@ from chibi_mcp.commercial import (
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.1"
+    assert __version__ == "1.4.2"
 
 
 def test_check_finds_packaged_assets():
@@ -190,3 +190,18 @@ def test_social_preview_writes_expected_size(tmp_path):
     assert result["size"] == [1280, 640]
     with Image.open(out) as image:
         assert image.size == (1280, 640)
+
+
+def test_lineup_preview_writes_expected_size(tmp_path):
+    out = tmp_path / "starter-lineup.png"
+    result = write_share_card(
+        out=out,
+        character_id="white_tteok",
+        title="tteoki starter lineup",
+        subtitle="local MCP pet",
+        preset="lineup",
+    )
+    assert result["ok"] is True
+    assert result["size"] == [1600, 900]
+    with Image.open(out) as image:
+        assert image.size == (1600, 900)

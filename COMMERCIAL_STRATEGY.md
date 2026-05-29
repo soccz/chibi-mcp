@@ -41,6 +41,7 @@
 - `chibi-mcp --check`로 설치 진단
 - `chibi-audit`로 로컬 신뢰 리포트 출력
 - `chibi-share`로 1080×1080 세션 공유 카드 생성
+- `chibi-share --preset lineup`으로 제공된 PNG 캐릭터 전체 라인업 생성
 - `chibi-pack validate/preview`로 크리에이터·팀 캐릭터팩 검증
 
 무료 코어는 줄이지 않는다. 이 제품은 신뢰와 귀여움이 먼저다.
@@ -114,6 +115,7 @@ chibi-pack preview ./my-pack
 chibi-audit --json
 chibi-share --out sprint-card.png
 chibi-share --preset social-preview --out social-preview.png
+chibi-share --preset lineup --out starter-lineup.png
 ```
 
 팀 유료화 전에는 이 두 결과물을 sales asset으로 쓴다. `chibi-audit`는 no telemetry, localhost-only default, state path, asset catalog, hook/plugin files를 보여주고, `chibi-share`는 팀/스프린트/릴리스 공유 카드의 초기 형태가 된다.

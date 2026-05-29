@@ -40,6 +40,7 @@ Star conversion에 필요한 시각 자료:
 - README 상단 GIF: pet opens, mood changes, slice drops
 - 1280x640 GitHub social preview image
 - 1080x1080 share card: "오늘 7도막 잘림"
+- 1600x900 starter lineup generated from the project PNG assets
 - VS Code sidebar screenshot
 - Claude Code `/chibi` screenshot
 - Codex terminal screenshot
@@ -47,19 +48,21 @@ Star conversion에 필요한 시각 자료:
 우선순위:
 
 1. `assets/social-preview.png`
-2. `docs/demo.gif`
-3. `docs/screenshots/claude-code.png`
-4. `docs/screenshots/vscode-sidebar.png`
+2. `docs/screenshots/starter-lineup.png`
+3. `docs/demo.gif`
+4. `docs/screenshots/claude-code.png`
+5. `docs/screenshots/vscode-sidebar.png`
 
 현재 실행 가능한 시작점:
 
 ```bash
 chibi-share --out docs/screenshots/share-card.png
 chibi-share --preset social-preview --out assets/social-preview.png
+chibi-share --preset lineup --out docs/screenshots/starter-lineup.png
 chibi-pack preview ./example-pack --out docs/screenshots/pack-preview.html
 ```
 
-실제 demo GIF는 수동 녹화가 필요하지만, share card와 pack preview는 repo 안에서 즉시 생성 가능하다.
+실제 demo GIF는 수동 녹화가 필요하지만, share card, social preview, starter lineup, pack preview는 repo 안에서 즉시 생성 가능하다.
 
 ### 3. Topics for Discovery
 
