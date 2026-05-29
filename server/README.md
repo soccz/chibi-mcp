@@ -36,9 +36,11 @@ chibi-mcp --check      # verify packaged assets + local runtime support
 chibi-mcp --version
 chibi-mcp --ws-only    # development: run only ws://127.0.0.1:9876
 chibi-audit            # local trust report for team/security review
+chibi-pack init ./my-pack
 chibi-pack validate ./my-pack
 chibi-pack preview ./my-pack
 chibi-share --out share-card.png
+chibi-share --preset social-preview --out social-preview.png
 ```
 
 ## MCP tools

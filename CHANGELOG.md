@@ -2,6 +2,15 @@
 
 All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condensed.
 
+## v1.4.1 — 2026-05-29
+
+Commercial helper polish.
+
+- `chibi-pack init` scaffolds a starter creator/team pack with `meta.json` and a placeholder PNG.
+- `chibi-pack validate` rejects explicit image paths that escape the pack directory.
+- `chibi-share --preset social-preview` generates a 1280×640 GitHub social preview card.
+- `verify_all.sh` now smoke-tests `chibi-audit`, `chibi-pack init/validate/preview`, and both share-card presets.
+
 ## v1.4.0 — 2026-05-29
 
 Commercial-readiness surfaces without paid gates.

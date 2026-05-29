@@ -10,6 +10,7 @@ from chibi_mcp import __version__
 from chibi_mcp.__main__ import _check, _ws_endpoint
 from chibi_mcp.commercial import (
     build_trust_audit,
+    init_pack,
     validate_pack,
     write_pack_preview,
     write_share_card,
@@ -17,7 +18,7 @@ from chibi_mcp.commercial import (
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.0"
+    assert __version__ == "1.4.1"
 
 
 def test_check_finds_packaged_assets():
@@ -64,6 +65,21 @@ def test_pack_validate_accepts_minimal_creator_pack(tmp_path):
     assert result["characters"][0]["id"] == "custom_tteok"
 
 
+def test_pack_init_scaffolds_valid_pack(tmp_path):
+    pack_dir = tmp_path / "pack"
+    result = init_pack(
+        pack_dir,
+        character_id="starter_tteok",
+        name="Starter Tteok",
+        category="tteok",
+        tier="creator",
+    )
+    assert result["ok"] is True
+    validation = validate_pack(pack_dir)
+    assert validation["ok"] is True
+    assert validation["characters"][0]["id"] == "starter_tteok"
+
+
 def test_pack_validate_rejects_duplicate_ids(tmp_path):
     Image.new("RGBA", (256, 256), (255, 240, 210, 255)).save(tmp_path / "dupe.png")
     (tmp_path / "meta.json").write_text(
@@ -92,6 +108,33 @@ def test_pack_validate_rejects_duplicate_ids(tmp_path):
     result = validate_pack(tmp_path)
     assert result["ok"] is False
     assert any("duplicates" in error for error in result["errors"])
+
+
+def test_pack_validate_rejects_image_path_escape(tmp_path):
+    outside = tmp_path / "outside.png"
+    Image.new("RGBA", (256, 256), (255, 240, 210, 255)).save(outside)
+    pack_dir = tmp_path / "pack"
+    pack_dir.mkdir()
+    (pack_dir / "meta.json").write_text(
+        json.dumps(
+            {
+                "characters": [
+                    {
+                        "id": "escape_tteok",
+                        "name_ko": "Escape",
+                        "category": "tteok",
+                        "rarity": 2,
+                        "tier": "creator",
+                        "image": "../outside.png",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    result = validate_pack(pack_dir)
+    assert result["ok"] is False
+    assert any("inside the pack directory" in error for error in result["errors"])
 
 
 def test_pack_preview_writes_html(tmp_path):
@@ -129,5 +172,21 @@ def test_share_card_writes_png(tmp_path):
         subtitle="local MCP pet",
     )
     assert result["ok"] is True
+    assert result["size"] == [1080, 1080]
     with Image.open(out) as image:
         assert image.size == (1080, 1080)
+
+
+def test_social_preview_writes_expected_size(tmp_path):
+    out = tmp_path / "social-preview.png"
+    result = write_share_card(
+        out=out,
+        character_id="white_tteok",
+        title="tteoki",
+        subtitle="local MCP pet",
+        preset="social-preview",
+    )
+    assert result["ok"] is True
+    assert result["size"] == [1280, 640]
+    with Image.open(out) as image:
+        assert image.size == (1280, 640)

@@ -22,6 +22,33 @@ echo "== Python server =="
     python -m build --wheel
   fi
   python -m chibi_mcp --check
+  python - <<'PY'
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from PIL import Image
+
+from chibi_mcp.commercial import audit_main, pack_main, share_main
+
+with TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    pack = root / "pack"
+    assert pack_main(["init", str(pack)]) == 0
+    assert pack_main(["validate", str(pack)]) == 0
+    assert pack_main(["preview", str(pack)]) == 0
+    assert audit_main([]) == 0
+
+    share = root / "share.png"
+    social = root / "social.png"
+    assert share_main(["--out", str(share)]) == 0
+    assert share_main(["--preset", "social-preview", "--out", str(social)]) == 0
+    with Image.open(share) as image:
+        assert image.size == (1080, 1080)
+    with Image.open(social) as image:
+        assert image.size == (1280, 640)
+
+print("commercial cli smoke ok")
+PY
 )
 
 echo "== Claude plugin =="

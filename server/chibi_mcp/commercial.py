@@ -52,6 +52,14 @@ def pack_main(argv: list[str] | None = None) -> int:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
+    init = sub.add_parser("init", help="Create a starter character pack")
+    init.add_argument("pack_dir", type=Path)
+    init.add_argument("--id", default="my_tteok", help="Starter character id")
+    init.add_argument("--name", default="My Tteok", help="Starter display name")
+    init.add_argument("--category", default="tteok", help="Starter category slug")
+    init.add_argument("--tier", default="creator", help="Pack tier")
+    init.add_argument("--force", action="store_true", help="Overwrite existing starter files")
+
     validate = sub.add_parser("validate", help="Validate a pack directory")
     validate.add_argument("pack_dir", type=Path)
     validate.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
@@ -62,6 +70,22 @@ def pack_main(argv: list[str] | None = None) -> int:
     preview.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
 
     args = parser.parse_args(argv)
+    if args.command == "init":
+        result = init_pack(
+            args.pack_dir,
+            character_id=args.id,
+            name=args.name,
+            category=args.category,
+            tier=args.tier,
+            force=args.force,
+        )
+        if result["ok"]:
+            print(f"created: {result['pack_dir']}")
+            print("next: chibi-pack validate " + result["pack_dir"])
+        else:
+            print(result["error"], file=sys.stderr)
+        return 0 if result["ok"] else 1
+
     if args.command == "validate":
         result = validate_pack(args.pack_dir)
         if args.json:
@@ -97,6 +121,12 @@ def share_main(argv: list[str] | None = None) -> int:
         description="Generate a local share card PNG for your coding session.",
     )
     parser.add_argument("--out", type=Path, help="Output PNG path")
+    parser.add_argument(
+        "--preset",
+        choices=("square", "social-preview"),
+        default="square",
+        help="Card dimensions: square=1080x1080, social-preview=1280x640",
+    )
     parser.add_argument("--character", default=None, help="Character id to render")
     parser.add_argument("--title", default="tteoki coding recap")
     parser.add_argument(
@@ -106,19 +136,78 @@ def share_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     args = parser.parse_args(argv)
 
-    out = args.out or (Path.home() / ".chibi-mcp" / "share-card.png")
+    default_name = "social-preview.png" if args.preset == "social-preview" else "share-card.png"
+    out = args.out or (Path.home() / ".chibi-mcp" / default_name)
     out = out.expanduser().resolve()
     result = write_share_card(
         out=out,
         character_id=args.character,
         title=args.title,
         subtitle=args.subtitle,
+        preset=args.preset,
     )
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         print(f"share_card: {result['path']}")
     return 0 if result["ok"] else 1
+
+
+def init_pack(
+    pack_dir: Path,
+    *,
+    character_id: str,
+    name: str,
+    category: str,
+    tier: str,
+    force: bool = False,
+) -> dict[str, Any]:
+    pack_dir = pack_dir.expanduser().resolve()
+    character_id = character_id.strip()
+    category = category.strip()
+    tier = tier.strip()
+    name = name.strip()
+    if not CHARACTER_ID_RE.fullmatch(character_id):
+        return {"ok": False, "error": f"invalid id: {character_id!r}", "pack_dir": str(pack_dir)}
+    if not CATEGORY_RE.fullmatch(category):
+        return {"ok": False, "error": f"invalid category: {category!r}", "pack_dir": str(pack_dir)}
+    if tier not in VALID_TIERS:
+        return {"ok": False, "error": f"invalid tier: {tier!r}", "pack_dir": str(pack_dir)}
+    if not name:
+        return {"ok": False, "error": "name must not be empty", "pack_dir": str(pack_dir)}
+
+    meta_path = pack_dir / "meta.json"
+    image_dir = pack_dir / "characters"
+    image_path = image_dir / f"{character_id}.png"
+    existing = [str(path) for path in (meta_path, image_path) if path.exists()]
+    if existing and not force:
+        return {
+            "ok": False,
+            "error": "refusing to overwrite existing files without --force: " + ", ".join(existing),
+            "pack_dir": str(pack_dir),
+        }
+
+    image_dir.mkdir(parents=True, exist_ok=True)
+    meta = {
+        "characters": [
+            {
+                "id": character_id,
+                "name_ko": name,
+                "category": category,
+                "rarity": 2,
+                "tier": tier,
+                "image": f"characters/{character_id}.png",
+            }
+        ]
+    }
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _write_starter_pack_png(image_path, label=character_id)
+    return {
+        "ok": True,
+        "pack_dir": str(pack_dir),
+        "meta": str(meta_path),
+        "image": str(image_path),
+    }
 
 
 def build_trust_audit() -> dict[str, Any]:
@@ -242,7 +331,7 @@ def validate_pack(pack_dir: Path) -> dict[str, Any]:
             warnings.append(f"{prefix}.tier {tier!r} is unusual; expected one of {sorted(VALID_TIERS)}")
 
         locked = bool(character.get("locked"))
-        image_path = _resolve_character_image(pack_dir, character)
+        image_path = _resolve_character_image(pack_dir, character, errors=errors, prefix=prefix)
         if image_path is None:
             if locked or tier == "upcoming":
                 warnings.append(f"{prefix} is locked/upcoming and has no image")
@@ -398,6 +487,7 @@ def write_share_card(
     character_id: str | None = None,
     title: str,
     subtitle: str,
+    preset: str = "square",
 ) -> dict[str, Any]:
     out.parent.mkdir(parents=True, exist_ok=True)
     asset_dir = _resolve_asset_dir()
@@ -413,7 +503,10 @@ def write_share_card(
     gacha = state["gacha"]
     mood = state["mood"]
 
-    width = height = 1080
+    if preset == "social-preview":
+        width, height = 1280, 640
+    else:
+        width = height = 1080
     image = Image.new("RGB", (width, height), "#fff7ed")
     draw = ImageDraw.Draw(image)
     title_font = _load_font(68, bold=True)
@@ -421,18 +514,72 @@ def write_share_card(
     metric_font = _load_font(30, bold=True)
     small_font = _load_font(24)
 
+    if preset == "social-preview":
+        _draw_social_preview_card(
+            image=image,
+            draw=draw,
+            asset_path=asset_path,
+            title=title,
+            subtitle=subtitle,
+            mood=mood,
+            counters=counters,
+            gacha=gacha,
+            title_font=title_font,
+            subtitle_font=subtitle_font,
+            metric_font=metric_font,
+            small_font=small_font,
+        )
+    else:
+        _draw_square_share_card(
+            image=image,
+            draw=draw,
+            asset_path=asset_path,
+            title=title,
+            subtitle=subtitle,
+            mood=mood,
+            counters=counters,
+            gacha=gacha,
+            title_font=title_font,
+            subtitle_font=subtitle_font,
+            metric_font=metric_font,
+            small_font=small_font,
+        )
+    image.save(out, "PNG")
+    return {
+        "ok": True,
+        "path": str(out),
+        "preset": preset,
+        "size": [width, height],
+        "character_asset": str(asset_path),
+        "mood": mood,
+        "calls": counters["calls_total"],
+        "slices": counters["slices_today"],
+    }
+
+
+def _draw_square_share_card(
+    *,
+    image: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    asset_path: Path,
+    title: str,
+    subtitle: str,
+    mood: str,
+    counters: dict[str, Any],
+    gacha: dict[str, Any],
+    title_font: ImageFont.ImageFont,
+    subtitle_font: ImageFont.ImageFont,
+    metric_font: ImageFont.ImageFont,
+    small_font: ImageFont.ImageFont,
+) -> None:
+    width, _height = image.size
     draw.rounded_rectangle((58, 58, 1022, 1022), radius=36, fill="#ffffff", outline="#fed7aa", width=4)
     draw.rounded_rectangle((86, 86, 994, 188), radius=22, fill="#0f766e")
     draw.text((120, 106), title[:48], fill="#ffffff", font=title_font)
     draw.text((122, 200), subtitle[:82], fill="#475569", font=subtitle_font)
 
     draw.ellipse((280, 285, 800, 805), fill="#ffedd5", outline="#f59e0b", width=6)
-    with Image.open(asset_path) as pet:
-        pet = pet.convert("RGBA")
-        pet.thumbnail((430, 430), Image.Resampling.LANCZOS)
-        x = (width - pet.width) // 2
-        y = 350 + (360 - pet.height) // 2
-        image.paste(pet, (x, y), pet)
+    _paste_pet(image, asset_path, max_size=(430, 430), center=(width // 2, 530))
 
     metrics = [
         ("calls", str(counters["calls_total"])),
@@ -449,15 +596,69 @@ def write_share_card(
 
     footer = f"chibi-mcp {__version__} | no telemetry | localhost-first"
     draw.text((120, 956), footer, fill="#64748b", font=small_font)
-    image.save(out, "PNG")
-    return {
-        "ok": True,
-        "path": str(out),
-        "character_asset": str(asset_path),
-        "mood": mood,
-        "calls": counters["calls_total"],
-        "slices": counters["slices_today"],
-    }
+
+
+def _draw_social_preview_card(
+    *,
+    image: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    asset_path: Path,
+    title: str,
+    subtitle: str,
+    mood: str,
+    counters: dict[str, Any],
+    gacha: dict[str, Any],
+    title_font: ImageFont.ImageFont,
+    subtitle_font: ImageFont.ImageFont,
+    metric_font: ImageFont.ImageFont,
+    small_font: ImageFont.ImageFont,
+) -> None:
+    draw.rounded_rectangle((40, 40, 1240, 600), radius=30, fill="#ffffff", outline="#fed7aa", width=4)
+    draw.rounded_rectangle((76, 78, 742, 168), radius=20, fill="#0f766e")
+    draw.text((108, 94), title[:34], fill="#ffffff", font=title_font)
+    draw.text((106, 194), subtitle[:70], fill="#475569", font=subtitle_font)
+    draw.text((106, 270), "Claude Code / Codex / VS Code", fill="#1f2937", font=metric_font)
+    draw.text((108, 318), "local-first MCP pet | no telemetry | creator packs", fill="#64748b", font=small_font)
+
+    metrics = [
+        ("calls", str(counters["calls_total"])),
+        ("slices", str(counters["slices_today"])),
+        ("mood", mood),
+        ("tickets", str(gacha["tickets"])),
+    ]
+    x0 = 106
+    for label, value in metrics:
+        draw.rounded_rectangle((x0, 418, x0 + 140, 505), radius=16, fill="#f8fafc", outline="#dbeafe")
+        draw.text((x0 + 16, 432), label, fill="#64748b", font=small_font)
+        draw.text((x0 + 16, 462), value[:10], fill="#1f2937", font=metric_font)
+        x0 += 160
+
+    draw.ellipse((805, 92, 1175, 462), fill="#ffedd5", outline="#f59e0b", width=6)
+    _paste_pet(image, asset_path, max_size=(315, 315), center=(990, 277))
+    draw.text((812, 510), f"chibi-mcp {__version__}", fill="#64748b", font=small_font)
+
+
+def _paste_pet(image: Image.Image, asset_path: Path, *, max_size: tuple[int, int], center: tuple[int, int]) -> None:
+    with Image.open(asset_path) as pet:
+        pet = pet.convert("RGBA")
+        pet.thumbnail(max_size, Image.Resampling.LANCZOS)
+        x = center[0] - pet.width // 2
+        y = center[1] - pet.height // 2
+        image.paste(pet, (x, y), pet)
+
+
+def _write_starter_pack_png(image_path: Path, *, label: str) -> None:
+    image = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    draw.rounded_rectangle((92, 166, 420, 346), radius=84, fill="#fff7ed", outline="#f59e0b", width=10)
+    draw.ellipse((182, 226, 210, 254), fill="#1f2937")
+    draw.ellipse((302, 226, 330, 254), fill="#1f2937")
+    draw.arc((212, 230, 300, 304), start=10, end=170, fill="#1f2937", width=6)
+    draw.ellipse((150, 265, 202, 310), fill="#fecaca")
+    draw.ellipse((310, 265, 362, 310), fill="#fecaca")
+    font = _load_font(28, bold=True)
+    draw.text((112, 382), label[:18], fill="#0f766e", font=font)
+    image.save(image_path, "PNG")
 
 
 def _format_audit(report: dict[str, Any]) -> str:
@@ -513,18 +714,31 @@ def _pack_result(
     }
 
 
-def _resolve_character_image(pack_dir: Path, character: dict[str, Any]) -> Path | None:
+def _resolve_character_image(
+    pack_dir: Path,
+    character: dict[str, Any],
+    *,
+    errors: list[str] | None = None,
+    prefix: str = "character",
+) -> Path | None:
     image_value = character.get("image")
     candidates: list[Path] = []
     if image_value:
-        candidates.append(pack_dir / str(image_value))
+        explicit = pack_dir / str(image_value)
+        resolved = explicit.resolve()
+        if not resolved.is_relative_to(pack_dir):
+            if errors is not None:
+                errors.append(f"{prefix}.image must stay inside the pack directory")
+            return None
+        candidates.append(explicit)
     character_id = str(character.get("id", "")).strip()
     if character_id:
         candidates.append(pack_dir / f"{character_id}.png")
         candidates.append(pack_dir / "characters" / f"{character_id}.png")
     for candidate in candidates:
-        if candidate.exists():
-            return candidate.resolve()
+        resolved = candidate.resolve()
+        if candidate.exists() and resolved.is_relative_to(pack_dir):
+            return resolved
     return None
 
 

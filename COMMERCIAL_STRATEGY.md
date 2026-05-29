@@ -86,6 +86,7 @@ MVP:
 현재 실행 가능한 기반:
 
 ```bash
+chibi-pack init ./my-pack
 chibi-pack validate ./my-pack
 chibi-pack preview ./my-pack
 ```
@@ -112,6 +113,7 @@ chibi-pack preview ./my-pack
 ```bash
 chibi-audit --json
 chibi-share --out sprint-card.png
+chibi-share --preset social-preview --out social-preview.png
 ```
 
 팀 유료화 전에는 이 두 결과물을 sales asset으로 쓴다. `chibi-audit`는 no telemetry, localhost-only default, state path, asset catalog, hook/plugin files를 보여주고, `chibi-share`는 팀/스프린트/릴리스 공유 카드의 초기 형태가 된다.

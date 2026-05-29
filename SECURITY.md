@@ -16,6 +16,15 @@ Security fixes target the latest `main` branch and the latest GitHub Release.
 
 MCP servers and plugins can execute local code, so install only from a repository you trust and review the install scripts before running one-line installers.
 
+Useful local checks:
+
+```bash
+chibi-audit
+chibi-pack validate ./my-pack
+```
+
+Character pack images are expected to stay inside the pack directory; explicit image paths that escape the pack are rejected by `chibi-pack validate`.
+
 ## Reporting a Vulnerability
 
 Use GitHub private vulnerability reporting if it is enabled for this repository.

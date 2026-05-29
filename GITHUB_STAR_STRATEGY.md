@@ -55,6 +55,7 @@ Star conversion에 필요한 시각 자료:
 
 ```bash
 chibi-share --out docs/screenshots/share-card.png
+chibi-share --preset social-preview --out assets/social-preview.png
 chibi-pack preview ./example-pack --out docs/screenshots/pack-preview.html
 ```
 

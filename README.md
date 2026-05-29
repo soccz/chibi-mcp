@@ -71,9 +71,11 @@ Commercial-readiness helpers:
 
 ```bash
 chibi-audit                         # local trust report: no telemetry, localhost, assets, hooks
+chibi-pack init ./my-pack            # scaffold a creator/team character pack
 chibi-pack validate ./my-pack        # validate a creator/team character pack
 chibi-pack preview ./my-pack         # write ./my-pack/preview.html
 chibi-share --out share-card.png     # generate a 1080x1080 session share card
+chibi-share --preset social-preview --out social-preview.png
 ```
 
 Now ask your client:
