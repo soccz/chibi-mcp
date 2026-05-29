@@ -113,4 +113,4 @@ if ($LASTEXITCODE -ne 0) {
     Write-Warning "Codex plugin marketplace add failed; MCP registration is still complete."
 }
 
-Write-Host "Codex install complete. Try: 내 치비 보여줘"
+Write-Host "Codex install complete. Try: chibi 보여줘"

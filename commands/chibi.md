@@ -1,8 +1,8 @@
 ---
-description: Show your active 치비, run a gacha, or open the collection.
+description: Show your active chibi, run a gacha, or open the collection.
 ---
 
-Invoke the `chibi` skill to handle the user's request about their 치비 (chibi) desktop pet.
+Invoke the `chibi` skill to handle the user's request about their chibi desktop pet.
 
 If the user typed `/chibi` with no arguments, default to **opening the floating window**:
 1. Call the `chibi` MCP server's `open_pet_window` tool (no args).

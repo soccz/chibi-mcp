@@ -25,7 +25,7 @@ xvfb-run -a make public-beta-check
 Release-tag preflight after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.4
+make release-check TAG=v1.4.5
 ```
 
 See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist, [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging, and the remaining manual demo assets.
@@ -89,7 +89,7 @@ Then in Claude Code:
 
 ```text
 /chibi
-내 치비 보여줘
+chibi 보여줘
 ```
 
 ### Codex
@@ -109,9 +109,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubus
 Then ask Codex:
 
 ```text
-내 치비 보여줘
-치비 뽑기 한 번
-치비 보관함 열어
+chibi 보여줘
+chibi 뽑기 한 번
+chibi 보관함 열어
 ```
 
 ### VS Code
@@ -163,9 +163,9 @@ If `tkinter` is false or no display session is available, MCP tools still work, 
 ### Common Prompts
 
 ```text
-내 치비 보여줘
-뽑기 한 번
-보관함 열어
+chibi 보여줘
+chibi 뽑기 한 번
+chibi 보관함 열어
 조청 드립 옵션 적용해줘
 옵션 해제해줘
 10번 호출마다 잘리게 해줘

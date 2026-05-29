@@ -59,4 +59,4 @@ fi
 
 codex plugin marketplace add "$MARKETPLACE" || true
 
-echo "Codex install complete. Try: 내 치비 보여줘"
+echo "Codex install complete. Try: chibi 보여줘"

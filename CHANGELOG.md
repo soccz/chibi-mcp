@@ -6,6 +6,8 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Replaced remaining non-ASCII name spelling in README, plugin metadata, command examples, installer output, and server descriptions with the ASCII `chibi` brand spelling.
+- Extended the brand identity sanity check so legacy project names and non-ASCII `chibi` spellings cannot leak back into public files.
 - Added product-market readiness, team adoption, and pilot playbook docs to clarify commercial gaps before paid launch.
 - Added team pilot and collaboration/drop issue forms for structured free feedback and partner ideas.
 - `chibi-audit` now reports commercial readiness docs/templates and confirms monetization remains disabled.

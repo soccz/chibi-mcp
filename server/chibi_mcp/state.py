@@ -1,4 +1,4 @@
-"""치비 state — mood derivation + gacha inventory + persistence.
+"""chibi state — mood derivation + gacha inventory + persistence.
 
 Persistence: only inventory/tickets/active character are persisted across
 server restarts. Counters (calls, slices) reset per server lifecycle by design.
@@ -50,7 +50,7 @@ STATE_SCHEMA_VERSION = 2
 
 @dataclass
 class ChibiState:
-    """In-memory + persisted state of the active 치비 collection."""
+    """In-memory + persisted state of the active chibi collection."""
 
     slice_interval: int = DEFAULT_SLICE_INTERVAL
     _lock: Lock = field(default_factory=Lock, repr=False)

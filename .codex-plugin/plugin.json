@@ -1,7 +1,7 @@
 {
   "name": "chibi-mcp",
-  "version": "1.4.4",
-  "description": "치비 (chibi) — Korean rice cake themed MCP pet for Codex. Collect squishy characters, apply 12 free option layers, open a floating pet window, and let it react to your coding session.",
+  "version": "1.4.5",
+  "description": "chibi — Korean rice cake themed MCP pet for Codex. Collect squishy characters, apply 12 free option layers, open a floating pet window, and let it react to your coding session.",
   "author": {
     "name": "soccz",
     "url": "https://github.com/soccz"
@@ -33,9 +33,9 @@
     ],
     "websiteURL": "https://github.com/soccz/chibi-mcp",
     "defaultPrompt": [
-      "내 치비 보여줘",
-      "치비 뽑기 한 번",
-      "치비 보관함 열어",
+      "chibi 보여줘",
+      "chibi 뽑기 한 번",
+      "chibi 보관함 열어",
       "조청 드립 옵션 적용해줘"
     ],
     "brandColor": "#F59E0B"

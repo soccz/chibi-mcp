@@ -25,6 +25,26 @@ fi
 echo "== Python server =="
 (
   cd "$ROOT/server"
+  ROOT="$ROOT" python - <<'PY'
+import json
+import os
+import tomllib
+from pathlib import Path
+
+import chibi_mcp
+
+root = Path(os.environ["ROOT"])
+pyproject = tomllib.loads((root / "server" / "pyproject.toml").read_text(encoding="utf-8"))
+server_version = pyproject["project"]["version"]
+versions = {
+    "server/chibi_mcp/__init__.py": chibi_mcp.__version__,
+    ".claude-plugin/plugin.json": json.loads((root / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))["version"],
+    ".codex-plugin/plugin.json": json.loads((root / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))["version"],
+}
+for source, version in versions.items():
+    assert version == server_version, f"{source} version {version} != server/pyproject.toml {server_version}"
+print(f"version metadata ok: {server_version}")
+PY
   python -m ruff check .
   python -m pytest -q
   python -m py_compile chibi_mcp/__main__.py chibi_mcp/server.py chibi_mcp/window.py
@@ -132,6 +152,7 @@ legacy_terms = [
     "tteo" + "ki",
     "Tteo" + "ki",
     "떡" + "이",
+    "치" + "비",
     "my_" + "tteok",
     "My " + "Tteok",
     "new " + "tteok character",

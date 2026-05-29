@@ -1,4 +1,4 @@
-"""Tk window for the floating 치비.
+"""Tk window for the floating chibi.
 
 v1.1 visual upgrade:
     - overrideredirect(True): no title bar — floats as a pure sprite.
@@ -336,7 +336,7 @@ class PetWindow:
                 log.warning("sound generation failed: %s", e)
 
         self.root = tk.Tk()
-        self.root.title(f"치비 — {name}")
+        self.root.title(f"chibi — {name}")
         self.root.attributes("-topmost", True)
 
         # Transparency on macOS
@@ -742,7 +742,7 @@ class PetWindow:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="chibi_mcp.window")
     parser.add_argument("--image", required=True)
-    parser.add_argument("--name", default="치비")
+    parser.add_argument("--name", default="chibi")
     parser.add_argument("--rarity", type=int, default=2)
     parser.add_argument("--mood", default="calm")
     parser.add_argument("--option-image", action="append", default=[], help="Transparent option PNG")

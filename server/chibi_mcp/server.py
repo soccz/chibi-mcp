@@ -366,7 +366,7 @@ def _window_runtime_issue() -> dict | None:
 
 @mcp.tool()
 def open_pet_window(character_id: str | None = None) -> dict:
-    """Pop up a small always-on-top tk window showing the active 치비.
+    """Pop up a small always-on-top tk window showing the active chibi.
 
     Spawns a detached Python subprocess that connects to the local WebSocket
     (ws://127.0.0.1:9876) and updates mood/slice/say events live. Only one
@@ -525,7 +525,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
 
 @mcp.tool()
 def close_pet_window() -> dict:
-    """Close the floating 치비 window if one is open."""
+    """Close the floating chibi window if one is open."""
     existed = _WINDOW_PID_FILE.exists()
     _kill_existing_window()
     return {"closed": True, "had_window": existed}
@@ -552,7 +552,7 @@ def set_slice_interval(n: int) -> dict:
 
 @mcp.tool()
 def pull_gacha() -> dict:
-    """Pull one 치비 from the gacha.
+    """Pull one chibi from the gacha.
 
     Costs:
         - First pull of the calendar day is free (resets at local midnight).
@@ -562,7 +562,7 @@ def pull_gacha() -> dict:
     slices. Use `add_ticket` for manual grants (debug / promo).
 
     Rarity weights: ★★★★★ 1%, ★★★★ 5%, ★★★ 24%, ★★ 70%. Newly pulled
-    character becomes your active 치비 if you didn't have one.
+    character becomes your active chibi if you didn't have one.
     """
     catalog = get_catalog()
     chars = catalog.get("characters", [])
@@ -603,7 +603,7 @@ def get_inventory() -> dict:
 
 @mcp.tool()
 def set_active_character(character_id: str) -> dict:
-    """Switch which 치비 is shown in the window. Must own the character."""
+    """Switch which chibi is shown in the window. Must own the character."""
     if not _CHAR_ID_RE.match(character_id):
         return {"ok": False, "reason": f"invalid character id: {character_id!r}"}
     state = get_state()
@@ -619,7 +619,7 @@ def set_active_character(character_id: str) -> dict:
 
 @mcp.tool()
 def rename_character(character_id: str, nickname: str) -> dict:
-    """Rename a 치비 you own. Nickname is clipped to 40 chars."""
+    """Rename a chibi you own. Nickname is clipped to 40 chars."""
     if not _CHAR_ID_RE.match(character_id):
         return {"ok": False, "reason": f"invalid character id: {character_id!r}"}
     state = get_state()

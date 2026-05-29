@@ -120,9 +120,9 @@ codex plugin marketplace add soccz/chibi-mcp
 Then ask Codex:
 
 ```text
-내 치비 보여줘
-치비 뽑기 한 번
-치비 보관함 열어
+chibi 보여줘
+chibi 뽑기 한 번
+chibi 보관함 열어
 ```
 
 ## Claude Code
@@ -212,7 +212,7 @@ images, and hidden legacy brand-name leaks.
 For maintainer release-tag readiness after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.4
+make release-check TAG=v1.4.5
 ```
 
 See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
@@ -237,14 +237,14 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push `main`, then run:
 
 ```bash
-make release-check TAG=v1.4.4
+make release-check TAG=v1.4.5
 ```
 
 3. Push a tag:
 
 ```bash
-git tag v1.4.4
-git push origin v1.4.4
+git tag v1.4.5
+git push origin v1.4.5
 ```
 
 4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.
