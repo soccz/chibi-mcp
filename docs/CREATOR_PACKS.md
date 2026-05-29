@@ -2,7 +2,7 @@
 
 `chibi-mcp` should feel like a character platform before it becomes a store. The pack format is intentionally simple: a folder with `meta.json`, transparent PNGs, and a generated preview.
 
-This is a commercial-readiness surface, not a paid gate. The base app, MCP tools, modes, starter characters, and free options stay free.
+This is a commercial-readiness surface, not a paid gate. The base app, MCP tools, modes, starter characters, and free options stay free. Do not add paid packs, paid pulls, Sponsors tiers, license keys, or creator revenue share unless the user explicitly approves monetization later.
 
 ## Pack Types
 
@@ -12,7 +12,7 @@ This is a commercial-readiness surface, not a paid gate. The base app, MCP tools
 | Creator pack | artist-made character/option set | external content supply | ready via validator |
 | Team pack | private mascot, release badge | B2B admin value | ready via validator |
 | Brand collab | keycap/cafe/devtool skin | distribution partner | strategy only |
-| Direct purchase pack | fixed-price cosmetics | future revenue | user decision later |
+| Direct purchase pack | fixed-price cosmetics | out of scope for now | do not implement |
 
 ## Runnable Examples
 
@@ -70,10 +70,11 @@ Use these labels when triaging a pack proposal:
 
 ## Commercial Guardrails
 
-- Do not introduce paid random pulls before traffic and legal review.
+- Do not introduce paid random pulls.
 - Do not lock Pet / Notification / Widget / VTuber modes.
+- Do not add paid packs, checkout, Sponsors tiers, license keys, or creator revenue share yet.
 - Do not add telemetry to measure pack usage.
-- Keep sponsor credit inside catalog/README/release notes, not as workflow interruption.
+- Keep any future sponsor credit inside catalog/README/release notes, not as workflow interruption, and only after approval.
 
 ## Source Notes
 

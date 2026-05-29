@@ -1,6 +1,8 @@
 # Launch Kit
 
-This is the practical launch/sales kit for turning `chibi-mcp` from a cute MVP into an installable, shareable product. It prepares commercial surfaces without turning on paid gates.
+This is the practical launch kit for turning `chibi-mcp` from a cute MVP into an installable, shareable product. It prepares distribution and content surfaces without turning on paid gates.
+
+Monetization is explicitly deferred. Do not add paid packs, paid random pulls, Sponsors tiers, license keys, checkout, team pricing, or creator revenue share unless the user approves that later.
 
 ## Positioning
 
@@ -25,7 +27,7 @@ Trust copy:
 | Codex plugin marketplace | Codex-native install path | `.codex-plugin`, skill, MCP | keep metadata polished |
 | VS Code Marketplace | search/install inside VS Code | `vscode-ext`, `vsce package` | publish after publisher token decision |
 | Open VSX | VS Code-compatible OSS editors | same `.vsix` package | publish after namespace/token decision |
-| GitHub Sponsors | low-friction open-source support | strategy only | enable only after user decision |
+| GitHub Sponsors | possible future support path | documented only | do not enable yet |
 | Creator packs | content supply | `chibi-pack validate/preview` | invite sample submissions |
 | Team packs | B2B admin value | `chibi-audit`, sample team pack | write admin install note |
 
@@ -88,4 +90,4 @@ https://github.com/soccz/chibi-mcp
 - Open VSX publishing uses the `ovsx` CLI and can publish an existing `.vsix`: https://github.com/eclipse/openvsx/wiki/Publishing-Extensions
 - Claude Code plugin marketplaces provide centralized discovery/versioning for teams and communities: https://code.claude.com/docs/en/plugin-marketplaces
 - Claude plugin submission can target the community plugin directory surfaced in Claude Code: https://claude.com/docs/plugins/submit
-- GitHub Sponsors supports one-time or monthly sponsorship tiers for open-source maintainers: https://docs.github.com/en/sponsors/getting-started-with-github-sponsors/about-github-sponsors
+- GitHub Sponsors supports one-time or monthly sponsorship tiers for open-source maintainers, but chibi-mcp should not enable it yet: https://docs.github.com/en/sponsors/getting-started-with-github-sponsors/about-github-sponsors

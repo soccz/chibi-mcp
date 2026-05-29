@@ -9,7 +9,7 @@
 
 `chibi-mcp`는 단순 데스크탑 펫이 아니라 **AI coding companion identity layer**다.
 
-개발자는 이미 Claude Code, Codex, VS Code 안에서 장시간 머문다. tteoki는 그 작업 흐름 안에 들어가서 시스템 상태, 세션 리듬, 도구 호출, 컬렉션, 공유 가능한 캐릭터성을 붙인다. 돈이 되는 지점은 MCP 도구 자체가 아니라 다음 네 가지다.
+개발자는 이미 Claude Code, Codex, VS Code 안에서 장시간 머문다. tteoki는 그 작업 흐름 안에 들어가서 시스템 상태, 세션 리듬, 도구 호출, 컬렉션, 공유 가능한 캐릭터성을 붙인다. 지금 단계의 목표는 결제 기능이 아니라 다음 네 가지 장기 확장 기반을 무료 코어 위에 준비하는 것이다.
 
 1. **수집 가능한 캐릭터 콘텐츠**
 2. **팀/조직용 배포와 관리**
@@ -20,7 +20,8 @@
 
 - Pet / Notification / Widget / VTuber 네 모드는 기본 무료.
 - CPU/RAM/BAT/idle 표시와 MCP 도구는 무료 코어.
-- 유료화는 모드를 막는 방식이 아니라 **콘텐츠, 팀 기능, 배포 편의, 콜라보, 지원**에서 한다.
+- **아직 유료화하지 않는다.** 가격, 결제, Sponsors, revenue share, 유료 pack, 유료 team edition은 사용자가 명시 승인하기 전까지 구현하지 않는다.
+- 사업성 문서는 **준비와 검증**만 다룬다: pack schema, 샘플팩, 배포 경로, 신뢰 문서, 런칭 자료.
 
 ---
 
@@ -53,14 +54,14 @@
 
 목적: 반복 방문과 공유.
 
-무료/유료가 섞일 수 있지만, paid random reward는 규제와 신뢰 리스크가 있으므로 초기에 피한다.
+현재 drop은 무료 중심으로 운영한다. paid random reward는 규제와 신뢰 리스크가 있으므로 도입하지 않는다.
 
 권장 모델:
 
 - Monthly free drop: 매월 1종 무료 공개
 - Monthly free option: 조청/꿀/비즈/스프링클/콩가루/흑임자/꽃잎/레진 별 같은 작은 옵션 레이어 공개
-- Direct purchase pack: 정가로 구매하는 테마팩
-- Limited collab drop: 기간 한정 브랜드/작가 콜라보
+- Free creator/community pack: 작가·기여자가 제안한 pack을 무료 검토/공개
+- Limited collab drop: 기간 한정 브랜드/작가 콜라보 후보 검토
 - Contributor drop: 오픈소스 기여자 전용 배지/캐릭터
 - Event drop: GitHub release, hackathon, conference 참여 보상
 
@@ -68,6 +69,7 @@
 
 - 유료 확률형 가챠를 바로 도입
 - 모드 기능을 잠그는 Pro
+- 유료 pack, Sponsorship tier, creator revenue share를 지금 구현
 - 사용자 몰래 telemetry 기반 보상 설계
 
 ### 3. Creator Marketplace
@@ -79,7 +81,7 @@
 - 공식 캐릭터/옵션 메타 스키마 공개
 - PNG pack + `meta.json` validator 제공
 - 작가별 pack을 GitHub Release나 웹 카탈로그로 배포
-- 수익 배분: creator 70 / platform 30 같은 단순 모델
+- 수익 배분/판매는 지금 정하지 않는다. 현재는 무료 제출·검수·preview 흐름만 만든다.
 - 검수 기준: 투명 배경 PNG, 128/256/512, 저작권 확인, NSFW 금지
 
 MVP:
@@ -102,7 +104,7 @@ chibi-pack validate examples/packs/team-sprint
 
 ### 4. Team Edition
 
-목적: B2B/팀 예산으로 결제 가능한 제품.
+목적: 유료 team edition이 아니라, 팀이 안심하고 설치를 검토할 수 있는 배포·관리 기반을 준비한다.
 
 팀 기능은 개인 재미와 다르게 “관리·배포·통제”가 가치다.
 
@@ -125,17 +127,9 @@ chibi-share --preset lineup --out starter-lineup.png
 chibi-share --preset options --out option-showcase.png
 ```
 
-팀 유료화 전에는 이 두 결과물을 sales asset으로 쓴다. `chibi-audit`는 no telemetry, localhost-only default, state path, asset catalog, hook/plugin files를 보여주고, `chibi-share`는 팀/스프린트/릴리스 공유 카드의 초기 형태가 된다.
+팀 배포 검토 전에는 이 두 결과물을 readiness asset으로 쓴다. `chibi-audit`는 no telemetry, localhost-only default, state path, asset catalog, hook/plugin files를 보여주고, `chibi-share`는 팀/스프린트/릴리스 공유 카드의 초기 형태가 된다.
 
-가격 후보:
-
-| Tier | 대상 | 가격 후보 | 포함 |
-|---|---|---:|---|
-| Free | 개인 | $0 | core + starter characters |
-| Supporter | 개인 팬 | $5~10 one-time/month | extra packs, supporter badge |
-| Creator Pack | 작가/콜라보 | pack별 | direct-purchase characters |
-| Team | 소규모 팀 | $49~99/month | team pack, admin docs, support |
-| Studio/Enterprise | 조직 | custom | signed bundle, policy docs, white-label |
+가격 후보는 아직 만들지 않는다. 가격표, 라이선스 키, entitlement, 결제 페이지, 유료 support tier는 모두 명시 승인 전 금지다. 이 문서에서 "Team Edition"은 당분간 유료 제품명이 아니라 팀 설치 검토용 준비 영역을 뜻한다.
 
 ### 5. Brand Collaborations
 
@@ -154,15 +148,15 @@ chibi-share --preset options --out option-showcase.png
 
 - “키캡 캐릭터 + MCP skin” 세트
 - conference badge character
-- sponsored seasonal character
+- seasonal collaboration character
 - open-source maintainer 감사 drop
 - livestream overlay pack
 
 브랜드 콜라보 원칙:
 
 - 코어 UX에 광고를 넣지 않는다.
-- 캐릭터 설명/카탈로그에만 sponsor credit을 둔다.
-- sponsored character도 사용자가 직접 선택해야 보인다.
+- 협찬/스폰서 표기는 아직 도입하지 않는다. 나중에 승인되더라도 캐릭터 설명/카탈로그에만 두고 workflow에는 끼워 넣지 않는다.
+- collab character도 사용자가 직접 선택해야 보인다.
 
 ### 6. Physical Goods
 
@@ -178,7 +172,7 @@ chibi-share --preset options --out option-showcase.png
 - “오늘 N도막” calendar card
 - small rice-cake-themed desk toy
 
-물리 굿즈는 software revenue보다 느리지만, social proof와 커뮤니티 정체성에 강하다.
+물리 굿즈는 지금 판매하지 않는다. 장기적으로 검토할 수 있는 커뮤니티 정체성 후보로만 둔다.
 
 ---
 
@@ -270,8 +264,8 @@ Success signal:
 - monthly drop schedule
 - pack schema and validator
 - creator submission flow
-- direct-purchase pack experiment
-- supporter badge / supporter-only cosmetic
+- free creator/community pack submissions
+- contributor badge / contributor cosmetic
 
 Success signal:
 
@@ -295,7 +289,7 @@ Success signal:
 - hackathon badge character
 - conference drop
 - coding streamer overlay
-- limited direct-purchase pack
+- limited free collaboration pack
 
 Success signal:
 
@@ -308,11 +302,11 @@ Success signal:
 | Risk | Guardrail |
 |---|---|
 | MCP/plugin trust concerns | keep source open, no telemetry, clear `--check`, signed releases later |
-| Paid gacha regulation/trust risk | start with direct-purchase packs and free drops |
+| Paid gacha regulation/trust risk | do not implement paid gacha; keep drops free until explicit approval |
 | Too many clients, shallow product | Claude Code remains primary; Codex/VS Code are distribution surfaces |
 | Cute but not useful | keep system state, calls, slices, CI/dev rituals visible |
 | Artist content quality variance | pack validator + visual review checklist |
-| Brand collab feels like ads | sponsor credit only in catalog/share card, never interrupt workflow |
+| Brand collab feels like ads | no sponsor placement for now; future credit only in catalog/share card if approved |
 
 ---
 
@@ -320,7 +314,7 @@ Success signal:
 
 These remain user/business decisions, not implementation assumptions:
 
-- Whether to sell direct-purchase character packs
+- Whether to ever sell direct-purchase character packs
 - Whether to publish on VS Code Marketplace or keep GitHub Release `.vsix`
 - Whether to allow creator revenue share
 - Whether to create paid team support
@@ -337,6 +331,6 @@ These remain user/business decisions, not implementation assumptions:
 - VS Code supports installing `.vsix` extensions via the `code --install-extension <extension-vsix-path>` command: https://code.visualstudio.com/docs/configure/extensions/extension-marketplace
 - VS Code extension docs describe `vsce package` producing installable `.vsix` files, including private/GitHub-release distribution: https://code.visualstudio.com/api/working-with-extensions/publishing-extension
 - Open VSX is an open-source registry for VS Code-compatible editors, and its publishing guide documents `ovsx publish <file> -p <token>` for `.vsix` distribution: https://open-vsx.org/about, https://github.com/eclipse/openvsx/wiki/Publishing-Extensions
-- GitHub Sponsors supports one-time and monthly sponsorship tiers for open-source maintainers; enabling it remains a later user/business decision: https://docs.github.com/en/sponsors/getting-started-with-github-sponsors/about-github-sponsors
+- GitHub Sponsors supports one-time and monthly sponsorship tiers for open-source maintainers; chibi-mcp should not enable it until the user explicitly approves monetization: https://docs.github.com/en/sponsors/getting-started-with-github-sponsors/about-github-sponsors
 - GitHub Octoverse 2025 reports rapid AI project and agentic-workflow growth, which supports positioning chibi-mcp as an AI coding companion rather than a generic desktop toy: https://github.blog/news-insights/octoverse/octoverse-a-new-developer-joins-github-every-second-as-ai-leads-typescript-to-1/
 - GitHub docs recommend topics for discovery, community health files, issue/PR templates, social preview images, and Traffic insights for repository growth loops: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/classifying-your-repository-with-topics

@@ -176,6 +176,8 @@ These should not be implemented without user approval:
 
 - paid character packs
 - creator revenue share
+- GitHub Sponsors tiers
+- checkout, license keys, or entitlement gates
 - VS Code Marketplace publishing
 - team edition pricing
 - physical goods

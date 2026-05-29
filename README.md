@@ -126,7 +126,7 @@ The remaining 21 characters are catalog placeholders for future drops; release t
 
 chibi-mcp is positioned as an **AI coding companion identity layer**: a local MCP pet that can grow into character drops, creator packs, team distribution, brand collaborations, and desk-culture goods without reducing the free core.
 
-The base product stays free: Pet / Notification / Widget / VTuber modes, MCP tools, system status, starter characters, option layers, and local state are not commercial gates. Paid offerings, if later approved, should be cosmetics, direct-purchase packs, team support, signed/offline bundles, collaborations, or physical goods.
+The base product stays free: Pet / Notification / Widget / VTuber modes, MCP tools, system status, starter characters, option layers, and local state are not commercial gates. Monetization is not enabled: no paid packs, no paid random pulls, no Sponsors tiers, no license keys, and no team pricing unless explicitly approved later.
 
 See [COMMERCIAL_STRATEGY.md](COMMERCIAL_STRATEGY.md) for the commercial expansion plan, [GITHUB_STAR_STRATEGY.md](GITHUB_STAR_STRATEGY.md) for the source-backed GitHub growth plan, [docs/CREATOR_PACKS.md](docs/CREATOR_PACKS.md) for creator/team pack submissions, and [docs/LAUNCH_KIT.md](docs/LAUNCH_KIT.md) for launch/distribution copy.
 
@@ -200,7 +200,7 @@ chibi-mcp/
 ├── .mcp.json                    # stdio MCP server spec
 ├── skills/chibi/SKILL.md        # behaviour guide for Claude
 ├── commands/chibi.md            # /chibi slash command
-├── COMMERCIAL_STRATEGY.md       # expansion model, revenue surfaces, guardrails
+├── COMMERCIAL_STRATEGY.md       # expansion readiness, deferred monetization guardrails
 ├── GITHUB_STAR_STRATEGY.md      # README, topics, community, launch loop
 ├── scripts/                     # install + verification scripts
 ├── assets/                      # starter PNG assets, option layers + catalog meta.json
