@@ -531,7 +531,7 @@ class PetWindow:
         self.canvas.coords(
             self._image_id, self._canvas_center[0], self._canvas_center[1] + offset
         )
-        self.root.after(BOB_TICK_MS, self._idle_bob_tick)
+        self._after(BOB_TICK_MS, self._idle_bob_tick)
 
     def _squish(self, _event: tk.Event) -> None:
         self._render_image(self.current_mood, scale=(1.15, 0.6))
@@ -571,12 +571,14 @@ class PetWindow:
 
         def tick(step: int = 0) -> None:
             if step >= 16:
-                self.canvas.delete(piece)
-                self.canvas.delete(seam)
+                with contextlib.suppress(tk.TclError):
+                    self.canvas.delete(piece)
+                    self.canvas.delete(seam)
                 return
-            self.canvas.move(piece, 0, 2)
-            self.canvas.move(seam, 0, 2)
-            self.root.after(45, lambda: tick(step + 1))
+            with contextlib.suppress(tk.TclError):
+                self.canvas.move(piece, 0, 2)
+                self.canvas.move(seam, 0, 2)
+            self._after(45, lambda: tick(step + 1))
 
         tick()
 
@@ -590,8 +592,10 @@ class PetWindow:
         except tk.TclError:
             self.bubble.pack(pady=(2, 10), padx=10)
         if self._bubble_hide_after is not None:
-            self.root.after_cancel(self._bubble_hide_after)
-        self._bubble_hide_after = self.root.after(BUBBLE_VISIBLE_MS, self._hide_bubble)
+            with contextlib.suppress(tk.TclError):
+                self.root.after_cancel(self._bubble_hide_after)
+            self._after_ids.discard(self._bubble_hide_after)
+        self._bubble_hide_after = self._after(BUBBLE_VISIBLE_MS, self._hide_bubble)
 
     def _hide_bubble(self) -> None:
         self.bubble.pack_forget()
@@ -605,7 +609,7 @@ class PetWindow:
         import random as _r
 
         delay = _r.randint(IDLE_BUBBLE_MIN_MS, IDLE_BUBBLE_MAX_MS)
-        self.root.after(delay, self._idle_bubble_tick)
+        self._after(delay, self._idle_bubble_tick)
 
     def _idle_bubble_tick(self) -> None:
         if self.stop_event.is_set():
@@ -651,7 +655,7 @@ class PetWindow:
         except queue.Empty:
             pass
         if not self.stop_event.is_set():
-            self.root.after(POLL_INTERVAL_MS, self._poll_events)
+            self._after(POLL_INTERVAL_MS, self._poll_events)
 
     def _handle_event(self, evt: dict) -> None:
         kind = evt.get("type")
@@ -677,8 +681,8 @@ class PetWindow:
                 daemon=True,
             )
             t.start()
-        self.root.after(POLL_INTERVAL_MS, self._poll_events)
-        self.root.after(BOB_TICK_MS, self._idle_bob_tick)
+        self._after(POLL_INTERVAL_MS, self._poll_events)
+        self._after(BOB_TICK_MS, self._idle_bob_tick)
         self._schedule_idle_bubble()
         self.root.mainloop()
 

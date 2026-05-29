@@ -94,14 +94,21 @@ class TteokiState:
 
     @staticmethod
     def _save_data(data: dict) -> None:
-        """Write a pre-snapshotted dict. Caller must NOT hold the lock."""
-        try:
-            STATE_DIR.mkdir(parents=True, exist_ok=True)
-            tmp = STATE_FILE.with_suffix(".json.tmp")
-            tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
-            tmp.replace(STATE_FILE)
-        except OSError as e:
-            log.warning("state save failed: %s", e)
+        """Write a pre-snapshotted dict. Caller must NOT hold the instance lock.
+
+        Serialized via _SAVE_LOCK so concurrent callers (e.g. record_call
+        granting a ticket while pull_gacha persists an inventory change) don't
+        race on tmp file write + rename, which would silently lose one of
+        the snapshots (last-write-wins).
+        """
+        with _SAVE_LOCK:
+            try:
+                STATE_DIR.mkdir(parents=True, exist_ok=True)
+                tmp = STATE_FILE.with_suffix(".json.tmp")
+                tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+                tmp.replace(STATE_FILE)
+            except OSError as e:
+                log.warning("state save failed: %s", e)
 
     def load(self) -> None:
         """Hydrate from ~/.chibi-mcp/state.json. Tolerates missing file."""
@@ -340,6 +347,10 @@ def _seconds_until_midnight() -> int:
 # request state simultaneously during cold start).
 _STATE: TteokiState | None = None
 _STATE_INIT_LOCK = Lock()
+
+# Serializes file writes from _save_data so concurrent persistence calls
+# can't lose snapshots via overlapping write+rename.
+_SAVE_LOCK = Lock()
 
 
 def get_state() -> TteokiState:

@@ -34,7 +34,7 @@ def say_main(argv: list[str] | None = None) -> int:
         return 0  # websockets missing — silent
 
     try:
-        with ws_connect(url, open_timeout=1, close_timeout=1) as conn:
+        with ws_connect(url, open_timeout=3, close_timeout=1) as conn:
             conn.send(json.dumps({"type": "say", "text": text[:200]}))
     except Exception:
         # No window / server up. Silent.

@@ -36,7 +36,11 @@ fi
 pick() {
   local IFS='|'
   local arr=($1)
-  echo "${arr[$((RANDOM % ${#arr[@]}))]}"
+  local n=${#arr[@]}
+  if [ "$n" -le 0 ]; then
+    return 0   # silent — caller falls through with empty $phrase
+  fi
+  echo "${arr[$((RANDOM % n))]}"
 }
 
 phrase=""

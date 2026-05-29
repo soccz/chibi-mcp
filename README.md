@@ -61,10 +61,10 @@ code --install-extension chibi-mcp-*.vsix
 
 See [INSTALL.md](INSTALL.md) for the full GitHub install matrix.
 
-Health check:
+Health check (either form works):
 
 ```bash
-chibi-mcp --check
+chibi-mcp --check     # or:  chibi-check
 ```
 
 Now ask your client:
@@ -130,7 +130,7 @@ It opens a one-shot WebSocket connection to the running chibi server (`ws://127.
 
 **Pre-wired in:**
 
-- **Claude Code** — `hooks/hooks.json` fires `chibi-say` on `PreToolUse` / `PostToolUse` for `Write|Edit|Bash|Read` (throttled ~30% so you don't get a bubble on every keystroke).
+- **Claude Code** — `hooks/hooks.json` fires `bin/chibi-react.sh` on `PreToolUse` / `PostToolUse` for `Write|Edit|Bash|Read`; the script picks a contextual phrase and calls `chibi-say`. Throttled to ~30% so you don't get a bubble on every keystroke.
 - **VS Code extension** — calls `chibi-say` on file save, task start/end, and debug start/stop (throttled). Disable via the `chibiMcp.sayBridge.enabled` setting.
 
 **Roll your own** — any tool that runs a shell command can talk to your 치비:

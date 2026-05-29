@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `chibi-mcp` is an MCP server + cross-platform desktop character ("chibi") that surfaces system state (CPU, battery, session) through a character with personality. It is installed from GitHub for Claude Code, Codex, and VS Code, and runs a local server/window that talks over localhost where a desktop session is available.
 
-The project now has an executable Python MCP server, Claude/Codex plugin metadata, a VS Code `.vsix` packaging path, and a Tauri desktop code path. Some docs still describe future product phases; check the current files before assuming a phase boundary.
+The project now has an executable Python MCP server, Claude/Codex plugin metadata, a VS Code `.vsix` packaging path, and a floating pet window implemented in pure Python (tk + Pillow + PyObjC for macOS transparency) spawned as a detached subprocess by the MCP server. A legacy Tauri attempt remains under `desktop/` for v0.1–v0.2 reference but is not part of the current install path. Some docs still describe future product phases; check the current files before assuming a phase boundary.
 
 ## Repository structure
 
@@ -18,9 +18,10 @@ The project now has an executable Python MCP server, Claude/Codex plugin metadat
 - `GITHUB_STAR_STRATEGY.md` — source-backed GitHub growth plan, topics, community surface, launch loop.
 - `INSTALL.md` — GitHub install matrix for Claude Code, Codex, and VS Code.
 - `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/` — public community and trust surface.
-- `server/` — Python MCP server package.
-- `desktop/` — Tauri desktop client path.
-- `vscode-ext/` — VS Code extension packaging path.
+- `server/` — Python MCP server package. Also ships the floating pet window (`chibi_mcp/window.py`), the `chibi-say` CLI used by hooks, and the `chibi-check` self-diagnostic.
+- `hooks/`, `bin/` — Claude Code plugin hooks bridge: `hooks/hooks.json` fires `bin/chibi-react.sh` on PreToolUse / PostToolUse, which forwards a contextual phrase via `chibi-say` to the floating window.
+- `vscode-ext/` — VS Code extension packaging path. As of 0.5.0 also calls `chibi-say` on save / task / debug events.
+- `desktop/` — legacy Tauri client; archival only.
 - `assets/` and `server/chibi_mcp/assets/` — starter PNG characters and metadata.
 
 Core commands:
@@ -117,4 +118,4 @@ Tauri or Electron — jointly decided. Linux/macOS/Windows must all work. Avoid 
 - After install, test, or build commands change.
 - After the user decides any commercial track in `COMMERCIAL_STRATEGY.md`.
 - After the GitHub growth plan in `GITHUB_STAR_STRATEGY.md` changes materially.
-- After `desktop/` shipping commands or platform package details change.
+- After the floating-window architecture or hooks bridge changes.

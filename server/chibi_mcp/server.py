@@ -441,8 +441,9 @@ def set_slice_interval(n: int) -> dict:
     if n < 1:
         raise ValueError("slice interval must be ≥ 1")
     state = get_state()
-    old = state.slice_interval
-    state.slice_interval = n
+    with state._lock:
+        old = state.slice_interval
+        state.slice_interval = n
     return {"previous": old, "current": n}
 
 
@@ -503,6 +504,8 @@ def get_inventory() -> dict:
 @mcp.tool()
 def set_active_character(character_id: str) -> dict:
     """Switch which 치비 is shown in the window. Must own the character."""
+    if not _CHAR_ID_RE.match(character_id):
+        return {"ok": False, "reason": f"invalid character id: {character_id!r}"}
     state = get_state()
     result = state.set_active(character_id)
     if result.get("ok") and _WINDOW_PID_FILE.exists():
@@ -517,6 +520,8 @@ def set_active_character(character_id: str) -> dict:
 @mcp.tool()
 def rename_character(character_id: str, nickname: str) -> dict:
     """Rename a 치비 you own. Nickname is clipped to 40 chars."""
+    if not _CHAR_ID_RE.match(character_id):
+        return {"ok": False, "reason": f"invalid character id: {character_id!r}"}
     state = get_state()
     return state.rename(character_id, nickname)
 
