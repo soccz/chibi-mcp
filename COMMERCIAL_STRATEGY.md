@@ -44,6 +44,8 @@
 - `chibi-share --preset lineup`으로 제공된 PNG 캐릭터 전체 라인업 생성
 - `chibi-share --preset options`로 조청·꿀·비즈·가루·씨앗·꽃잎·레진·소스 12종 옵션 쇼케이스 생성
 - `chibi-pack validate/preview`로 크리에이터·팀 캐릭터팩 검증
+- `examples/packs/spring-hwajeon`, `examples/packs/team-sprint`로 실제 검증 가능한 creator/team pack 템플릿 제공
+- `docs/CREATOR_PACKS.md`, `docs/LAUNCH_KIT.md`로 제출/배포/런칭 루프 문서화
 
 무료 코어는 줄이지 않는다. 이 제품은 신뢰와 귀여움이 먼저다.
 
@@ -92,6 +94,8 @@ MVP:
 chibi-pack init ./my-pack
 chibi-pack validate ./my-pack
 chibi-pack preview ./my-pack
+chibi-pack validate examples/packs/spring-hwajeon
+chibi-pack validate examples/packs/team-sprint
 ```
 
 `meta.json`의 `characters[]` 항목은 `id`, `name_ko`, `category`, `rarity`, `tier`, PNG 이미지로 검증된다. `options[]` 항목은 `id`, `name_ko`, `category`, `tier`, PNG 이미지로 검증된다. 이 단계는 marketplace 결제를 켜기 전에도 작가·팀·브랜드 pack 품질을 표준화한다.
@@ -332,5 +336,7 @@ These remain user/business decisions, not implementation assumptions:
 - Claude Code plugin docs explicitly warn that marketplaces/plugins are trusted components that can execute code, so commercial packaging must emphasize trust and review: https://code.claude.com/docs/en/discover-plugins
 - VS Code supports installing `.vsix` extensions via the `code --install-extension <extension-vsix-path>` command: https://code.visualstudio.com/docs/configure/extensions/extension-marketplace
 - VS Code extension docs describe `vsce package` producing installable `.vsix` files, including private/GitHub-release distribution: https://code.visualstudio.com/api/working-with-extensions/publishing-extension
+- Open VSX is an open-source registry for VS Code-compatible editors, and its publishing guide documents `ovsx publish <file> -p <token>` for `.vsix` distribution: https://open-vsx.org/about, https://github.com/eclipse/openvsx/wiki/Publishing-Extensions
+- GitHub Sponsors supports one-time and monthly sponsorship tiers for open-source maintainers; enabling it remains a later user/business decision: https://docs.github.com/en/sponsors/getting-started-with-github-sponsors/about-github-sponsors
 - GitHub Octoverse 2025 reports rapid AI project and agentic-workflow growth, which supports positioning chibi-mcp as an AI coding companion rather than a generic desktop toy: https://github.blog/news-insights/octoverse/octoverse-a-new-developer-joins-github-every-second-as-ai-leads-typescript-to-1/
 - GitHub docs recommend topics for discovery, community health files, issue/PR templates, social preview images, and Traffic insights for repository growth loops: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/classifying-your-repository-with-topics

@@ -86,6 +86,8 @@ chibi-audit                         # local trust report: no telemetry, localhos
 chibi-pack init ./my-pack            # scaffold a creator/team character pack
 chibi-pack validate ./my-pack        # validate a creator/team character pack
 chibi-pack preview ./my-pack         # write ./my-pack/preview.html
+chibi-pack validate examples/packs/spring-hwajeon  # from a clone
+chibi-pack validate examples/packs/team-sprint     # from a clone
 chibi-share --out share-card.png     # generate a 1080x1080 session share card
 chibi-share --preset social-preview --out social-preview.png
 chibi-share --preset lineup --out starter-lineup.png
@@ -126,12 +128,13 @@ chibi-mcp is positioned as an **AI coding companion identity layer**: a local MC
 
 The base product stays free: Pet / Notification / Widget / VTuber modes, MCP tools, system status, starter characters, option layers, and local state are not commercial gates. Paid offerings, if later approved, should be cosmetics, direct-purchase packs, team support, signed/offline bundles, collaborations, or physical goods.
 
-See [COMMERCIAL_STRATEGY.md](COMMERCIAL_STRATEGY.md) for the commercial expansion plan and [GITHUB_STAR_STRATEGY.md](GITHUB_STAR_STRATEGY.md) for the source-backed GitHub growth plan.
+See [COMMERCIAL_STRATEGY.md](COMMERCIAL_STRATEGY.md) for the commercial expansion plan, [GITHUB_STAR_STRATEGY.md](GITHUB_STAR_STRATEGY.md) for the source-backed GitHub growth plan, [docs/CREATOR_PACKS.md](docs/CREATOR_PACKS.md) for creator/team pack submissions, and [docs/LAUNCH_KIT.md](docs/LAUNCH_KIT.md) for launch/distribution copy.
 
 The first commercial-product surfaces are already executable:
 
 - `chibi-audit` gives users and teams a local trust report before they install hooks widely.
 - `chibi-pack` validates and previews creator/team character packs before any marketplace exists.
+- `examples/packs/spring-hwajeon` and `examples/packs/team-sprint` are runnable pack templates for creators and teams.
 - `chibi-share` creates a local share card so the repo can grow through screenshots without telemetry.
 
 ## MCP tools

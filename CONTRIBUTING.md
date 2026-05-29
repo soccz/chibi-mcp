@@ -9,6 +9,7 @@ Thanks for helping make `chibi-mcp` easier to install, safer to run, and more fu
 - Add tests for MCP tools, catalog handling, or window state.
 - Polish starter character metadata.
 - Propose a character pack through the issue template.
+- Validate a sample creator/team pack with `chibi-pack validate`.
 - Add screenshots, demo GIFs, or share-card examples.
 
 ## Local Setup
@@ -45,4 +46,9 @@ Character pack proposals should include:
 - no copyrighted third-party character, logo, or brand use without permission
 - no NSFW content
 
-Future pack validation should be automated through `chibi character pack validate <dir>`.
+Use [docs/CREATOR_PACKS.md](docs/CREATOR_PACKS.md) as the submission guide. Runnable examples live under `examples/packs/`, and validation is:
+
+```bash
+chibi-pack validate examples/packs/spring-hwajeon
+chibi-pack validate examples/packs/team-sprint
+```

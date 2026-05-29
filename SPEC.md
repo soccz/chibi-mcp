@@ -21,6 +21,7 @@
 12. **요즘 출처 기반으로 GitHub star 받을만한 형태 강화** (사용자 요청 2026-05-29) — AI coding/MCP 흐름, GitHub community 표준, social preview, topics, showcase loop 반영
 13. **상업화 기반 기능까지 진행** (사용자 요청 2026-05-29) — 데모/공유, 정식 배포 준비, 캐릭터팩 SDK, 신뢰 리포트, 팀 에디션 준비를 무료 코어 위에 추가
 14. **옵션 이미지 계열 추가** (사용자 요청 2026-05-29) — 꿀, 조청, 비즈/스프링클에서 시작해 연유, 콩가루, 흑임자, 팥, 꽃잎, 레진 별, 말차, 매콤 소스까지 무료 시각 옵션 레이어를 캐릭터 위에 합성 가능하게 추가
+15. **사업성 강화** (사용자 요청 2026-05-29) — 결제 게이트 없이 creator/team pack 예시, launch kit, pack submission guide, 배포 채널 근거 문서를 추가해 상업화 준비도를 높임
 
 ---
 
@@ -53,6 +54,7 @@
 | **상업 확장 원칙** | **무료 코어 유지 + 콘텐츠/팀/콜라보/굿즈 확장 후보 검토**. 네 가지 모드와 MCP 기본 기능은 유료 게이트로 막지 않음 |
 | **상업화 기반 CLI** | `chibi-audit`, `chibi-pack init/validate/preview`, `chibi-share` 추가. 결제/유료 게이트가 아니라 신뢰·콘텐츠·공유 루프 기반 |
 | **무료 옵션 레이어** | 12종 추가: `jocheong_drip`, `honey_glaze`, `sugar_beads`, `rainbow_sprinkles`, `condensed_milk`, `kinako_dust`, `black_sesame`, `red_bean_bits`, `flower_petals`, `resin_stars`, `matcha_powder`, `spicy_sauce`. 본체 기능을 잠그지 않는 무료 코스메틱 기반 |
+| **상업 샘플팩** | `examples/packs/spring-hwajeon`, `examples/packs/team-sprint` 추가. creator/team pack 제출과 검증 흐름을 실행 가능한 예시로 제공 |
 
 ## 아직 사용자 결정 대기
 

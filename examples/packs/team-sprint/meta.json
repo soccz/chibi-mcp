@@ -1,0 +1,26 @@
+{
+  "name": "Team Sprint Sample Pack",
+  "description": "A team-pack example for private mascot skins, release rituals, and admin review.",
+  "license": "sample-only",
+  "characters": [
+    {
+      "id": "team_sprint_tteok",
+      "name_ko": "스프린트 떡이",
+      "category": "team",
+      "rarity": 2,
+      "tier": "creator",
+      "image": "team_sprint_tteok.png",
+      "description": "Team mascot sample for sprint/release recap cards."
+    }
+  ],
+  "options": [
+    {
+      "id": "release_badge",
+      "name_ko": "릴리즈 배지",
+      "category": "badge",
+      "tier": "creator",
+      "image": "options/release_badge.png",
+      "description": "Small ship badge overlay for release-day team rituals."
+    }
+  ]
+}

@@ -29,7 +29,7 @@ body:
     id: concept
     attributes:
       label: Concept
-      description: Shape, colors, expression, option layer position, motion, sound idea.
+      description: Shape, colors, expression, option layer position, motion, sound idea. See docs/CREATOR_PACKS.md and examples/packs/.
     validations:
       required: true
   - type: textarea

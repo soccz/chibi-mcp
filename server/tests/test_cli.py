@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from PIL import Image
 
@@ -15,6 +16,8 @@ from chibi_mcp.commercial import (
     write_pack_preview,
     write_share_card,
 )
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
@@ -82,6 +85,17 @@ def test_pack_init_scaffolds_valid_pack(tmp_path):
     validation = validate_pack(pack_dir)
     assert validation["ok"] is True
     assert validation["characters"][0]["id"] == "starter_tteok"
+
+
+def test_sample_commercial_packs_validate():
+    for pack_dir in [
+        ROOT / "examples" / "packs" / "spring-hwajeon",
+        ROOT / "examples" / "packs" / "team-sprint",
+    ]:
+        result = validate_pack(pack_dir)
+        assert result["ok"] is True
+        assert len(result["characters"]) == 1
+        assert len(result["options"]) == 1
 
 
 def test_pack_validate_rejects_duplicate_ids(tmp_path):

@@ -2,6 +2,14 @@
 
 All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condensed.
 
+## Unreleased
+
+Commercial-readiness polish without enabling paid gates.
+
+- Added runnable creator/team sample packs under `examples/packs/`.
+- Added `docs/CREATOR_PACKS.md` and `docs/LAUNCH_KIT.md` for creator submissions, team pack positioning, and launch channel readiness.
+- `verify_all.sh` and tests now validate the sample packs.
+
 ## v1.4.4 — 2026-05-29
 
 Broader free option catalog for a more commercial-looking character platform.

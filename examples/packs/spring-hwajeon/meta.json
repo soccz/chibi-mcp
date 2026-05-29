@@ -1,0 +1,26 @@
+{
+  "name": "Spring Hwajeon Sample Pack",
+  "description": "A creator-pack example showing one seasonal character and one option layer.",
+  "license": "sample-only",
+  "characters": [
+    {
+      "id": "spring_hwajeon",
+      "name_ko": "봄 화전",
+      "category": "tteok",
+      "rarity": 3,
+      "tier": "creator",
+      "image": "spring_hwajeon.png",
+      "description": "Round rice-cake character with flower-petal styling for seasonal drops."
+    }
+  ],
+  "options": [
+    {
+      "id": "spring_petal_mix",
+      "name_ko": "봄꽃 믹스",
+      "category": "seasonal",
+      "tier": "creator",
+      "image": "options/spring_petal_mix.png",
+      "description": "Transparent petal overlay for creator or event packs."
+    }
+  ]
+}

@@ -42,6 +42,7 @@ Star conversion에 필요한 시각 자료:
 - 1080x1080 share card: "오늘 7도막 잘림"
 - 1600x900 starter lineup generated from the project PNG assets
 - 1600x900 option showcase generated from 12 free topping/glaze/powder/seed/resin PNG layers
+- runnable creator/team pack examples under `examples/packs/`
 - VS Code sidebar screenshot
 - Claude Code `/chibi` screenshot
 - Codex terminal screenshot
@@ -51,9 +52,11 @@ Star conversion에 필요한 시각 자료:
 1. `assets/social-preview.png`
 2. `docs/screenshots/starter-lineup.png`
 3. `docs/screenshots/option-showcase.png`
-4. `docs/demo.gif`
-5. `docs/screenshots/claude-code.png`
-6. `docs/screenshots/vscode-sidebar.png`
+4. `docs/LAUNCH_KIT.md`
+5. `docs/CREATOR_PACKS.md`
+6. `docs/demo.gif`
+7. `docs/screenshots/claude-code.png`
+8. `docs/screenshots/vscode-sidebar.png`
 
 현재 실행 가능한 시작점:
 
@@ -62,10 +65,12 @@ chibi-share --out docs/screenshots/share-card.png
 chibi-share --preset social-preview --out assets/social-preview.png
 chibi-share --preset lineup --out docs/screenshots/starter-lineup.png
 chibi-share --preset options --out docs/screenshots/option-showcase.png
-chibi-pack preview ./example-pack --out docs/screenshots/pack-preview.html
+chibi-pack validate examples/packs/spring-hwajeon
+chibi-pack preview examples/packs/spring-hwajeon --out docs/screenshots/pack-preview.html
+chibi-pack validate examples/packs/team-sprint
 ```
 
-실제 demo GIF는 수동 녹화가 필요하지만, share card, social preview, starter lineup, option showcase, pack preview는 repo 안에서 즉시 생성 가능하다.
+실제 demo GIF는 수동 녹화가 필요하지만, share card, social preview, starter lineup, option showcase, pack preview, sample pack validation은 repo 안에서 즉시 실행 가능하다.
 
 ### 3. Topics for Discovery
 
@@ -190,3 +195,5 @@ Star strategy can prepare these surfaces, but it should not silently turn them o
 - GitHub issue forms standardize useful information from contributors: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
 - GitHub Traffic shows clones, visitors, referrers, and popular content for recent launch analysis: https://docs.github.com/en/enterprise-cloud@latest/repositories/viewing-activity-and-data-for-your-repository/viewing-traffic-to-a-repository
 - Claude Code plugin docs warn users to trust plugins before installing because plugins and MCP servers can execute code: https://code.claude.com/docs/en/discover-plugins
+- VS Code Marketplace publishing uses `vsce package` / `vsce publish`, and packaged `.vsix` files can be installed from the command line: https://code.visualstudio.com/api/working-with-extensions/publishing-extension
+- Open VSX provides a VS Code-compatible open-source registry and publishing path for `.vsix` packages: https://open-vsx.org/about, https://github.com/eclipse/openvsx/wiki/Publishing-Extensions
