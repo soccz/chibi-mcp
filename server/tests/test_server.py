@@ -62,7 +62,21 @@ def test_asset_dir_resolves_for_direct_mcp_installs():
 def test_options_catalog_exposes_free_layers():
     result = get_options()
     ids = {option["id"] for option in result["options"]}
-    assert {"jocheong_drip", "honey_glaze", "sugar_beads", "rainbow_sprinkles"} <= ids
+    assert result["total"] >= 12
+    assert {
+        "jocheong_drip",
+        "honey_glaze",
+        "sugar_beads",
+        "rainbow_sprinkles",
+        "condensed_milk",
+        "kinako_dust",
+        "black_sesame",
+        "red_bean_bits",
+        "flower_petals",
+        "resin_stars",
+        "matcha_powder",
+        "spicy_sauce",
+    } <= ids
     assert all(option["image_exists"] for option in result["options"])
 
 

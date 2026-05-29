@@ -1,7 +1,7 @@
 {
   "name": "chibi-mcp",
-  "description": "치비 (chibi) — Korean rice cake themed desktop pet for Claude Code. Gacha-collect squishy characters and free option layers. They react to your session and get sliced every N tool calls.",
-  "version": "1.4.3",
+  "description": "치비 (chibi) — Korean rice cake themed desktop pet for Claude Code. Gacha-collect squishy characters and 12 free option layers. They react to your session and get sliced every N tool calls.",
+  "version": "1.4.4",
   "author": {
     "name": "soccz",
     "url": "https://github.com/soccz"

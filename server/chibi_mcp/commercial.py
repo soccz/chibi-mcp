@@ -852,7 +852,7 @@ def _draw_options_share_card(
     draw.rounded_rectangle((82, 78, 1080, 174), radius=22, fill="#0f766e")
     draw.text((116, 96), _fit_text(draw, title, title_font, 900), fill="#ffffff", font=title_font)
     draw.text((116, 206), _fit_text(draw, subtitle, subtitle_font, 1200), fill="#475569", font=subtitle_font)
-    draw.text((116, 268), "Free option layers: syrup, honey, beads, and sprinkles", fill="#1f2937", font=metric_font)
+    draw.text((116, 268), "12 free option layers: glaze, powder, seeds, petals, resin, and sauce", fill="#1f2937", font=metric_font)
     draw.text(
         (116, 316),
         f"calls {counters['calls_total']} | slices {counters['slices_today']} | mood {mood} | tickets {gacha['tickets']}",
@@ -860,7 +860,7 @@ def _draw_options_share_card(
         font=small_font,
     )
 
-    options = _load_catalog_option_assets(asset_path.parent)[:4]
+    options = _load_catalog_option_assets(asset_path.parent)[:12]
     if not options:
         options = [
             {
@@ -871,24 +871,28 @@ def _draw_options_share_card(
             }
         ]
 
-    start_x = 98
-    start_y = 390
-    tile_w = 332
-    tile_h = 332
-    gap_x = 34
-    label_font = _load_font(24, bold=True)
-    detail_font = _load_font(21)
+    start_x = 92
+    start_y = 354
+    tile_w = 334
+    tile_h = 138
+    gap_x = 28
+    gap_y = 20
+    columns = 4
+    label_font = _load_font(20, bold=True)
+    detail_font = _load_font(17)
     for index, option in enumerate(options):
-        x = start_x + index * (tile_w + gap_x)
-        y = start_y
-        draw.rounded_rectangle((x, y, x + tile_w, y + tile_h), radius=20, fill="#f8fafc", outline="#dbeafe")
-        draw.ellipse((x + 56, y + 34, x + 276, y + 254), fill="#ffedd5", outline="#fed7aa", width=3)
+        col = index % columns
+        row = index // columns
+        x = start_x + col * (tile_w + gap_x)
+        y = start_y + row * (tile_h + gap_y)
+        draw.rounded_rectangle((x, y, x + tile_w, y + tile_h), radius=18, fill="#f8fafc", outline="#dbeafe")
+        draw.ellipse((x + 22, y + 22, x + 118, y + 118), fill="#ffedd5", outline="#fed7aa", width=3)
         option_paths = [option["image"]] if option.get("image") else []
-        _paste_pet(image, asset_path, max_size=(190, 190), center=(x + tile_w // 2, y + 144), option_paths=option_paths)
+        _paste_pet(image, asset_path, max_size=(86, 86), center=(x + 70, y + 70), option_paths=option_paths)
         label = str(option["id"]).replace("_", " ")
-        draw.text((x + 34, y + 252), _fit_text(draw, label, label_font, 264), fill="#1f2937", font=label_font)
-        detail = f"{option['category']} | free option"
-        draw.text((x + 34, y + 288), _fit_text(draw, detail, detail_font, 264), fill="#0f766e", font=detail_font)
+        draw.text((x + 132, y + 38), _fit_text(draw, label, label_font, 184), fill="#1f2937", font=label_font)
+        detail = f"{option['category']} | free"
+        draw.text((x + 132, y + 76), _fit_text(draw, detail, detail_font, 184), fill="#0f766e", font=detail_font)
 
     footer = f"chibi-mcp {__version__} | option layers are free cosmetics | no telemetry"
     draw.text((116, height - 88), _fit_text(draw, footer, small_font, 1260), fill="#64748b", font=small_font)

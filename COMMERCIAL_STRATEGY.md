@@ -42,7 +42,7 @@
 - `chibi-audit`로 로컬 신뢰 리포트 출력
 - `chibi-share`로 1080×1080 세션 공유 카드 생성
 - `chibi-share --preset lineup`으로 제공된 PNG 캐릭터 전체 라인업 생성
-- `chibi-share --preset options`로 조청·꿀·비즈 옵션 쇼케이스 생성
+- `chibi-share --preset options`로 조청·꿀·비즈·가루·씨앗·꽃잎·레진·소스 12종 옵션 쇼케이스 생성
 - `chibi-pack validate/preview`로 크리에이터·팀 캐릭터팩 검증
 
 무료 코어는 줄이지 않는다. 이 제품은 신뢰와 귀여움이 먼저다.
@@ -56,7 +56,7 @@
 권장 모델:
 
 - Monthly free drop: 매월 1종 무료 공개
-- Monthly free option: 조청/꿀/비즈/스프링클 같은 작은 옵션 레이어 공개
+- Monthly free option: 조청/꿀/비즈/스프링클/콩가루/흑임자/꽃잎/레진 별 같은 작은 옵션 레이어 공개
 - Direct purchase pack: 정가로 구매하는 테마팩
 - Limited collab drop: 기간 한정 브랜드/작가 콜라보
 - Contributor drop: 오픈소스 기여자 전용 배지/캐릭터

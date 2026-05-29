@@ -265,6 +265,70 @@
       "tier": "free",
       "image": "options/rainbow_sprinkles.png",
       "description": "Small colorful sprinkles for share-card-friendly character variants."
+    },
+    {
+      "id": "condensed_milk",
+      "name_ko": "연유 글레이즈",
+      "category": "glaze",
+      "tier": "free",
+      "image": "options/condensed_milk.png",
+      "description": "Creamy white condensed-milk glaze for soft dessert styling."
+    },
+    {
+      "id": "kinako_dust",
+      "name_ko": "콩가루 더스트",
+      "category": "powder",
+      "tier": "free",
+      "image": "options/kinako_dust.png",
+      "description": "Toasty soybean powder speckles for injeolmi-style texture."
+    },
+    {
+      "id": "black_sesame",
+      "name_ko": "흑임자 씨앗",
+      "category": "seed",
+      "tier": "free",
+      "image": "options/black_sesame.png",
+      "description": "Tiny black sesame seeds for a restrained Korean dessert look."
+    },
+    {
+      "id": "red_bean_bits",
+      "name_ko": "팥 알갱이",
+      "category": "topping",
+      "tier": "free",
+      "image": "options/red_bean_bits.png",
+      "description": "Red bean chunks for bukkumi and chapssaltteok-inspired variants."
+    },
+    {
+      "id": "flower_petals",
+      "name_ko": "꽃잎 토핑",
+      "category": "seasonal",
+      "tier": "free",
+      "image": "options/flower_petals.png",
+      "description": "Soft flower petals for seasonal hwajeon-style drops."
+    },
+    {
+      "id": "resin_stars",
+      "name_ko": "레진 별",
+      "category": "resin",
+      "tier": "free",
+      "image": "options/resin_stars.png",
+      "description": "Translucent star inserts inspired by artisan keycap resin layers."
+    },
+    {
+      "id": "matcha_powder",
+      "name_ko": "말차 파우더",
+      "category": "powder",
+      "tier": "free",
+      "image": "options/matcha_powder.png",
+      "description": "Green tea powder dust for a clean dessert-cafe palette."
+    },
+    {
+      "id": "spicy_sauce",
+      "name_ko": "매콤 소스",
+      "category": "sauce",
+      "tier": "free",
+      "image": "options/spicy_sauce.png",
+      "description": "Bright red tteokbokki-style sauce for savory character variants."
     }
   ]
 }

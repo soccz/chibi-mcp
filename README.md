@@ -21,7 +21,7 @@ Star this repo to follow monthly character drops, VS Code builds, creator packs,
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/option-showcase.png" alt="chibi-mcp free option layers including jocheong, honey, beads, and sprinkles" width="720">
+  <img src="docs/screenshots/option-showcase.png" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
 </p>
 
 ## Install from GitHub
@@ -103,7 +103,7 @@ Now ask your client:
 ## What you get
 
 - 🍡 **8 starter characters** released now (white_tteok, garaetteok_short, baekseolgi, mochi, green_grape, melon, cheddar, toast — all ★★)
-- 🍯 **4 free option layers** released now (jocheong_drip, honey_glaze, sugar_beads, rainbow_sprinkles)
+- 🍯 **12 free option layers** released now across syrup, glaze, powder, seeds, petals, resin stars, and sauce.
 - 🔒 **21 more characters coming later** including the ★★★★★ rainbow series, all 떡 varieties, cheeses, fruits, mandu. Catalog shows them as "???" placeholders until release.
 - 🎟 **Gacha pulls** — weighted by rarity (1% / 5% / 24% / 70%)
 - 📦 **Collection** — see what you've got, switch active character, rename them
@@ -145,7 +145,7 @@ The first commercial-product surfaces are already executable:
 | `pull_gacha` | Pull one character (1 free/day, else 1 ticket) |
 | `get_inventory` | Owned characters + ticket balance |
 | `set_active_character(id)` | Switch the active 치비 |
-| `get_options` | Free visual option layers such as 조청, honey, beads, sprinkles |
+| `get_options` | Free visual option layers such as 조청, honey, kinako, sesame, petals, resin stars |
 | `set_active_options([ids])` / `clear_active_options` | Apply up to 3 free option layers |
 | `rename_character(id, nickname)` | Rename a 치비 you own |
 | `open_pet_window` / `close_pet_window` | Spawn or close the floating tk window |

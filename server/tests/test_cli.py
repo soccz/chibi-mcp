@@ -18,14 +18,16 @@ from chibi_mcp.commercial import (
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.3"
+    assert __version__ == "1.4.4"
 
 
 def test_check_finds_packaged_assets():
     result = _check()
     assert result["ok"] is True
     assert result["catalog_count"] >= 8
+    assert result["option_count"] >= 12
     assert result["free_assets_missing"] == []
+    assert result["free_options_missing"] == []
 
 
 def test_invalid_ws_port_falls_back_to_default(monkeypatch):
@@ -39,7 +41,7 @@ def test_trust_audit_reports_local_first_defaults():
     assert report["trust"]["telemetry"] == "none"
     assert report["trust"]["localhost_only_by_default"] is True
     assert report["trust"]["paid_core_gate"] == "none"
-    assert report["assets"]["option_count"] >= 4
+    assert report["assets"]["option_count"] >= 12
     assert report["assets"]["free_options_missing"] == []
 
 

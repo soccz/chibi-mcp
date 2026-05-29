@@ -41,7 +41,7 @@ Star conversion에 필요한 시각 자료:
 - 1280x640 GitHub social preview image
 - 1080x1080 share card: "오늘 7도막 잘림"
 - 1600x900 starter lineup generated from the project PNG assets
-- 1600x900 option showcase generated from free topping/glaze PNG layers
+- 1600x900 option showcase generated from 12 free topping/glaze/powder/seed/resin PNG layers
 - VS Code sidebar screenshot
 - Claude Code `/chibi` screenshot
 - Codex terminal screenshot

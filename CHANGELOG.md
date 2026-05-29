@@ -2,6 +2,16 @@
 
 All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condensed.
 
+## v1.4.4 — 2026-05-29
+
+Broader free option catalog for a more commercial-looking character platform.
+
+- Expanded the free option catalog from 4 to 12 transparent PNG layers: condensed milk, kinako, black sesame, red bean, petals, resin stars, matcha, and spicy sauce.
+- Updated the root, packaged server, and VS Code asset catalogs so Claude/Codex/VS Code all see the same options.
+- `chibi-share --preset options` now renders a 12-item grid instead of a 4-card showcase.
+- VS Code extension assets/version moved to 0.5.2.
+- Tests now require at least 12 packaged free options and verify their PNGs are present.
+
 ## v1.4.3 — 2026-05-29
 
 Free visual option layers for higher character completeness.

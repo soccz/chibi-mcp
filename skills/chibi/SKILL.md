@@ -21,7 +21,7 @@ Claude is the primary client. Treat this skill as a small companion workflow, no
 
 - `get_pet_state` — mood (calm/happy/joyful/panting/drowsy/lonely/surprised) + system metrics + counters + active character id + ticket count.
 - `get_catalog` — released character list (8 starter characters now; upcoming placeholders hidden).
-- `get_options` — released free option layers (jocheong/honey/beads/sprinkles).
+- `get_options` — released free option layers (jocheong/honey/beads/sprinkles/kinako/sesame/petals/resin/matcha/sauce).
 - `get_inventory` — owned characters, ticket balance, total pulls, seconds until next free pull.
 - `get_license_status` — current open-source catalog access status.
 
@@ -84,7 +84,7 @@ Trigger: "보관함", "내 컬렉션", `/chibi 보관함`.
 
 ## Options / 옵션
 
-Triggers: "옵션", "조청 올려", "꿀 발라", "비즈 붙여", "토핑 바꿔".
+Triggers: "옵션", "조청 올려", "꿀 발라", "비즈 붙여", "콩가루", "흑임자", "말차", "토핑 바꿔".
 
 1. Call `get_options` to list available free option layers.
 2. Call `set_active_options([ids])` with up to 3 ids, for example `["jocheong_drip", "sugar_beads"]`.
