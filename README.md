@@ -255,11 +255,13 @@ chibi-pack validate ./my-pack
 chibi-pack preview ./my-pack
 ```
 
-Before a public pack proposal, fill in `license` and `source_rights`, then run:
+Before a public pack proposal, fill in the rights metadata, then run:
 
 ```bash
 chibi-pack validate --submission ./my-pack
 ```
+
+Public submissions now require complete rights metadata: `license`, `source_rights`, `rights_owner`, `asset_origin`, `permission_scope`, and `no_third_party_ip: true`.
 
 Runnable examples from a clone:
 
@@ -278,8 +280,11 @@ See [docs/CREATOR_PACKS.md](docs/CREATOR_PACKS.md).
 - `chibi-audit` prints the local trust report.
 - No paid gates or license keys.
 - Security reports: see [SECURITY.md](SECURITY.md).
-- Asset and pack rights: see [ASSET_RIGHTS.md](ASSET_RIGHTS.md) and
-  [docs/IP_AND_RIGHTS.md](docs/IP_AND_RIGHTS.md).
+- Official asset terms: see [OFFICIAL_ASSET_TERMS.md](OFFICIAL_ASSET_TERMS.md).
+- Brand/fork naming: see [TRADEMARK.md](TRADEMARK.md).
+- Asset, pack, and copycat response: see [ASSET_RIGHTS.md](ASSET_RIGHTS.md),
+  [docs/IP_AND_RIGHTS.md](docs/IP_AND_RIGHTS.md), and
+  [docs/COPYCAT_RESPONSE.md](docs/COPYCAT_RESPONSE.md).
 
 ```bash
 chibi-audit
@@ -314,6 +319,8 @@ Useful docs:
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — install and runtime fixes
 - [CONTRIBUTING.md](CONTRIBUTING.md) — contribution guide
 - [ASSET_RIGHTS.md](ASSET_RIGHTS.md) — official asset and pack provenance policy
+- [OFFICIAL_ASSET_TERMS.md](OFFICIAL_ASSET_TERMS.md) — official artwork usage terms
+- [TRADEMARK.md](TRADEMARK.md) — brand and fork naming guardrails
 - [COMMERCIAL_STRATEGY.md](COMMERCIAL_STRATEGY.md) — expansion readiness and deferred monetization guardrails
 - [GITHUB_STAR_STRATEGY.md](GITHUB_STAR_STRATEGY.md) — launch and repository growth plan
 - [docs/LAUNCH_KIT.md](docs/LAUNCH_KIT.md) — launch/distribution copy
@@ -324,5 +331,6 @@ Useful docs:
 
 ## License
 
-Code is MIT. Asset provenance and pack submission rules are documented in
-[ASSET_RIGHTS.md](ASSET_RIGHTS.md).
+Code is MIT. Official artwork and project presentation have separate usage terms
+in [OFFICIAL_ASSET_TERMS.md](OFFICIAL_ASSET_TERMS.md). Asset provenance and pack
+submission rules are documented in [ASSET_RIGHTS.md](ASSET_RIGHTS.md).

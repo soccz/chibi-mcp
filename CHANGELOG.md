@@ -6,6 +6,10 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Added official asset usage terms, trademark/fork naming guardrails, and a copycat response playbook.
+- Added an IP/rights concern issue form for copied assets, confusing forks/listings, and risky pack submissions.
+- `chibi-pack validate --submission` now requires `rights_owner`, `asset_origin`, `permission_scope`, and `no_third_party_ip: true` in addition to `license` and `source_rights`.
+- Official and sample asset manifests now include expanded provenance metadata.
 - GitHub Releases now attach `SHA256SUMS.txt` for release artifact verification.
 - CI now parses Windows PowerShell installer scripts on `windows-latest`.
 - Added `docs/TROUBLESHOOTING.md` for Claude Code, Codex, VS Code, Linux, macOS, and Windows install/runtime fixes.

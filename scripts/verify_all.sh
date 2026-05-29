@@ -244,10 +244,47 @@ for item in required:
 print("workflow ok")
 PY
 
+echo "== Rights policy sanity =="
+python - <<'PY'
+import json
+from pathlib import Path
+
+required_docs = [
+    "ASSET_RIGHTS.md",
+    "OFFICIAL_ASSET_TERMS.md",
+    "TRADEMARK.md",
+    "docs/IP_AND_RIGHTS.md",
+    "docs/COPYCAT_RESPONSE.md",
+]
+for rel in required_docs:
+    assert Path(rel).exists(), rel
+
+required_meta = {
+    "license",
+    "source_rights",
+    "rights_owner",
+    "asset_origin",
+    "permission_scope",
+    "no_third_party_ip",
+}
+for rel in [
+    "assets/meta.json",
+    "server/chibi_mcp/assets/meta.json",
+    "vscode-ext/resources/meta.json",
+    "examples/packs/spring-hwajeon/meta.json",
+    "examples/packs/team-sprint/meta.json",
+]:
+    meta = json.loads(Path(rel).read_text(encoding="utf-8"))
+    missing = required_meta - set(meta)
+    assert not missing, f"{rel} missing {sorted(missing)}"
+    assert meta["no_third_party_ip"] is True, rel
+print("rights policy ok")
+PY
+
 echo "== GitHub issue forms =="
 (
   cd "$ROOT/vscode-ext"
-  node -e "const fs=require('fs'); const yaml=require('js-yaml'); for (const f of ['../.github/ISSUE_TEMPLATE/config.yml','../.github/ISSUE_TEMPLATE/bug_report.yml','../.github/ISSUE_TEMPLATE/install_problem.yml','../.github/ISSUE_TEMPLATE/feature_request.yml','../.github/ISSUE_TEMPLATE/character_pack.yml','../.github/ISSUE_TEMPLATE/showcase.yml']) { yaml.load(fs.readFileSync(f, 'utf8')); console.log('ok', f); }"
+  node -e "const fs=require('fs'); const yaml=require('js-yaml'); for (const f of ['../.github/ISSUE_TEMPLATE/config.yml','../.github/ISSUE_TEMPLATE/bug_report.yml','../.github/ISSUE_TEMPLATE/install_problem.yml','../.github/ISSUE_TEMPLATE/feature_request.yml','../.github/ISSUE_TEMPLATE/character_pack.yml','../.github/ISSUE_TEMPLATE/ip_report.yml','../.github/ISSUE_TEMPLATE/showcase.yml']) { yaml.load(fs.readFileSync(f, 'utf8')); console.log('ok', f); }"
 )
 
 echo "all checks passed"

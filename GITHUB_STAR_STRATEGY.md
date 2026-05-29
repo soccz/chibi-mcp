@@ -104,9 +104,13 @@ Files that should exist before public launch:
 - `CONTRIBUTING.md`
 - `SECURITY.md`
 - `CODE_OF_CONDUCT.md`
+- `OFFICIAL_ASSET_TERMS.md`
+- `TRADEMARK.md`
+- `docs/COPYCAT_RESPONSE.md`
 - `.github/ISSUE_TEMPLATE/bug_report.yml`
 - `.github/ISSUE_TEMPLATE/install_problem.yml`
 - `.github/ISSUE_TEMPLATE/feature_request.yml`
+- `.github/ISSUE_TEMPLATE/ip_report.yml`
 - `.github/ISSUE_TEMPLATE/character_pack.yml`
 - `.github/ISSUE_TEMPLATE/showcase.yml`
 - `.github/PULL_REQUEST_TEMPLATE.md`
@@ -140,6 +144,7 @@ Must stay visible:
 - localhost-only WebSocket default
 - SECURITY.md with reporting path
 - ASSET_RIGHTS.md and `chibi-pack validate --submission` for pack provenance
+- OFFICIAL_ASSET_TERMS.md, TRADEMARK.md, and COPYCAT_RESPONSE.md for copycat/readiness posture
 - no hidden paid gate in the open-source core
 - no embedded license secret or placeholder production key
 - release checksums attached to tagged GitHub Releases

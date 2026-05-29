@@ -1,0 +1,59 @@
+name: IP or rights concern
+description: Report copied official assets, risky submitted artwork, or confusing unofficial branding.
+title: "[Rights]: "
+labels: ["rights", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for operational triage. Do not paste private legal documents, secrets, API keys, or home-directory paths. For formal legal claims, follow the relevant platform process such as GitHub's DMCA or trademark policy.
+  - type: dropdown
+    id: concern_type
+    attributes:
+      label: Concern type
+      options:
+        - Copied official chibi-mcp asset
+        - Confusing unofficial fork/package/listing
+        - Submitted pack with unclear rights
+        - Third-party character/logo/brand risk
+        - Other rights concern
+    validations:
+      required: true
+  - type: input
+    id: copied_location
+    attributes:
+      label: Copied or risky location
+      description: URL, repository, package, release asset, marketplace listing, or PR.
+    validations:
+      required: true
+  - type: input
+    id: official_source
+    attributes:
+      label: Official source
+      description: chibi-mcp file path, commit SHA, release, or doc that appears copied.
+      placeholder: "assets/social-preview.png at commit <sha>"
+    validations:
+      required: true
+  - type: textarea
+    id: comparison
+    attributes:
+      label: Comparison notes
+      description: Explain what looks copied or confusing. Include screenshots only if they do not expose private information.
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Known provenance or permission
+      description: Any license, source_rights, rights_owner, permission_scope, or contributor statement already available.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked ASSET_RIGHTS.md, OFFICIAL_ASSET_TERMS.md, TRADEMARK.md, and docs/COPYCAT_RESPONSE.md.
+          required: true
+        - label: I understand this issue form is not a formal legal notice.
+          required: true
+        - label: I removed secrets, tokens, and private paths from the report.
+          required: true

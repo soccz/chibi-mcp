@@ -94,6 +94,68 @@ def test_pack_submission_validation_requires_rights_metadata(tmp_path):
     assert result["ok"] is False
     assert "meta.json license is required for submissions" in result["errors"]
     assert "meta.json source_rights is required for submissions" in result["errors"]
+    assert "meta.json rights_owner is required for submissions" in result["errors"]
+    assert "meta.json asset_origin is required for submissions" in result["errors"]
+    assert "meta.json permission_scope is required for submissions" in result["errors"]
+    assert "meta.json no_third_party_ip must be true for submissions" in result["errors"]
+
+
+def test_pack_submission_requires_no_third_party_ip_true(tmp_path):
+    Image.new("RGBA", (256, 256), (255, 240, 210, 255)).save(tmp_path / "custom_tteok.png")
+    (tmp_path / "meta.json").write_text(
+        json.dumps(
+            {
+                "license": "original-submission",
+                "source_rights": "Original artwork by Test Artist, submitted with permission.",
+                "rights_owner": "Test Artist",
+                "asset_origin": "original",
+                "permission_scope": "May be reviewed, previewed, and distributed by chibi-mcp if accepted.",
+                "no_third_party_ip": False,
+                "characters": [
+                    {
+                        "id": "custom_tteok",
+                        "name_ko": "Custom Tteok",
+                        "category": "tteok",
+                        "rarity": 3,
+                        "tier": "creator",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    result = validate_pack(tmp_path, submission=True)
+    assert result["ok"] is False
+    assert result["errors"] == ["meta.json no_third_party_ip must be true for submissions"]
+
+
+def test_pack_submission_accepts_complete_rights_metadata(tmp_path):
+    Image.new("RGBA", (256, 256), (255, 240, 210, 255)).save(tmp_path / "custom_tteok.png")
+    (tmp_path / "meta.json").write_text(
+        json.dumps(
+            {
+                "license": "original-submission",
+                "source_rights": "Original artwork by Test Artist, submitted with permission.",
+                "rights_owner": "Test Artist",
+                "asset_origin": "original",
+                "permission_scope": "May be reviewed, previewed, and distributed by chibi-mcp if accepted.",
+                "no_third_party_ip": True,
+                "characters": [
+                    {
+                        "id": "custom_tteok",
+                        "name_ko": "Custom Tteok",
+                        "category": "tteok",
+                        "rarity": 3,
+                        "tier": "creator",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    result = validate_pack(tmp_path, submission=True)
+    assert result["ok"] is True
+    assert result["metadata"]["rights_owner"] == "Test Artist"
 
 
 def test_pack_init_scaffolds_valid_pack(tmp_path):
@@ -113,6 +175,9 @@ def test_pack_init_scaffolds_valid_pack(tmp_path):
     assert submission_validation["ok"] is False
     assert "meta.json license is required for submissions" in submission_validation["errors"]
     assert "meta.json source_rights is required for submissions" in submission_validation["errors"]
+    assert "meta.json rights_owner is required for submissions" in submission_validation["errors"]
+    assert "meta.json permission_scope is required for submissions" in submission_validation["errors"]
+    assert "meta.json no_third_party_ip must be true for submissions" in submission_validation["errors"]
 
 
 def test_sample_commercial_packs_validate():

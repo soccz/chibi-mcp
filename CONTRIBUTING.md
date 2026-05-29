@@ -42,14 +42,15 @@ Character pack proposals should include:
 
 - transparent PNG assets
 - `meta.json` entry
-- top-level `license` and `source_rights` fields in `meta.json`
+- top-level `license`, `source_rights`, `rights_owner`, `asset_origin`, `permission_scope`, and `no_third_party_ip` fields in `meta.json`
 - clear source/ownership statement
 - source/provenance files if maintainers request them during review
 - no copyrighted third-party character, logo, or brand use without permission
+- no AI-generated image that imitates a named living artist, studio, mascot, or copyrighted character
 - no misleading claim that a fork, pack, or variant is an official project release
 - no NSFW content
 
-Use [docs/CREATOR_PACKS.md](docs/CREATOR_PACKS.md) and [ASSET_RIGHTS.md](ASSET_RIGHTS.md) as the submission guide. Runnable examples live under `examples/packs/`, and validation is:
+Use [docs/CREATOR_PACKS.md](docs/CREATOR_PACKS.md), [ASSET_RIGHTS.md](ASSET_RIGHTS.md), [OFFICIAL_ASSET_TERMS.md](OFFICIAL_ASSET_TERMS.md), and [TRADEMARK.md](TRADEMARK.md) as the submission guide. Runnable examples live under `examples/packs/`, and validation is:
 
 ```bash
 chibi-pack validate --submission examples/packs/spring-hwajeon

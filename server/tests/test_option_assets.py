@@ -27,6 +27,14 @@ EXPECTED_OPTIONS = {
     "matcha_powder",
     "spicy_sauce",
 }
+REQUIRED_RIGHTS_FIELDS = {
+    "license",
+    "source_rights",
+    "rights_owner",
+    "asset_origin",
+    "permission_scope",
+    "no_third_party_ip",
+}
 
 
 def test_free_option_assets_match_across_install_surfaces():
@@ -34,6 +42,8 @@ def test_free_option_assets_match_across_install_surfaces():
 
     for asset_root in ASSET_ROOTS:
         catalog = json.loads((asset_root / "meta.json").read_text(encoding="utf-8"))
+        assert set(catalog) >= REQUIRED_RIGHTS_FIELDS
+        assert catalog["no_third_party_ip"] is True
         options = [option for option in catalog["options"] if option["tier"] == "free"]
         ids = [option["id"] for option in options]
 

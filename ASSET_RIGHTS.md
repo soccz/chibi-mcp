@@ -7,11 +7,16 @@ the repository, not legal advice.
 ## Current Scope
 
 - Project code remains licensed under [MIT](LICENSE).
+- Official artwork and project presentation are governed by
+  [OFFICIAL_ASSET_TERMS.md](OFFICIAL_ASSET_TERMS.md), not treated as standalone
+  stock art under the code license.
+- Brand and naming confusion is covered by [TRADEMARK.md](TRADEMARK.md).
 - The names `chibi-mcp` and `tteoki`, the project social preview, starter
   character identity, and official pack presentation should not be used to
   imply sponsorship, endorsement, or an official release from this project.
-- Character/option pack submissions must include a `license` and
-  `source_rights` statement before they are accepted for public review.
+- Character/option pack submissions must include `license`, `source_rights`,
+  `rights_owner`, `asset_origin`, `permission_scope`, and
+  `no_third_party_ip: true` before they are accepted for public review.
 - Do not submit third-party copyrighted characters, mascots, logos, brand marks,
   screenshots, or fan-art unless you can provide permission.
 - The four base modes and included free starter assets remain free. This policy
@@ -35,7 +40,11 @@ Every submitted `meta.json` should include top-level rights fields:
 ```json
 {
   "license": "original-submission",
-  "source_rights": "Original artwork by <name>, submitted with permission for chibi-mcp review."
+  "source_rights": "Original artwork by <name>, submitted with permission for chibi-mcp review.",
+  "rights_owner": "<name or organization>",
+  "asset_origin": "original",
+  "permission_scope": "May be reviewed, previewed, and distributed by chibi-mcp if accepted.",
+  "no_third_party_ip": true
 }
 ```
 
@@ -59,19 +68,21 @@ Collect evidence before acting:
 - The rights basis: original project asset, commissioned file, contributor
   statement, or documented permission.
 
-GitHub documents a DMCA process for copyright complaints and counter-notices:
+Use [docs/COPYCAT_RESPONSE.md](docs/COPYCAT_RESPONSE.md) to collect evidence
+before acting. GitHub documents a DMCA process for copyright complaints and
+counter-notices:
 https://docs.github.com/github/site-policy/dmca-takedown-policy
 
 For brand-name or logo protection, trademark registration is a separate business
-decision. USPTO explains that trademarks typically cover brand names and logos
-used for goods or services:
+decision. GitHub also documents trademark complaints, and USPTO explains that
+trademarks typically cover brand names and logos used for goods or services:
+https://docs.github.com/github/site-policy/github-trademark-policy
 https://www.uspto.gov/trademarks/basics/trademark-process
 
 ## Decisions Not Yet Made
 
 These should remain explicit user/business decisions:
 
-- Whether official art should use a separate asset license from the code license.
 - Whether to register `chibi-mcp`, `tteoki`, or a logo as a trademark.
 - Whether to keep high-resolution source art private and publish only runtime
   PNGs.

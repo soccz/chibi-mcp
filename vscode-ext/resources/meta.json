@@ -1,6 +1,10 @@
 {
   "license": "project-starter-assets",
   "source_rights": "Project-generated starter characters, free option layers, and launch images for chibi-mcp packaging; no third-party characters, logos, or brands intended.",
+  "rights_owner": "chibi-mcp project",
+  "asset_origin": "generated",
+  "permission_scope": "Official starter assets for chibi-mcp runtime, documentation, releases, and extension packaging; see OFFICIAL_ASSET_TERMS.md.",
+  "no_third_party_ip": true,
   "characters": [
     {
       "id": "white_tteok",

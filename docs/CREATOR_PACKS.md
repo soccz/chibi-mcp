@@ -49,7 +49,11 @@ Public submissions also require top-level rights fields:
 ```json
 {
   "license": "original-submission",
-  "source_rights": "Original artwork by <name>, submitted with permission for chibi-mcp review."
+  "source_rights": "Original artwork by <name>, submitted with permission for chibi-mcp review.",
+  "rights_owner": "<name or organization>",
+  "asset_origin": "original",
+  "permission_scope": "May be reviewed, previewed, and distributed by chibi-mcp if accepted.",
+  "no_third_party_ip": true
 }
 ```
 
@@ -58,8 +62,9 @@ IDs must be lowercase slugs. PNGs should be transparent, square, and at least 12
 ## Submission Checklist
 
 - Artwork is original, commissioned, or permissioned.
-- `meta.json` includes `license` and `source_rights`.
+- `meta.json` includes `license`, `source_rights`, `rights_owner`, `asset_origin`, `permission_scope`, and `no_third_party_ip: true`.
 - No copyrighted third-party characters, logos, or mascots without rights.
+- No AI-generated images that imitate a named living artist, studio, mascot, or copyrighted character.
 - No misleading claim that the pack, fork, or variant is an official project release.
 - PNG background is transparent.
 - Character is readable at 80px, because the VS Code sidebar and share cards use small previews.
@@ -86,7 +91,7 @@ Use these labels when triaging a pack proposal:
 - Do not add paid packs, checkout, Sponsors tiers, license keys, or creator revenue share yet.
 - Do not add telemetry to measure pack usage.
 - Keep any future sponsor credit inside catalog/README/release notes, not as workflow interruption, and only after approval.
-- Keep creator submissions rights-safe: require `license`, `source_rights`, and provenance files when needed.
+- Keep creator submissions rights-safe: require full rights metadata and provenance files when needed.
 
 ## Source Notes
 

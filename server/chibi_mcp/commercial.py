@@ -27,6 +27,7 @@ CHARACTER_ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,40}$")
 CATEGORY_RE = re.compile(r"^[a-z][a-z0-9_-]{0,40}$")
 VALID_TIERS = {"free", "upcoming", "creator", "supporter", "team", "collab"}
 VALID_RARITIES = {2, 3, 4, 5}
+VALID_ASSET_ORIGINS = {"original", "commissioned", "generated", "licensed", "public-domain", "sample"}
 
 
 def audit_main(argv: list[str] | None = None) -> int:
@@ -66,7 +67,7 @@ def pack_main(argv: list[str] | None = None) -> int:
     validate.add_argument(
         "--submission",
         action="store_true",
-        help="Require license and source_rights metadata for public submissions",
+        help="Require rights metadata for public submissions",
     )
 
     preview = sub.add_parser("preview", help="Write a static HTML pack preview")
@@ -88,7 +89,7 @@ def pack_main(argv: list[str] | None = None) -> int:
             print(f"created: {result['pack_dir']}")
             print("next: chibi-pack validate " + result["pack_dir"])
             print(
-                "submit: fill license/source_rights, then chibi-pack validate --submission "
+                "submit: fill rights metadata, then chibi-pack validate --submission "
                 + result["pack_dir"]
             )
         else:
@@ -206,6 +207,10 @@ def init_pack(
     meta = {
         "license": "draft",
         "source_rights": "TODO: replace before public submission with artwork source, license, and permission.",
+        "rights_owner": "TODO: replace with the owner or authorized submitter.",
+        "asset_origin": "original",
+        "permission_scope": "TODO: explain how chibi-mcp may review, preview, and distribute this pack.",
+        "no_third_party_ip": False,
         "characters": [
             {
                 "id": character_id,
@@ -335,13 +340,29 @@ def validate_pack(pack_dir: Path, *, submission: bool = False) -> dict[str, Any]
 
     license_value = str(catalog.get("license") or "").strip()
     rights_value = str(catalog.get("source_rights") or catalog.get("rights") or "").strip()
+    rights_owner = str(catalog.get("rights_owner") or "").strip()
+    asset_origin = str(catalog.get("asset_origin") or "").strip().lower()
+    permission_scope = str(catalog.get("permission_scope") or "").strip()
+    no_third_party_ip = catalog.get("no_third_party_ip")
     if submission:
         if _missing_submission_value(license_value):
             errors.append("meta.json license is required for submissions")
         if _missing_submission_value(rights_value):
             errors.append("meta.json source_rights is required for submissions")
+        if _missing_submission_value(rights_owner):
+            errors.append("meta.json rights_owner is required for submissions")
+        if _missing_submission_value(asset_origin):
+            errors.append("meta.json asset_origin is required for submissions")
+        elif asset_origin not in VALID_ASSET_ORIGINS:
+            errors.append(f"meta.json asset_origin must be one of {sorted(VALID_ASSET_ORIGINS)}")
+        if _missing_submission_value(permission_scope):
+            errors.append("meta.json permission_scope is required for submissions")
+        if no_third_party_ip is not True:
+            errors.append("meta.json no_third_party_ip must be true for submissions")
     elif _missing_submission_value(rights_value):
         warnings.append("meta.json source_rights is recommended for public submissions")
+    if not submission and no_third_party_ip is not True:
+        warnings.append("meta.json no_third_party_ip=true is recommended before public submissions")
 
     seen: set[str] = set()
     for index, character in enumerate(characters):
@@ -456,6 +477,10 @@ def validate_pack(pack_dir: Path, *, submission: bool = False) -> dict[str, Any]
         metadata={
             "license": license_value,
             "source_rights": rights_value,
+            "rights_owner": rights_owner,
+            "asset_origin": asset_origin,
+            "permission_scope": permission_scope,
+            "no_third_party_ip": no_third_party_ip,
             "submission": submission,
         },
     )
@@ -1097,6 +1122,11 @@ def _format_pack_validation(result: dict[str, Any]) -> str:
         rights_value = str(metadata.get("source_rights") or "")
         rights_line = "source_rights: present" if not _missing_submission_value(rights_value) else "source_rights: <missing>"
         lines.append(rights_line)
+        if metadata.get("submission"):
+            lines.append(f"rights_owner: {metadata.get('rights_owner') or '<missing>'}")
+            lines.append(f"asset_origin: {metadata.get('asset_origin') or '<missing>'}")
+            lines.append(f"permission_scope: {'present' if metadata.get('permission_scope') else '<missing>'}")
+            lines.append(f"no_third_party_ip: {metadata.get('no_third_party_ip') is True}")
     for warning in result["warnings"]:
         lines.append(f"warning: {warning}")
     for error in result["errors"]:
@@ -1131,6 +1161,8 @@ def _missing_submission_value(value: str) -> bool:
         not normalized
         or normalized in {"todo", "tbd", "draft", "replace-me"}
         or "replace before public submission" in normalized
+        or "replace with" in normalized
+        or "explain how" in normalized
     )
 
 

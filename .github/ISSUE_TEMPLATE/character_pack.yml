@@ -36,7 +36,27 @@ body:
     id: source_rights
     attributes:
       label: Source and rights
-      description: Confirm the artwork source, license, and permission to submit it. Public packs must pass `chibi-pack validate --submission`.
+      description: Confirm source_rights, rights_owner, asset_origin, permission_scope, and license. Public packs must pass `chibi-pack validate --submission`.
+    validations:
+      required: true
+  - type: input
+    id: rights_owner
+    attributes:
+      label: Rights owner
+      placeholder: "Name or organization authorized to submit this artwork"
+    validations:
+      required: true
+  - type: dropdown
+    id: asset_origin
+    attributes:
+      label: Asset origin
+      options:
+        - original
+        - commissioned
+        - generated
+        - licensed
+        - public-domain
+        - sample
     validations:
       required: true
   - type: checkboxes
@@ -46,7 +66,11 @@ body:
       options:
         - label: I will not submit copyrighted third-party characters or logos without permission.
           required: true
+        - label: I will not submit AI-generated images that imitate a named living artist, studio, mascot, or copyrighted character.
+          required: true
         - label: I can provide source/provenance files or permission records if maintainers request them.
+          required: true
+        - label: My pack metadata will include no_third_party_ip set to true before public submission.
           required: true
         - label: I will not imply that my fork, pack, or variant is an official chibi-mcp release unless maintainers approve it.
           required: true
