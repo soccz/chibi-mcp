@@ -1,11 +1,11 @@
 ---
 name: chibi
-description: Floating chibi desktop pet with real gacha, inventory, live mood, and free option layers. Use whenever the user mentions chibi, 가래떡, 떡, 슬랑이, 뽑기, 보관함, 옵션, pet, or types /chibi-mcp:chibi. Talks to the chibi MCP server (open_pet_window, pull_gacha, get_inventory, get_options, set_active_options, clear_active_options, set_active_character, rename_character, pet_say, slice_now, get_pet_state).
+description: Floating chibi desktop pet with real gacha, inventory, live mood, and free option layers. Use whenever the user mentions chibi, 뽑기, 보관함, 옵션, pet, or types /chibi-mcp:chibi. Talks to the chibi MCP server (open_pet_window, pull_gacha, get_inventory, get_options, set_active_options, clear_active_options, set_active_character, rename_character, pet_say, slice_now, get_pet_state).
 ---
 
-# chibi — Korean rice cake desktop pet
+# chibi — local desktop coding pet
 
-You are the steward of the user's chibi — a Korean rice cake themed gacha pet that pops up as a real always-on-top floating window, reacts to CPU/RAM/idle, and gets sliced every N tool calls.
+You are the steward of the user's chibi — a local gacha pet that pops up as a real always-on-top floating window, reacts to CPU/RAM/idle, and celebrates session milestones every N tool calls.
 
 ## Claude Code contract
 
@@ -22,7 +22,7 @@ Claude is the primary client. Treat this skill as a small companion workflow, no
 
 - `get_pet_state` — mood (calm/happy/joyful/panting/drowsy/lonely/surprised) + system metrics + counters + active character id + ticket count.
 - `get_catalog` — released character list (8 starter characters now; upcoming placeholders hidden).
-- `get_options` — released free option layers (jocheong/honey/beads/sprinkles/kinako/sesame/petals/resin/matcha/sauce).
+- `get_options` — released free option layers (honey/beads/sprinkles/powder/sesame/petals/resin/matcha/sauce).
 - `get_inventory` — owned characters, ticket balance, total pulls, seconds until next free pull.
 - `get_license_status` — current open-source catalog access status.
 
@@ -47,7 +47,7 @@ Mood labels:
 
 If `opened: false` because nothing's available → run a welcome `pull_gacha` instead (first daily pull is free).
 
-The window is **live**: mood, slice flashes, and `pet_say` bubbles update in real time via a local WebSocket. You don't need to refresh it manually.
+The window is **live**: mood, milestone flashes, and `pet_say` bubbles update in real time via a local WebSocket. You don't need to refresh it manually.
 
 ## Gacha
 
@@ -56,7 +56,7 @@ Trigger: "뽑기", "한 번 뽑아", "pull", `/chibi-mcp:chibi 뽑기`.
 1. Call `pull_gacha`. Server handles:
    - First pull of the calendar day is free.
    - Otherwise 1 ticket is spent.
-   - Tickets auto-grow: +1 / 100 tool calls, +1 / 10 slices.
+   - Tickets auto-grow: +1 / 100 tool calls, +1 / 10 milestone events.
 2. Response shape (success):
    `{ drawn: {id, name_ko, rarity, category}, was_free, tickets, owned_count, active_character_id, total_pulls }`
    Response shape (no ticket and free already used today):
@@ -74,23 +74,23 @@ Trigger: "보관함", "내 컬렉션", `/chibi-mcp:chibi 보관함`.
 
 1. Call `get_inventory` for the owned set + ticket balance.
 2. Call `get_catalog` for the full released list (NEVER infer from inventory alone — some characters may be in the catalog but unowned).
-3. Render a compact list grouped by category (떡 / 과일 / 치즈 / 만두 / 기타). Keep it short; show only owned names first, then "미보유 N종".
+3. Render a compact list grouped by category. Keep it short; show only owned names first, then "미보유 N종".
 4. Surface one status line: `티켓 N장 · 보유 K/T · 다음 무료뽑기 HH:MM`.
 
-## Slice / cadence
+## Milestone / cadence
 
-- `slice_now` — manual slice on request ("잘라줘", "썰어줘").
+- `slice_now` — manual milestone animation on request ("마일스톤 보여줘", "지금 반응해줘").
 - `set_slice_interval(n)` — change cadence (default 10).
-- The window flashes when a slice fires (no need for you to announce it).
+- The window flashes when a milestone fires (no need for you to announce it).
 
 ## Options / 옵션
 
-Triggers: "옵션", "조청 올려", "꿀 발라", "비즈 붙여", "콩가루", "흑임자", "말차", "토핑 바꿔".
+Triggers: "옵션", "꿀 발라", "비즈 붙여", "콩가루", "흑임자", "말차", "토핑 바꿔".
 
 1. Call `get_options` to list available free option layers.
-2. Call `set_active_options([ids])` with up to 3 ids, for example `["jocheong_drip", "sugar_beads"]`.
+2. Call `set_active_options([ids])` with up to 3 ids, for example `["honey_glaze", "sugar_beads"]`.
 3. Use `clear_active_options` when the user wants a plain character again.
-4. Keep the reply short: `조청 드립 + 슈가 비즈 적용.`
+4. Keep the reply short: `꿀 글레이즈 + 슈가 비즈 적용.`
 
 ## Speech bubble
 
@@ -106,7 +106,7 @@ Good bubble examples:
 - `오늘 좀 잘되네`
 - `헐 바쁘다`
 - `충전해줘`
-- `한 도막 더!`
+- `한 번 더!`
 
 Avoid:
 

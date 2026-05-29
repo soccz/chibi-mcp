@@ -12,7 +12,7 @@ One-line:
 
 Short copy:
 
-> `chibi-mcp` adds a local rice-cake desktop pet to AI coding sessions. It reacts to CPU, battery, idle time, and tool calls; collects characters; applies free option layers; and stays no-telemetry by default.
+> `chibi-mcp` adds a local chibi desktop pet to AI coding sessions. It reacts to CPU, battery, idle time, and tool calls; collects characters; applies free option layers; and stays no-telemetry by default.
 
 Trust copy:
 
@@ -64,7 +64,7 @@ Already generated:
 
 Still needed before broad launch:
 
-- `docs/demo.gif` — pet opens, option toggles, slice event, share card
+- `docs/demo.gif` — pet opens, option toggles, milestone event, share card
 - `docs/screenshots/vscode-sidebar.png`
 - `docs/screenshots/claude-code.png`
 - `docs/screenshots/codex-terminal.png`
@@ -92,7 +92,7 @@ GitHub/X short:
 ```text
 I made chibi-mcp: a no-telemetry local MCP pet for Claude Code, Codex, and VS Code.
 
-It reacts to CPU/battery/tool calls, gets sliced every N calls, has gacha characters, and now ships with 12 free visual option layers.
+It reacts to CPU/battery/tool calls, celebrates session milestones, has gacha characters, and now ships with 12 free visual option layers.
 
 GitHub: https://github.com/soccz/chibi-mcp
 ```
@@ -102,7 +102,7 @@ Korean short:
 ```text
 Claude Code / Codex / VS Code에서 돌아가는 로컬 MCP 펫 만들었습니다.
 
-chibi가 CPU·배터리·툴 호출에 반응하고, N번 호출마다 도막나고, 캐릭터/옵션팩까지 확장됩니다. telemetry 없음.
+chibi가 CPU·배터리·툴 호출에 반응하고, N번 호출마다 작은 마일스톤을 보여주며, 캐릭터/옵션팩까지 확장됩니다. telemetry 없음.
 
 https://github.com/soccz/chibi-mcp
 ```

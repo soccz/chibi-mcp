@@ -1,6 +1,6 @@
 {
   "name": "chibi-mcp",
-  "description": "chibi — Korean rice cake themed desktop pet for Claude Code. Gacha-collect squishy characters and 12 free option layers. They react to your session and get sliced every N tool calls.",
+  "description": "chibi — local desktop pet for Claude Code. Collect squishy characters, apply 12 free option layers, and let chibi react to your coding session.",
   "version": "1.4.10",
   "author": {
     "name": "soccz",
@@ -10,9 +10,9 @@
   "license": "MIT",
   "keywords": [
     "chibi",
-    "rice-cake",
-    "garaetteok",
-    "korean",
+    "local-first",
+    "desktop-pet",
+    "coding",
     "squishy",
     "gacha",
     "pet",

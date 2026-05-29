@@ -200,6 +200,43 @@ for path in root.rglob("*"):
 
 if violations:
     raise SystemExit("legacy brand identity found:\n" + "\n".join(violations))
+
+public_surfaces = [
+    "README.md",
+    "INSTALL.md",
+    "server/README.md",
+    "server/pyproject.toml",
+    ".claude-plugin/plugin.json",
+    ".claude-plugin/marketplace.json",
+    ".codex-plugin/plugin.json",
+    "commands/chibi.md",
+    "skills/chibi/SKILL.md",
+    "docs/LAUNCH_KIT.md",
+    "docs/PUBLIC_BETA_READINESS.md",
+]
+public_terms = [
+    "Korean rice cake",
+    "rice cake",
+    "rice-cake",
+    "garaetteok",
+    "tteok",
+    "조청",
+    "가래떡",
+    "도막",
+]
+public_violations = []
+for rel in public_surfaces:
+    path = root / rel
+    if not path.exists():
+        continue
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    for term in public_terms:
+        if term in text:
+            public_violations.append(f"{rel}: contains public legacy concept {term!r}")
+            break
+
+if public_violations:
+    raise SystemExit("public chibi branding drift found:\n" + "\n".join(public_violations))
 print("brand identity ok")
 PY
 

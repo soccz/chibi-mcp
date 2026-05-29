@@ -1,7 +1,7 @@
 {
   "name": "chibi-mcp",
   "version": "1.4.10",
-  "description": "chibi — Korean rice cake themed MCP pet for Codex. Collect squishy characters, apply 12 free option layers, open a floating pet window, and let it react to your coding session.",
+  "description": "chibi — local MCP pet for Codex. Collect squishy characters, apply 12 free option layers, open a floating pet window, and let it react to your coding session.",
   "author": {
     "name": "soccz",
     "url": "https://github.com/soccz"
@@ -11,20 +11,20 @@
   "license": "MIT",
   "keywords": [
     "chibi",
-    "rice-cake",
+    "local-first",
     "mcp",
     "codex",
     "pet",
     "gacha",
-    "korean",
+    "desktop-pet",
     "cosmetics"
   ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "chibi",
-    "shortDescription": "A squishy Korean rice cake MCP pet for Codex.",
-    "longDescription": "Open a floating chibi pet, collect characters, apply 12 free option layers, run gacha pulls, and show local CPU, RAM, battery, idle, tool-call, and slice state through MCP.",
+    "shortDescription": "A squishy local MCP pet for Codex.",
+    "longDescription": "Open a floating chibi pet, collect characters, apply 12 free option layers, run gacha pulls, and show local CPU, RAM, battery, idle, tool-call, and milestone state through MCP.",
     "developerName": "soccz",
     "category": "Productivity",
     "capabilities": [
@@ -36,7 +36,7 @@
       "chibi 보여줘",
       "chibi 뽑기 한 번",
       "chibi 보관함 열어",
-      "조청 드립 옵션 적용해줘"
+      "꿀 글레이즈 옵션 적용해줘"
     ],
     "brandColor": "#F59E0B"
   }

@@ -40,10 +40,10 @@ See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no
 - Floating-window controls for inventory, option customization, gacha pulls,
   and close actions.
 - Mood based on CPU, RAM, battery, and idle time.
-- Slice cycle: every N tool calls, chibi gets sliced.
+- Session cadence: every N tool calls, chibi plays a small milestone animation.
 - `chibi-say`, a tiny CLI for making the pet show speech bubbles from scripts.
-- Built-in local ASMR-style sounds for squish, slice, gacha pulls, rare pulls,
-  option changes, and speech bubbles.
+- Built-in local ASMR-style sounds for squish, milestone events, gacha pulls,
+  rare pulls, option changes, and speech bubbles.
 
 The base product is free. Monetization is not enabled: no paid packs, no paid random pulls, no Sponsors tiers, no license keys, and no team pricing unless explicitly approved later.
 
@@ -121,7 +121,7 @@ Then ask Codex:
 chibi 보여줘
 chibi 뽑기 한 번
 chibi 보관함 열어
-chibi 조청 옵션 적용해줘
+chibi 꿀 글레이즈 옵션 적용해줘
 ```
 
 ### VS Code
@@ -176,9 +176,9 @@ If `tkinter` is false or no display session is available, MCP tools still work, 
 chibi 보여줘
 chibi 뽑기 한 번
 chibi 보관함 열어
-조청 드립 옵션 적용해줘
+꿀 글레이즈 옵션 적용해줘
 옵션 해제해줘
-10번 호출마다 잘리게 해줘
+10번 호출마다 마일스톤 반응하게 해줘
 ```
 
 ### Main MCP Tools
@@ -188,8 +188,8 @@ chibi 보관함 열어
 | `open_pet_window` / `close_pet_window` | Open or close the floating pet |
 | `get_pet_state` | Mood, system metrics, counters, active character |
 | `pet_say(text)` | Show a short speech bubble |
-| `slice_now` | Trigger a slice immediately |
-| `set_slice_interval(n)` | Change the slice cadence |
+| `slice_now` | Trigger the milestone animation immediately |
+| `set_slice_interval(n)` | Change the milestone cadence |
 | `pull_gacha` | Pull one character |
 | `get_inventory` | Show owned characters and ticket balance |
 | `set_active_character(id)` | Switch active character |

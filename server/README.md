@@ -1,6 +1,6 @@
 # chibi-mcp (server)
 
-MCP server for **chibi** — a Korean rice cake (가래떡) desktop character that visualizes Claude Code or Codex session state.
+MCP server for **chibi** — a local desktop character that visualizes Claude Code or Codex session state.
 
 The server has two jobs running together in one process:
 1. **MCP server (stdio)** — Claude Code / Codex calls these tools to interact with chibi.
@@ -49,11 +49,11 @@ chibi-share --preset options --out option-showcase.png
 
 | Tool | Description |
 |---|---|
-| `get_pet_state` | Returns mood, system metrics (CPU/RAM/battery), counters, timing. Counts as a Claude interaction (may trigger a slice every N calls). |
+| `get_pet_state` | Returns mood, system metrics (CPU/RAM/battery), counters, timing. Counts as a Claude interaction (may trigger a milestone event every N calls). |
 | `pet_say(text)` | Make chibi say something in a speech bubble. |
-| `slice_now` | Force a slice (resets the lengthen cycle, fires a slice event). |
-| `set_slice_interval(n)` | Change how often (every N Claude tool calls) the auto-slice fires. Default: 10. |
-| `get_options` | List free visual option layers such as jocheong, honey, kinako, sesame, petals, resin, and sauce. |
+| `slice_now` | Force a milestone animation immediately. |
+| `set_slice_interval(n)` | Change how often (every N Claude tool calls) the milestone animation fires. Default: 10. |
+| `get_options` | List free visual option layers such as honey, beads, sprinkles, powder, sesame, petals, resin, and sauce. |
 | `set_active_options([ids])` / `clear_active_options` | Apply or clear up to 3 free option layers. |
 
 ## WebSocket protocol (server → desktop)
@@ -75,7 +75,7 @@ JSON messages broadcast to all connected desktop clients:
 { "type": "slice" }
 ```
 
-State is pushed every 2 seconds. `say` and `slice` are pushed on demand.
+State is pushed every 2 seconds. `say` and milestone events are pushed on demand.
 
 ## Environment variables
 
@@ -107,6 +107,6 @@ The stdio MCP side will wait for a client on stdin/stdout, so to test the WebSoc
 
 - **Counter resets only when the process restarts** — intentional "today's-work" scope.
 - **All metrics are local** — no network calls, no telemetry, no accounts.
-- **Slice trigger is Claude-call-based** (not wall-clock) — measures actual work, not just time sitting.
+- **Milestone trigger is Claude-call-based** (not wall-clock) — measures actual work, not just time sitting.
 
 See `../SPEC.md` and `../CHARACTER_DESIGN.md` for the broader project context.

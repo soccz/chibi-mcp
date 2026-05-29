@@ -56,7 +56,7 @@ This checks:
 These are still manual because they should show real usage, not fake product
 proof:
 
-- `docs/demo.gif` — open pet, apply option, slice event, share card.
+- `docs/demo.gif` — open pet, apply option, milestone event, share card.
 - `docs/screenshots/vscode-sidebar.png`
 - `docs/screenshots/claude-code.png`
 - `docs/screenshots/codex-terminal.png`

@@ -1,12 +1,12 @@
 [project]
 name = "chibi-mcp"
 version = "1.4.10"
-description = "MCP server for chibi — a Korean rice cake desktop pet that pops up a floating tk window (mood-tinted, live-updating, gacha-driven) in your Claude Code session"
+description = "MCP server for chibi — a local desktop pet that pops up a floating tk window (mood-tinted, live-updating, gacha-driven) in your Claude Code session"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "soccz" }]
-keywords = ["mcp", "claude-code", "desktop-pet", "korean", "chibi", "garaetteok"]
+keywords = ["mcp", "claude-code", "desktop-pet", "local-first", "chibi", "gacha"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
