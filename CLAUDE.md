@@ -15,6 +15,7 @@ The project now has an executable Python MCP server, Claude/Codex plugin metadat
 - `STYLE_GUIDE.md` — UI, typography, voice, share-card design. Also delegated design domain.
 - `PROCESS.md` — Step A through Step G. Step F/G are commercial and GitHub growth strategy, not approved monetization implementation.
 - `COMMERCIAL_STRATEGY.md` — commercial expansion candidates and guardrails.
+- `docs/PRODUCT_MARKET_READINESS.md`, `docs/TEAM_ADOPTION.md`, `docs/PILOT_PLAYBOOK.md` — commercial readiness, team evaluation, and free pilot feedback loops without monetization.
 - `GITHUB_STAR_STRATEGY.md` — source-backed GitHub growth plan, topics, community surface, launch loop.
 - `INSTALL.md` — GitHub install matrix for Claude Code, Codex, and VS Code.
 - `docs/TROUBLESHOOTING.md` — user-facing install/runtime fixes and issue checklist.

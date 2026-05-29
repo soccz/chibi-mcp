@@ -30,6 +30,8 @@ Trust copy:
 | GitHub Sponsors | possible future support path | documented only | do not enable yet |
 | Creator packs | content supply | `chibi-pack validate/preview` | invite sample submissions |
 | Team packs | B2B admin value | `chibi-audit`, sample team pack | write admin install note |
+| Free pilot feedback | commercial proof before pricing | `docs/PILOT_PLAYBOOK.md`, team pilot issue form | invite 3-5 evaluators after demo GIF |
+| Collaboration drops | distribution without ads | collaboration issue form, rights docs | collect free drop proposals |
 
 ## Assets To Ship
 
@@ -60,6 +62,8 @@ Still needed before public push:
 7. Update GitHub social preview using `assets/social-preview.png`.
 8. Set topics: `mcp`, `model-context-protocol`, `claude-code`, `codex`, `vscode-extension`, `local-first`, `no-telemetry`, `desktop-pet`, `ai-agent`.
 9. Open a pinned "Show your tteoki" issue or Discussion.
+10. Invite free team/pilot feedback with `.github/ISSUE_TEMPLATE/team_pilot.yml`.
+11. Collect free collaboration/drop ideas with `.github/ISSUE_TEMPLATE/collaboration_idea.yml`.
 
 ## Post Copy
 

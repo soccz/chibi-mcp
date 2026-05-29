@@ -46,6 +46,11 @@ def test_trust_audit_reports_local_first_defaults():
     assert report["trust"]["paid_core_gate"] == "none"
     assert report["assets"]["option_count"] >= 12
     assert report["assets"]["free_options_missing"] == []
+    readiness = report["commercial_readiness"]
+    assert readiness["monetization_enabled"] is False
+    assert readiness["readiness_files_missing"] == []
+    assert readiness["pilot_feedback_template"] is True
+    assert readiness["collaboration_template"] is True
 
 
 def test_pack_validate_accepts_minimal_creator_pack(tmp_path):

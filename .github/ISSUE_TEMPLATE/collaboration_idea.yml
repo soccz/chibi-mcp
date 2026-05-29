@@ -1,0 +1,56 @@
+name: Collaboration or drop idea
+description: Suggest a free collaboration, event drop, creator drop, or distribution partnership.
+title: "[Collab]: "
+labels: ["collaboration", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is for free/experimental collaboration ideas. Do not use it to create paid sponsorships, paid packs, revenue share, ads, or license keys.
+  - type: dropdown
+    id: collab_type
+    attributes:
+      label: Collaboration type
+      options:
+        - Free character drop
+        - Free option layer
+        - Creator/community pack
+        - Hackathon or conference badge
+        - Keyboard/keycap/devdesk collaboration
+        - Coding stream overlay idea
+        - Devtool integration
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: concept
+    attributes:
+      label: Concept
+      description: Describe the drop, pack, event, audience, and why it fits chibi-mcp.
+    validations:
+      required: true
+  - type: textarea
+    id: distribution
+    attributes:
+      label: Distribution value
+      description: What audience or channel would this bring? GitHub, event, community, stream, newsletter, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: rights
+    attributes:
+      label: Rights and brand safety
+      description: Confirm artwork/source rights and whether any third-party logo, mascot, or brand is involved.
+    validations:
+      required: true
+  - type: checkboxes
+    id: guardrails
+    attributes:
+      label: Guardrails
+      options:
+        - label: This idea does not require paid gates, paid random pulls, or checkout.
+          required: true
+        - label: This idea can be clearly labeled if it is unofficial or community-made.
+          required: true
+        - label: I can provide rights/provenance details before any public asset is accepted.
+          required: true

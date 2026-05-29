@@ -106,11 +106,16 @@ Files that should exist before public launch:
 - `CODE_OF_CONDUCT.md`
 - `OFFICIAL_ASSET_TERMS.md`
 - `TRADEMARK.md`
+- `docs/PRODUCT_MARKET_READINESS.md`
+- `docs/TEAM_ADOPTION.md`
+- `docs/PILOT_PLAYBOOK.md`
 - `docs/COPYCAT_RESPONSE.md`
 - `.github/ISSUE_TEMPLATE/bug_report.yml`
 - `.github/ISSUE_TEMPLATE/install_problem.yml`
 - `.github/ISSUE_TEMPLATE/feature_request.yml`
 - `.github/ISSUE_TEMPLATE/ip_report.yml`
+- `.github/ISSUE_TEMPLATE/team_pilot.yml`
+- `.github/ISSUE_TEMPLATE/collaboration_idea.yml`
 - `.github/ISSUE_TEMPLATE/character_pack.yml`
 - `.github/ISSUE_TEMPLATE/showcase.yml`
 - `.github/PULL_REQUEST_TEMPLATE.md`

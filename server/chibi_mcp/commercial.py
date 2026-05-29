@@ -281,6 +281,25 @@ def build_trust_audit() -> dict[str, Any]:
             ".mcp.json",
         ]
     )
+    readiness_expected = [
+        "COMMERCIAL_STRATEGY.md",
+        "docs/PRODUCT_MARKET_READINESS.md",
+        "docs/TEAM_ADOPTION.md",
+        "docs/PILOT_PLAYBOOK.md",
+        "docs/LAUNCH_KIT.md",
+        "docs/CREATOR_PACKS.md",
+        "docs/IP_AND_RIGHTS.md",
+        "OFFICIAL_ASSET_TERMS.md",
+        "TRADEMARK.md",
+        ".github/ISSUE_TEMPLATE/team_pilot.yml",
+        ".github/ISSUE_TEMPLATE/collaboration_idea.yml",
+    ]
+    readiness_files = _find_project_files(readiness_expected)
+    readiness_missing = [
+        relative
+        for relative in readiness_expected
+        if not any(path.endswith(relative) for path in readiness_files)
+    ]
     report = {
         "ok": bool(asset_dir and not free_assets_missing),
         "version": __version__,
@@ -300,6 +319,17 @@ def build_trust_audit() -> dict[str, Any]:
         },
         "entrypoints": entrypoints,
         "project_files": hook_files,
+        "commercial_readiness": {
+            "monetization_enabled": False,
+            "readiness_files_found": readiness_files,
+            "readiness_files_missing": readiness_missing,
+            "pilot_feedback_template": not any(
+                missing == ".github/ISSUE_TEMPLATE/team_pilot.yml" for missing in readiness_missing
+            ),
+            "collaboration_template": not any(
+                missing == ".github/ISSUE_TEMPLATE/collaboration_idea.yml" for missing in readiness_missing
+            ),
+        },
         "environment": {
             "CHIBI_WS_HOST": os.environ.get("CHIBI_WS_HOST"),
             "CHIBI_WS_PORT": os.environ.get("CHIBI_WS_PORT"),
@@ -1089,6 +1119,7 @@ def _format_audit(report: dict[str, Any]) -> str:
     found_entrypoints = ", ".join(name for name, path in entrypoints.items() if path) or "none"
     project_files = report["project_files"]
     found_files = ", ".join(project_files) if project_files else "not found from current checkout"
+    readiness = report.get("commercial_readiness") or {}
     return "\n".join(
         [
             "chibi-mcp trust audit",
@@ -1105,6 +1136,8 @@ def _format_audit(report: dict[str, Any]) -> str:
             f"free_options_missing: {report['assets']['free_options_missing']}",
             f"entrypoints_found: {found_entrypoints}",
             f"project_files_found: {found_files}",
+            f"commercial_monetization_enabled: {readiness.get('monetization_enabled')}",
+            f"commercial_readiness_missing: {readiness.get('readiness_files_missing', [])}",
         ]
     )
 

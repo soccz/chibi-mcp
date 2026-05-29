@@ -253,6 +253,12 @@ required_docs = [
     "ASSET_RIGHTS.md",
     "OFFICIAL_ASSET_TERMS.md",
     "TRADEMARK.md",
+    "COMMERCIAL_STRATEGY.md",
+    "docs/PRODUCT_MARKET_READINESS.md",
+    "docs/TEAM_ADOPTION.md",
+    "docs/PILOT_PLAYBOOK.md",
+    "docs/LAUNCH_KIT.md",
+    "docs/CREATOR_PACKS.md",
     "docs/IP_AND_RIGHTS.md",
     "docs/COPYCAT_RESPONSE.md",
 ]
@@ -284,7 +290,7 @@ PY
 echo "== GitHub issue forms =="
 (
   cd "$ROOT/vscode-ext"
-  node -e "const fs=require('fs'); const yaml=require('js-yaml'); for (const f of ['../.github/ISSUE_TEMPLATE/config.yml','../.github/ISSUE_TEMPLATE/bug_report.yml','../.github/ISSUE_TEMPLATE/install_problem.yml','../.github/ISSUE_TEMPLATE/feature_request.yml','../.github/ISSUE_TEMPLATE/character_pack.yml','../.github/ISSUE_TEMPLATE/ip_report.yml','../.github/ISSUE_TEMPLATE/showcase.yml']) { yaml.load(fs.readFileSync(f, 'utf8')); console.log('ok', f); }"
+  node -e "const fs=require('fs'); const yaml=require('js-yaml'); for (const f of ['../.github/ISSUE_TEMPLATE/config.yml','../.github/ISSUE_TEMPLATE/bug_report.yml','../.github/ISSUE_TEMPLATE/install_problem.yml','../.github/ISSUE_TEMPLATE/feature_request.yml','../.github/ISSUE_TEMPLATE/character_pack.yml','../.github/ISSUE_TEMPLATE/ip_report.yml','../.github/ISSUE_TEMPLATE/team_pilot.yml','../.github/ISSUE_TEMPLATE/collaboration_idea.yml','../.github/ISSUE_TEMPLATE/showcase.yml']) { yaml.load(fs.readFileSync(f, 'utf8')); console.log('ok', f); }"
 )
 
 echo "all checks passed"

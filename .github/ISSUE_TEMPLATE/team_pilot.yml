@@ -1,0 +1,79 @@
+name: Team or pilot feedback
+description: Share install, adoption, or rollout feedback without starting a paid plan.
+title: "[Pilot]: "
+labels: ["pilot", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is for free pilot/evaluation feedback. It does not create a paid plan, pricing request, support contract, license key, or private entitlement.
+  - type: dropdown
+    id: pilot_type
+    attributes:
+      label: Pilot type
+      options:
+        - Individual AI coding workflow
+        - Small team evaluation
+        - VS Code extension evaluation
+        - Claude Code/Codex MCP evaluation
+        - Creator/team pack evaluation
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: primary_client
+    attributes:
+      label: Primary client
+      options:
+        - Claude Code
+        - Codex
+        - VS Code
+        - Mixed
+        - Not sure yet
+    validations:
+      required: true
+  - type: input
+    id: platforms
+    attributes:
+      label: Platforms tested
+      placeholder: "Ubuntu 24.04, macOS 15, Windows 11, WSL, dev container"
+    validations:
+      required: true
+  - type: textarea
+    id: install_result
+    attributes:
+      label: Install result
+      description: Include command used and whether `chibi-mcp --check` passed. Remove private paths.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: useful_moment
+    attributes:
+      label: Most useful or shareable moment
+      description: What made it feel worth keeping installed?
+    validations:
+      required: true
+  - type: textarea
+    id: blockers
+    attributes:
+      label: Blockers
+      description: Install, trust, admin policy, platform, design, or workflow issues.
+    validations:
+      required: true
+  - type: textarea
+    id: requested_pack
+    attributes:
+      label: Character/team pack request
+      description: Optional. Describe a custom character, team mascot, or workflow reaction you would want.
+  - type: checkboxes
+    id: guardrails
+    attributes:
+      label: Guardrails
+      options:
+        - label: I understand this does not request or enable a paid plan.
+          required: true
+        - label: I did not include secrets, tokens, or private paths.
+          required: true
+        - label: I understand chibi-mcp should remain no-telemetry by default.
+          required: true

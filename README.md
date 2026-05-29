@@ -25,6 +25,16 @@ It is local-first: no telemetry, localhost WebSocket by default, open-source cod
 
 The base product is free. Monetization is not enabled: no paid packs, no paid random pulls, no Sponsors tiers, no license keys, and no team pricing unless explicitly approved later.
 
+## Who It Is For
+
+- Individual Claude Code/Codex users who want a local AI coding companion.
+- VS Code users who want a sidebar pet and small save/task/debug reactions.
+- Teams evaluating no-telemetry coding rituals, release mascots, or private character packs.
+- Creators who want to submit rights-clean character or option packs.
+- Devtool, keyboard, hackathon, or coding-stream communities exploring free collaboration drops.
+
+Commercial readiness is documented without enabling payment: see [docs/PRODUCT_MARKET_READINESS.md](docs/PRODUCT_MARKET_READINESS.md), [docs/TEAM_ADOPTION.md](docs/TEAM_ADOPTION.md), and [docs/PILOT_PLAYBOOK.md](docs/PILOT_PLAYBOOK.md).
+
 ## Requirements
 
 - Python 3.12+
@@ -322,6 +332,9 @@ Useful docs:
 - [OFFICIAL_ASSET_TERMS.md](OFFICIAL_ASSET_TERMS.md) — official artwork usage terms
 - [TRADEMARK.md](TRADEMARK.md) — brand and fork naming guardrails
 - [COMMERCIAL_STRATEGY.md](COMMERCIAL_STRATEGY.md) — expansion readiness and deferred monetization guardrails
+- [docs/PRODUCT_MARKET_READINESS.md](docs/PRODUCT_MARKET_READINESS.md) — commercial readiness scorecard
+- [docs/TEAM_ADOPTION.md](docs/TEAM_ADOPTION.md) — team/admin evaluation guide
+- [docs/PILOT_PLAYBOOK.md](docs/PILOT_PLAYBOOK.md) — free pilot feedback loop
 - [GITHUB_STAR_STRATEGY.md](GITHUB_STAR_STRATEGY.md) — launch and repository growth plan
 - [docs/LAUNCH_KIT.md](docs/LAUNCH_KIT.md) — launch/distribution copy
 

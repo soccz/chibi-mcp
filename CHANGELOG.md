@@ -6,6 +6,9 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Added product-market readiness, team adoption, and pilot playbook docs to clarify commercial gaps before paid launch.
+- Added team pilot and collaboration/drop issue forms for structured free feedback and partner ideas.
+- `chibi-audit` now reports commercial readiness docs/templates and confirms monetization remains disabled.
 - Added official asset usage terms, trademark/fork naming guardrails, and a copycat response playbook.
 - Added an IP/rights concern issue form for copied assets, confusing forks/listings, and risky pack submissions.
 - `chibi-pack validate --submission` now requires `rights_owner`, `asset_origin`, `permission_scope`, and `no_third_party_ip: true` in addition to `license` and `source_rights`.

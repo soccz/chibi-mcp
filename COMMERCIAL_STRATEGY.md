@@ -25,6 +25,21 @@
 
 ---
 
+## Commercial Readiness Surfaces
+
+상업적으로 부족한 부분은 기능 수가 아니라 **도입 이유, 반복 사용 증거, 팀 검토 흐름, 파일럿 피드백 루프**다. 결제 기능 없이 다음 표면을 먼저 강화한다.
+
+- [docs/PRODUCT_MARKET_READINESS.md](docs/PRODUCT_MARKET_READINESS.md): 타깃 사용자, 부족한 증거, 유료화 전 readiness gate.
+- [docs/TEAM_ADOPTION.md](docs/TEAM_ADOPTION.md): 팀/admin 평가 질문, `chibi-audit --json`, 배포 경로, team pack 검토.
+- [docs/PILOT_PLAYBOOK.md](docs/PILOT_PLAYBOOK.md): 무료 파일럿 질문, 성공 신호, telemetry 없는 측정 방식.
+- `.github/ISSUE_TEMPLATE/team_pilot.yml`: 팀/파일럿 피드백 수집.
+- `.github/ISSUE_TEMPLATE/collaboration_idea.yml`: 무료 drop, creator/community pack, hackathon/keycap/devtool 협업 제안 수집.
+- `chibi-audit`: trust report에 commercial readiness 문서와 파일럿/협업 템플릿 누락 여부를 표시.
+
+이 표면들은 유료화가 아니라 **나중에 돈을 받을 수 있는 이유가 실제로 있는지 검증**하기 위한 장치다.
+
+---
+
 ## Product Surfaces
 
 ### 1. Free Core
@@ -47,6 +62,7 @@
 - `chibi-pack validate/preview`로 크리에이터·팀 캐릭터팩 검증
 - `examples/packs/spring-hwajeon`, `examples/packs/team-sprint`로 실제 검증 가능한 creator/team pack 템플릿 제공
 - `docs/CREATOR_PACKS.md`, `docs/LAUNCH_KIT.md`로 제출/배포/런칭 루프 문서화
+- `docs/PRODUCT_MARKET_READINESS.md`, `docs/TEAM_ADOPTION.md`, `docs/PILOT_PLAYBOOK.md`로 타깃/팀/파일럿 검증 루프 문서화
 
 무료 코어는 줄이지 않는다. 이 제품은 신뢰와 귀여움이 먼저다.
 
