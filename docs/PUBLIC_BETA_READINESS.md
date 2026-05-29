@@ -79,6 +79,17 @@ Ship a free public beta when all are true:
 - Issue templates exist for install problems, pack proposals, IP reports,
   team pilots, collaborations, and showcases.
 
+## Release Tag Gate
+
+After `main` is pushed and before creating a GitHub Release tag, run:
+
+```bash
+make release-check TAG=v1.4.4
+```
+
+This verifies version alignment, upstream state, tag availability, and the full
+public beta preflight. See [RELEASE_PROCESS.md](RELEASE_PROCESS.md).
+
 ## Evidence To Collect After Launch
 
 Use only public or user-submitted signals:

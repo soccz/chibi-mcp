@@ -1,0 +1,26 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: User-Facing Changes
+      labels:
+        - enhancement
+        - feature
+    - title: Fixes
+      labels:
+        - bug
+        - install
+    - title: Trust, Rights, And Security
+      labels:
+        - security
+        - rights-needed
+        - ip
+    - title: Docs And Launch
+      labels:
+        - documentation
+        - showcase
+        - collaboration
+    - title: Other Changes
+      labels:
+        - "*"

@@ -22,7 +22,13 @@ Maintainer preflight before a release tag:
 xvfb-run -a make public-beta-check
 ```
 
-See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist and the remaining manual demo assets.
+Release-tag preflight after pushing `main`:
+
+```bash
+make release-check TAG=v1.4.4
+```
+
+See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist, [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging, and the remaining manual demo assets.
 
 ## What You Get
 
@@ -45,7 +51,7 @@ The base product is free. Monetization is not enabled: no paid packs, no paid ra
 - Creators who want to submit rights-clean character or option packs.
 - Devtool, keyboard, hackathon, or coding-stream communities exploring free collaboration drops.
 
-Commercial readiness is documented without enabling payment: see [docs/PRODUCT_MARKET_READINESS.md](docs/PRODUCT_MARKET_READINESS.md), [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md), [docs/TEAM_ADOPTION.md](docs/TEAM_ADOPTION.md), and [docs/PILOT_PLAYBOOK.md](docs/PILOT_PLAYBOOK.md).
+Commercial readiness is documented without enabling payment: see [docs/PRODUCT_MARKET_READINESS.md](docs/PRODUCT_MARKET_READINESS.md), [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md), [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md), [docs/TEAM_ADOPTION.md](docs/TEAM_ADOPTION.md), and [docs/PILOT_PLAYBOOK.md](docs/PILOT_PLAYBOOK.md).
 
 ## Requirements
 

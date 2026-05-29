@@ -209,6 +209,14 @@ This runs strict source/runtime verification and a public-surface checklist for
 README signals, rights docs, issue forms, plugin metadata, generated launch
 images, and hidden legacy brand-name leaks.
 
+For maintainer release-tag readiness after pushing `main`:
+
+```bash
+make release-check TAG=v1.4.4
+```
+
+See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
+
 On Ubuntu/Debian, Tauri requires system development packages before `make runtime-check` can pass:
 
 ```bash
@@ -226,14 +234,20 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 ## Maintainer Release Checklist
 
 1. Update versions in `server/pyproject.toml`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, and `vscode-ext/package.json`.
-2. Push a tag:
+2. Push `main`, then run:
 
 ```bash
-git tag v1.1.1
-git push origin v1.1.1
+make release-check TAG=v1.4.4
 ```
 
-3. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.
-4. GitHub Actions publishes the GitHub Release and attaches the wheel, source archive, `.vsix`, per-OS desktop artifacts, and `SHA256SUMS.txt`.
+3. Push a tag:
+
+```bash
+git tag v1.4.4
+git push origin v1.4.4
+```
+
+4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.
+5. GitHub Actions publishes the GitHub Release and attaches the wheel, source archive, `.vsix`, per-OS desktop artifacts, and `SHA256SUMS.txt`.
 
 PyPI publishing is optional. Set the repository variable `PUBLISH_PYPI=true` only after PyPI Trusted Publishing is configured for this repo.

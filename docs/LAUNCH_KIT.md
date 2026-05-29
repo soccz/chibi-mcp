@@ -45,6 +45,14 @@ This is stricter than `make check`: it enforces runtime readiness, generated
 launch assets, rights/community surfaces, and hidden-file brand identity sanity.
 See [PUBLIC_BETA_READINESS.md](PUBLIC_BETA_READINESS.md).
 
+After `main` is pushed and before creating a tag:
+
+```bash
+make release-check TAG=v1.4.4
+```
+
+See [RELEASE_PROCESS.md](RELEASE_PROCESS.md).
+
 ## Assets To Ship
 
 Already generated:
@@ -66,15 +74,16 @@ Still needed before broad launch:
 1. Run `xvfb-run -a make public-beta-check`.
 2. Generate or refresh release assets with `chibi-share` if visuals changed.
 3. Package VS Code extension with `./scripts/package-vscode.sh` if you need a local `.vsix`.
-4. Validate sample packs:
+4. Push `main`, then run `make release-check TAG=v1.4.4`.
+5. Validate sample packs:
    - `chibi-pack validate examples/packs/spring-hwajeon`
    - `chibi-pack validate examples/packs/team-sprint`
-5. Tag a GitHub Release with wheel, `.vsix`, checksums, and screenshots.
-6. Update GitHub social preview using `assets/social-preview.png`.
-7. Set topics: `mcp`, `model-context-protocol`, `claude-code`, `codex`, `vscode-extension`, `local-first`, `no-telemetry`, `desktop-pet`, `ai-agent`.
-8. Open a pinned "Show your chibi" issue or Discussion.
-9. Invite free team/pilot feedback with `.github/ISSUE_TEMPLATE/team_pilot.yml`.
-10. Collect free collaboration/drop ideas with `.github/ISSUE_TEMPLATE/collaboration_idea.yml`.
+6. Tag a GitHub Release with wheel, `.vsix`, checksums, and screenshots.
+7. Update GitHub social preview using `assets/social-preview.png`.
+8. Set topics: `mcp`, `model-context-protocol`, `claude-code`, `codex`, `vscode-extension`, `local-first`, `no-telemetry`, `desktop-pet`, `ai-agent`.
+9. Open a pinned "Show your chibi" issue or Discussion.
+10. Invite free team/pilot feedback with `.github/ISSUE_TEMPLATE/team_pilot.yml`.
+11. Collect free collaboration/drop ideas with `.github/ISSUE_TEMPLATE/collaboration_idea.yml`.
 
 ## Post Copy
 

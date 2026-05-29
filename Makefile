@@ -1,4 +1,4 @@
-.PHONY: check server-test server-build vscode-package desktop-lint rust-check runtime-check strict-check public-beta-check
+.PHONY: check server-test server-build vscode-package desktop-lint rust-check runtime-check strict-check public-beta-check release-check
 
 check:
 	./scripts/verify_all.sh
@@ -28,3 +28,6 @@ strict-check:
 
 public-beta-check:
 	./scripts/public_beta_preflight.sh
+
+release-check:
+	./scripts/release_preflight.sh $(TAG)
