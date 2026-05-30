@@ -11,7 +11,9 @@ Commercial-readiness polish without enabling paid gates.
   sparkles, and long idle shows a lonely cloud.
 - Added floating-window view modes. Users can cycle normal, debug, and compact
   modes from the toolbar or keyboard; debug expands rhythm/ticket context while
-  compact keeps only the chibi and essential controls visible.
+  compact keeps only the chibi and essential controls visible. The selected
+  mode now persists across window restarts and can be set with
+  `chibi-mcp --open --view-mode debug`.
 - Added a developer HUD to the floating-window status card: CPU/RAM/BAT now
   render in the window, high CPU and low unplugged battery get warning styling,
   and the compact tool-idle label shows whether Claude/Codex has called a tool

@@ -24,8 +24,10 @@ def main() -> int:
         os.environ["HOME"] = home
 
         from chibi_mcp.window import PetWindow
+        from chibi_mcp import window as window_mod
 
         asset_dir = ROOT / "server" / "chibi_mcp" / "assets"
+        assert window_mod._initial_view_mode() == "normal"
         pet = PetWindow(
             asset_dir / "white_tteok.png",
             "White Chibi",
@@ -120,6 +122,7 @@ def main() -> int:
             assert pet.view_mode == "debug"
             assert pet.status_card._view_mode == "debug"
             assert "call티켓" in pet.status_card._debug_hud
+            assert window_mod._load_window_prefs()["view_mode"] == "debug"
 
             pet._cycle_view_mode()
             pet.root.update_idletasks()
@@ -128,6 +131,7 @@ def main() -> int:
             assert not pet.inventory_button.winfo_ismapped()
             assert pet.mode_button.winfo_ismapped()
             assert pet.close_button.winfo_ismapped()
+            assert window_mod._load_window_prefs()["view_mode"] == "compact"
 
             pet._cycle_view_mode()
             pet.root.update_idletasks()

@@ -90,6 +90,7 @@ IDLE_BUBBLE_MAX_MS = 7 * 60_000
 
 SOUND_DIR = Path.home() / ".chibi-mcp" / "sounds"
 SOUND_VERSION = "2"
+WINDOW_PREFS_FILE = Path.home() / ".chibi-mcp" / "window-prefs.json"
 
 IDLE_PHRASES_BY_MOOD: dict[str, list[str]] = {
     "calm":      ["말랑...", "심심해", "쉬자", "..."],
@@ -206,6 +207,30 @@ def _scale_from_resize_drag(
 def _normalize_view_mode(value: object) -> str:
     mode = str(value or "normal").strip().lower()
     return mode if mode in VIEW_MODES else "normal"
+
+
+def _load_window_prefs() -> dict:
+    try:
+        data = json.loads(WINDOW_PREFS_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _save_window_prefs(data: dict) -> None:
+    try:
+        WINDOW_PREFS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        current = _load_window_prefs()
+        current.update(data)
+        WINDOW_PREFS_FILE.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
+    except OSError as exc:
+        log.debug("window prefs save failed: %s", exc)
+
+
+def _initial_view_mode(requested: object = None) -> str:
+    if requested:
+        return _normalize_view_mode(requested)
+    return _normalize_view_mode(_load_window_prefs().get("view_mode"))
 
 
 def _next_view_mode(mode: str) -> str:
@@ -1127,7 +1152,7 @@ class PetWindow:
         active_option_ids: list[str] | None = None,
         frameless: bool = True,
         sounds: bool = True,
-        view_mode: str = "normal",
+        view_mode: str | None = None,
     ):
         self.image_path = image_path
         self.name = name
@@ -1140,7 +1165,7 @@ class PetWindow:
         self.catalog = _load_catalog(asset_dir)
         self.ws_url: str | None = None
         self.drawer_mode: str | None = None
-        self.view_mode = _normalize_view_mode(view_mode)
+        self.view_mode = _initial_view_mode(view_mode)
         self._drawer_render_signature: tuple | None = None
         self.frameless = frameless
         self.sounds_enabled = sounds
@@ -1158,6 +1183,7 @@ class PetWindow:
         self._last_state_payload: dict = {}
         self._mood_fx_items: list[int] = []
         self._last_bob_offset = 0
+        self._mood_fx_phase = 0
         # Cache ((mood, max_side) → rendered RGBA). Variants bypass filter.
         self._mood_image_cache: dict[tuple[str, int], Image.Image] = {}
         self._option_cache: dict[tuple[int, int], list[Image.Image]] = {}
@@ -1365,7 +1391,7 @@ class PetWindow:
         # avoid "invalid command name" errors firing on the destroyed root.
         self._after_ids: set[str] = set()
         self._layout_ready = True
-        self._apply_view_mode(self.view_mode, announce=False)
+        self._apply_view_mode(self.view_mode, announce=False, persist=False)
 
     def _place_and_raise(self) -> None:
         """Make the first window placement visible on desktop launch."""
@@ -1442,6 +1468,32 @@ class PetWindow:
                 self.canvas.move("mood_fx_bob", 0, self._last_bob_offset)
         with contextlib.suppress(tk.TclError):
             self.canvas.tag_raise("mood_fx")
+
+    def _mood_fx_tick(self) -> None:
+        if self.stop_event.is_set():
+            return
+        self._mood_fx_phase += 1
+        phase = self._mood_fx_phase
+        with contextlib.suppress(tk.TclError):
+            for idx, item in enumerate(self._mood_fx_items):
+                if self.current_mood in {"happy", "joyful", "surprised"}:
+                    self.canvas.itemconfigure(
+                        item,
+                        state="hidden" if (phase + idx) % 4 == 0 else "normal",
+                    )
+                elif self.current_mood == "panting":
+                    self.canvas.itemconfigure(
+                        item,
+                        width=max(1, self._s(1 + ((phase + idx) % 2))),
+                    )
+                elif self.current_mood == "drowsy":
+                    fill = "#6f83b7" if (phase + idx) % 2 == 0 else "#94a4cf"
+                    self.canvas.itemconfigure(item, fill=fill)
+                elif self.current_mood == "lonely":
+                    fill = "#e7e1da" if idx == 0 and phase % 2 == 0 else ""
+                    if fill:
+                        self.canvas.itemconfigure(item, fill=fill)
+        self._after(320, self._mood_fx_tick)
 
     def _draw_panting_fx(self) -> None:
         for x_frac, y_frac, size in ((0.78, 0.22, 7), (0.84, 0.36, 5)):
@@ -1635,7 +1687,7 @@ class PetWindow:
         for button in buttons:
             button.pack(side="left", padx=self._s(3))
 
-    def _apply_view_mode(self, mode: str, *, announce: bool = True) -> str:
+    def _apply_view_mode(self, mode: str, *, announce: bool = True, persist: bool = True) -> str:
         self.view_mode = _normalize_view_mode(mode)
         status_mode = "debug" if self.view_mode == "debug" else "normal"
         self.status_card.set_view_mode(status_mode)
@@ -1658,6 +1710,8 @@ class PetWindow:
 
         self._pack_toolbar_for_mode()
         self._fit_root_to_content()
+        if persist:
+            _save_window_prefs({"view_mode": self.view_mode})
         if announce:
             labels = {"normal": "일반 모드", "debug": "상세 모드", "compact": "작게 보기"}
             self.show_bubble(labels[self.view_mode])
@@ -2472,6 +2526,7 @@ class PetWindow:
             t.start()
         self._after(POLL_INTERVAL_MS, self._poll_events)
         self._after(BOB_TICK_MS, self._idle_bob_tick)
+        self._after(320, self._mood_fx_tick)
         self._schedule_idle_bubble()
         self.root.mainloop()
 
@@ -2517,7 +2572,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--view-mode",
         choices=VIEW_MODES,
-        default=_normalize_view_mode(os.environ.get("CHIBI_WINDOW_MODE", "normal")),
+        default=None,
         help="Initial window display mode",
     )
     parser.add_argument(
@@ -2557,7 +2612,7 @@ def main(argv: list[str] | None = None) -> int:
         active_option_ids=args.active_option_id,
         frameless=not args.no_frameless,
         sounds=not args.no_sounds,
-        view_mode=args.view_mode,
+        view_mode=args.view_mode or os.environ.get("CHIBI_WINDOW_MODE"),
     )
     _write_ready_file(args.ready_file)
     win.start(args.ws)

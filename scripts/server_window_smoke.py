@@ -30,12 +30,13 @@ def main() -> int:
 
         from chibi_mcp import server
 
-        result = server.open_pet_window()
+        result = server.open_pet_window(view_mode="debug")
         try:
             assert result.get("opened") is True, result
             assert result.get("ready") is True, result
             assert result.get("pid"), result
             assert result.get("character"), result
+            assert result.get("view_mode") == "debug", result
 
             log_path = Path(str(result["log_path"]))
             if log_path.exists():

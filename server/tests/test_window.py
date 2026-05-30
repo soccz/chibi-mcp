@@ -35,9 +35,21 @@ def test_window_scale_is_clamped():
 def test_view_mode_helpers_are_stable():
     assert window._normalize_view_mode("debug") == "debug"
     assert window._normalize_view_mode("bad") == "normal"
+    assert window._initial_view_mode("compact") == "compact"
     assert window._next_view_mode("normal") == "debug"
     assert window._next_view_mode("debug") == "compact"
     assert window._next_view_mode("compact") == "normal"
+
+
+def test_window_view_mode_prefs_round_trip(tmp_path, monkeypatch):
+    monkeypatch.setattr(window, "WINDOW_PREFS_FILE", tmp_path / "prefs.json")
+
+    assert window._initial_view_mode() == "normal"
+    window._save_window_prefs({"view_mode": "debug"})
+
+    assert window._load_window_prefs()["view_mode"] == "debug"
+    assert window._initial_view_mode() == "debug"
+    assert window._initial_view_mode("compact") == "compact"
 
 
 def test_resize_drag_scale_uses_larger_axis():

@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.27"
+    assert __version__ == "1.4.28"
 
 
 def test_stdio_startup_does_not_write_non_protocol_output():
@@ -93,7 +93,7 @@ def test_stdio_jsonrpc_handles_initialize_list_and_call():
     assert [response["id"] for response in responses] == [1, 2, 3]
     assert responses[0]["result"]["serverInfo"] == {
         "name": "chibi-mcp",
-        "version": "1.4.27",
+        "version": "1.4.28",
     }
     tools = {tool["name"] for tool in responses[1]["result"]["tools"]}
     assert {"get_catalog", "get_pet_state", "pull_gacha"}.issubset(tools)
@@ -112,7 +112,7 @@ def test_check_finds_packaged_assets():
 
 
 def test_open_cli_reports_direct_window_result(monkeypatch, capsys):
-    def fake_open_pet_window(character_id=None):
+    def fake_open_pet_window(character_id=None, view_mode=None):
         return {
             "opened": True,
             "pid": 123,
@@ -120,15 +120,17 @@ def test_open_cli_reports_direct_window_result(monkeypatch, capsys):
             "name_ko": "mochi",
             "rarity": 2,
             "mood": "calm",
+            "view_mode": view_mode,
             "log_path": "/tmp/window.log",
         }
 
     monkeypatch.setattr(main_mod.server_tools, "open_pet_window", fake_open_pet_window)
 
-    assert main_mod.main(["--open", "--character-id", "mochi"]) == 0
+    assert main_mod.main(["--open", "--character-id", "mochi", "--view-mode", "debug"]) == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["opened"] is True
     assert payload["character"] == "mochi"
+    assert payload["view_mode"] == "debug"
     assert payload["log_path"] == "/tmp/window.log"
 
 

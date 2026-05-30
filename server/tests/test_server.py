@@ -64,6 +64,13 @@ def test_asset_dir_resolves_for_direct_mcp_installs():
     assert (Path(asset_dir) / "meta.json").exists()
 
 
+def test_open_pet_window_rejects_invalid_view_mode():
+    result = server_mod.open_pet_window(view_mode="wide")
+    assert result["opened"] is False
+    assert "invalid view_mode" in result["reason"]
+    assert result["allowed_view_modes"] == ["compact", "debug", "normal"]
+
+
 def test_options_catalog_exposes_free_layers():
     result = get_options()
     ids = {option["id"] for option in result["options"]}

@@ -348,9 +348,9 @@ def _check() -> dict:
     }
 
 
-def _open_window_once(character_id: str | None = None) -> dict:
+def _open_window_once(character_id: str | None = None, view_mode: str | None = None) -> dict:
     """Open the floating window from the CLI and return the MCP tool payload."""
-    return server_tools.open_pet_window(character_id=character_id)
+    return server_tools.open_pet_window(character_id=character_id, view_mode=view_mode)
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -370,6 +370,12 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         default=None,
         help="Optional released character id to use with --open",
     )
+    parser.add_argument(
+        "--view-mode",
+        choices=("normal", "debug", "compact"),
+        default=None,
+        help="Optional initial window mode to use with --open",
+    )
     parser.add_argument("--ws-only", action="store_true", help="Run only the localhost WebSocket server")
     parser.add_argument("--no-ws", action="store_true", help="Run MCP stdio without the WebSocket server")
     return parser.parse_args(argv)
@@ -386,7 +392,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["ok"] else 1
     if args.open:
         _setup_logging()
-        result = _open_window_once(character_id=args.character_id)
+        result = _open_window_once(character_id=args.character_id, view_mode=args.view_mode)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result.get("opened") else 1
 

@@ -30,6 +30,7 @@ log = logging.getLogger(__name__)
 # across MCP server restarts (the window is a detached subprocess).
 _WINDOW_PID_FILE = Path.home() / ".chibi-mcp" / "window.pid"
 _WINDOW_READY_TIMEOUT_SECONDS = 5.0
+_WINDOW_VIEW_MODES = {"normal", "debug", "compact"}
 
 mcp = FastMCP("chibi-mcp")
 
@@ -436,7 +437,7 @@ def _window_startup_failure(
 
 
 @mcp.tool()
-def open_pet_window(character_id: str | None = None) -> dict:
+def open_pet_window(character_id: str | None = None, view_mode: str | None = None) -> dict:
     """Pop up a small always-on-top tk window showing the active chibi.
 
     Spawns a detached Python subprocess that connects to the local WebSocket
@@ -447,9 +448,19 @@ def open_pet_window(character_id: str | None = None) -> dict:
         character_id: optional. If given (and you own it), shows that one.
             Otherwise uses your active character; if no active, the first
             character in your catalog.
+        view_mode: optional. One of normal, debug, compact. If omitted, the
+            window uses the last saved user mode.
     """
     if character_id and not _CHAR_ID_RE.match(character_id):
         return {"opened": False, "reason": f"invalid character id: {character_id!r}"}
+    if view_mode is not None:
+        view_mode = str(view_mode).strip().lower()
+        if view_mode not in _WINDOW_VIEW_MODES:
+            return {
+                "opened": False,
+                "reason": f"invalid view_mode: {view_mode!r}",
+                "allowed_view_modes": sorted(_WINDOW_VIEW_MODES),
+            }
 
     catalog = get_catalog()
     chars = catalog.get("characters", [])
@@ -506,6 +517,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
             "name_ko": ch.get("name_ko") or ch["id"],
             "image": str(image_path),
             "options": [option_id for option_id, _path in option_images],
+            "view_mode": view_mode,
         }
 
     # Prefer the user-given nickname if any
@@ -553,6 +565,8 @@ def open_pet_window(character_id: str | None = None) -> dict:
         "--ready-file",
         str(ready_path),
     ]
+    if view_mode is not None:
+        command.extend(["--view-mode", view_mode])
     for _option_id, option_path in option_images:
         command.extend(["--option-image", str(option_path)])
     for option_id in snap["gacha"].get("active_option_ids", []):
@@ -585,6 +599,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
         "mood": mood,
         "image": str(image_path),
         "options": [option_id for option_id, _path in option_images],
+        "view_mode": view_mode,
         "log_path": str(log_path),
         "ready": True,
         "pid_file": str(_WINDOW_PID_FILE),
