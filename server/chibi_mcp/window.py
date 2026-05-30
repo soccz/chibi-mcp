@@ -647,11 +647,27 @@ class PetWindow:
         self.root.bind("<Control-w>", lambda _e: self.shutdown())
         self.root.protocol("WM_DELETE_WINDOW", self.shutdown)
 
+        self._place_and_raise()
+
         # Idle bob state
         self._bob_phase = 0.0
         # Track pending after() callbacks so shutdown can cancel them and
         # avoid "invalid command name" errors firing on the destroyed root.
         self._after_ids: set[str] = set()
+
+    def _place_and_raise(self) -> None:
+        """Make the first window placement visible on desktop launch."""
+        with contextlib.suppress(tk.TclError):
+            self.root.update_idletasks()
+            screen_w = self.root.winfo_screenwidth()
+            win_w = self.root.winfo_width()
+            x = max(24, screen_w - win_w - 40)
+            y = 80
+            self.root.geometry(f"+{x}+{y}")
+            self.root.lift()
+            self.root.attributes("-topmost", True)
+            self.root.focus_force()
+            self.root.after(250, self.root.lift)
 
     # ── Rendering ────────────────────────────────────────────────────────────
 

@@ -33,6 +33,9 @@ Commercial-readiness polish without enabling paid gates.
   runtime reason/log path instead of falling through to gacha.
 - Claude/Codex installers now refresh the MCP registration after installing so
   stale client entries cannot keep pointing at an old or broken command.
+- The floating window now explicitly places and raises itself after Tk layout,
+  reducing macOS cases where the window process starts but the pet is not
+  visible.
 - Expanded built-in local ASMR-style sounds: squish, slice, normal gacha, rare gacha, option brush, and bubble pop are generated as free local wav files with no network or paid sound packs.
 - Expanded installer self-repair beyond macOS: Linux bash installers now try Tk repair across `apt`, `dnf`, `yum`, `pacman`, `zypper`, and `apk`; Windows PowerShell installers can bootstrap Python with `winget` before installing `pipx`.
 - Made the Claude/Codex installers more self-healing: they install `pipx` when it is missing, suppress confusing `pipx ensurepath` noise, attempt macOS Homebrew Tk repair automatically in bash, reinstall the pipx app after Tk repair, and re-run the health check.
