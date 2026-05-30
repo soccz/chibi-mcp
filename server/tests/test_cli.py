@@ -266,7 +266,8 @@ def test_standalone_open_reuses_existing_ws_server(monkeypatch):
 
 
 def test_standalone_open_starts_ws_server_when_missing(tmp_path, monkeypatch):
-    monkeypatch.setenv("HOME", str(tmp_path))
+    runtime_dir = tmp_path / ".chibi-mcp"
+    monkeypatch.setenv("CHIBI_RUNTIME_DIR", str(runtime_dir))
     attempts = iter([False, True])
     popen_calls = []
 
@@ -293,7 +294,7 @@ def test_standalone_open_starts_ws_server_when_missing(tmp_path, monkeypatch):
     assert result["pid"] == 4321
     assert result["url"] == "ws://127.0.0.1:9876"
     assert popen_calls[0][0] == [sys.executable, "-m", "chibi_mcp", "--ws-only"]
-    assert (tmp_path / ".chibi-mcp" / "ws.pid").read_text(encoding="utf-8") == "4321"
+    assert (runtime_dir / "ws.pid").read_text(encoding="utf-8") == "4321"
 
 
 def test_trust_audit_reports_local_first_defaults():

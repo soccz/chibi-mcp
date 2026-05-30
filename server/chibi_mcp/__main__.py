@@ -578,13 +578,20 @@ def _ws_accepts(host: str, port: int, *, timeout: float = 0.6) -> bool:
         return False
 
 
+def _runtime_dir() -> Path:
+    override = os.environ.get("CHIBI_RUNTIME_DIR")
+    if override:
+        return Path(override).expanduser()
+    return Path.home() / ".chibi-mcp"
+
+
 def _ensure_ws_server_for_open() -> dict:
     host, port = _ws_endpoint()
     url = f"ws://{host}:{port}"
     if _ws_accepts(host, port):
         return {"ok": True, "started": False, "url": url}
 
-    runtime_dir = Path.home() / ".chibi-mcp"
+    runtime_dir = _runtime_dir()
     runtime_dir.mkdir(parents=True, exist_ok=True)
     log_path = runtime_dir / "ws.log"
     pid_path = runtime_dir / "ws.pid"
