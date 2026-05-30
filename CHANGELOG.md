@@ -14,6 +14,9 @@ Commercial-readiness polish without enabling paid gates.
   character render, stage, shadow, status card, bubbles, drawer, and buttons
   now resize together instead of leaving the pet image fixed inside a larger
   frame.
+- Added a real floating-window resize grip and stricter Tk UI smoke coverage
+  so resize, drawer, option selection, bubbles, and active-character updates
+  are verified together instead of one symptom at a time.
 - Replaced the floating window's black fallback surface with a light panel and
   fixed the macOS transparency helper so chibi does not appear inside a black box.
 - Added floating-window controls for inventory, option customization, gacha

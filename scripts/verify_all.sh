@@ -491,6 +491,13 @@ except Exception:
 PY
 then
   echo "tkinter ok"
+  if [[ "${CHIBI_STRICT_RUNTIME:-0}" == "1" ]]; then
+    if [[ "$(uname -s)" == "Linux" && -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]]; then
+      echo "fail: strict window UI smoke needs a display; run with xvfb-run -a" >&2
+      exit 1
+    fi
+    python "$ROOT/scripts/window_ui_smoke.py"
+  fi
 elif [[ "${CHIBI_STRICT_RUNTIME:-0}" == "1" ]]; then
   python - <<'PY'
 try:

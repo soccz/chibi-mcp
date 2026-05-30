@@ -41,6 +41,7 @@ log = logging.getLogger(__name__)
 CANVAS_SIZE = 240
 WINDOW_MIN_SCALE = 0.65
 WINDOW_MAX_SCALE = 1.85
+RESIZE_GRIP_SIZE = 20
 PANEL_BG = "#fff8ef"
 PANEL_BG_2 = "#fff1df"
 PANEL_BORDER = "#e7c9a6"
@@ -154,6 +155,22 @@ def _scale_to_fit(img: Image.Image, max_side: int) -> Image.Image:
 
 def _clamp_window_scale(scale: float) -> float:
     return max(WINDOW_MIN_SCALE, min(WINDOW_MAX_SCALE, scale))
+
+
+def _scale_from_resize_drag(
+    start_scale: float,
+    delta_x: int,
+    delta_y: int,
+    base_width: int,
+    base_height: int,
+) -> float:
+    base_width = max(1, base_width)
+    base_height = max(1, base_height)
+    start_width = base_width * start_scale
+    start_height = base_height * start_scale
+    return _clamp_window_scale(
+        max((start_width + delta_x) / base_width, (start_height + delta_y) / base_height)
+    )
 
 
 def _load_image_for_mood(image_path: Path, mood: str) -> tuple[Image.Image, bool]:
@@ -914,6 +931,7 @@ class PetWindow:
         self._layout_ready = False
         self._suspend_resize_events = False
         self._resize_after: str | None = None
+        self._resize_start: tuple[int, int, float] | None = None
         # Cache ((mood, max_side) → rendered RGBA). Variants bypass filter.
         self._mood_image_cache: dict[tuple[str, int], Image.Image] = {}
         self._option_cache: dict[tuple[int, int], list[Image.Image]] = {}
@@ -1065,6 +1083,23 @@ class PetWindow:
         )
         self._bubble_hide_after: str | None = None
 
+        self.resize_grip = tk.Canvas(
+            self.root,
+            width=self._s(RESIZE_GRIP_SIZE),
+            height=self._s(RESIZE_GRIP_SIZE),
+            bg=bg,
+            borderwidth=0,
+            highlightthickness=0,
+        )
+        with contextlib.suppress(tk.TclError):
+            self.resize_grip.configure(cursor="bottom_right_corner")
+        self.resize_grip.place(relx=1.0, rely=1.0, anchor="se")
+        self.resize_grip.bind("<Button-1>", self._start_resize)
+        self.resize_grip.bind("<B1-Motion>", self._do_resize)
+        self.resize_grip.bind("<ButtonRelease-1>", self._end_resize)
+        self.resize_grip.bind("<Double-Button-1>", lambda _event: self._reset_window_scale())
+        self._draw_resize_grip()
+
         # Bind drag + clicks on canvas and labels
         for w in (self.canvas, self.status_card):
             w.bind("<Button-1>", self._start_drag)
@@ -1075,6 +1110,14 @@ class PetWindow:
         self.root.bind("<Escape>", lambda _e: self.shutdown())
         self.root.bind("<Command-w>", lambda _e: self.shutdown())
         self.root.bind("<Control-w>", lambda _e: self.shutdown())
+        self.root.bind("<Command-plus>", lambda _e: self._nudge_window_scale(0.1))
+        self.root.bind("<Command-equal>", lambda _e: self._nudge_window_scale(0.1))
+        self.root.bind("<Control-plus>", lambda _e: self._nudge_window_scale(0.1))
+        self.root.bind("<Control-equal>", lambda _e: self._nudge_window_scale(0.1))
+        self.root.bind("<Command-minus>", lambda _e: self._nudge_window_scale(-0.1))
+        self.root.bind("<Control-minus>", lambda _e: self._nudge_window_scale(-0.1))
+        self.root.bind("<Command-0>", lambda _e: self._reset_window_scale())
+        self.root.bind("<Control-0>", lambda _e: self._reset_window_scale())
         self.root.bind("<Configure>", self._on_root_configure)
         self.root.protocol("WM_DELETE_WINDOW", self.shutdown)
 
@@ -1148,6 +1191,7 @@ class PetWindow:
             padx=self._s(10),
             pady=self._s(6),
         )
+        self._draw_resize_grip()
 
     def _set_control_scale(self) -> None:
         for button in (
@@ -1166,8 +1210,11 @@ class PetWindow:
         )
         self.drawer.configure(padx=self._s(8), pady=self._s(8))
         self.toolbar.pack_configure(pady=(0, self._s(10)), padx=self._s(8))
+        self._draw_resize_grip()
 
     def _fit_root_to_content(self) -> None:
+        if not self._layout_ready:
+            return
         self._suspend_resize_events = True
         try:
             with contextlib.suppress(tk.TclError):
@@ -1180,6 +1227,28 @@ class PetWindow:
                 self.root.update_idletasks()
         finally:
             self._suspend_resize_events = False
+
+    def _draw_resize_grip(self) -> None:
+        if not hasattr(self, "resize_grip"):
+            return
+        size = self._s(RESIZE_GRIP_SIZE)
+        self.resize_grip.configure(width=size, height=size)
+        self.resize_grip.delete("all")
+        line_width = max(1, self._s(1))
+        colors = ("#d6b98c", "#ad8151", "#7c5b3c")
+        for idx, color in enumerate(colors):
+            offset = self._s(4 + idx * 5)
+            self.resize_grip.create_line(
+                size - offset,
+                size - self._s(2),
+                size - self._s(2),
+                size - offset,
+                fill=color,
+                width=line_width,
+                capstyle="round",
+            )
+        with contextlib.suppress(tk.TclError):
+            self.resize_grip.tk.call("raise", self.resize_grip._w)
 
     def _apply_window_scale(self, scale: float) -> None:
         scale = _clamp_window_scale(scale)
@@ -1214,6 +1283,14 @@ class PetWindow:
     def _finish_resize(self, scale: float) -> None:
         self._resize_after = None
         self._apply_window_scale(scale)
+
+    def _nudge_window_scale(self, delta: float) -> str:
+        self._apply_window_scale(self._window_scale + delta)
+        return "break"
+
+    def _reset_window_scale(self) -> str:
+        self._apply_window_scale(1.0)
+        return "break"
 
     def _get_mood_image(self, mood: str) -> Image.Image:
         cache_key = (mood, self._render_max_side)
@@ -1455,11 +1532,13 @@ class PetWindow:
             self.drawer.pack_forget()
             self.drawer_mode = None
             self._drawer_render_signature = None
+            self._fit_root_to_content()
             return
         self.drawer_mode = mode
         self._render_drawer()
         if not self.drawer.winfo_ismapped():
             self.drawer.pack(pady=(0, self._s(8)), padx=self._s(10), fill="x")
+        self._fit_root_to_content()
 
     def _render_drawer(self) -> None:
         for child in self.drawer.winfo_children():
@@ -1503,6 +1582,7 @@ class PetWindow:
         signature = self._current_drawer_signature()
         if signature != self._drawer_render_signature:
             self._render_drawer()
+            self._fit_root_to_content()
 
     def _drawer_header(self, text: str) -> None:
         tk.Label(
@@ -1740,6 +1820,7 @@ class PetWindow:
             )
         except (AttributeError, tk.TclError):
             self.bubble.pack(pady=(self._s(2), self._s(10)), padx=self._s(10))
+        self._fit_root_to_content()
         if self._bubble_hide_after is not None:
             with contextlib.suppress(tk.TclError):
                 self.root.after_cancel(self._bubble_hide_after)
@@ -1749,6 +1830,7 @@ class PetWindow:
     def _hide_bubble(self) -> None:
         self.bubble.pack_forget()
         self._bubble_hide_after = None
+        self._fit_root_to_content()
 
     # ── Idle bubbles ─────────────────────────────────────────────────────────
 
@@ -1794,6 +1876,28 @@ class PetWindow:
         dx, dy = offset
         self.root.geometry(f"+{event.x_root - dx}+{event.y_root - dy}")
 
+    def _start_resize(self, event: tk.Event) -> str:
+        self._resize_start = (event.x_root, event.y_root, self._window_scale)
+        return "break"
+
+    def _do_resize(self, event: tk.Event) -> str:
+        if self._resize_start is None:
+            return "break"
+        start_x, start_y, start_scale = self._resize_start
+        scale = _scale_from_resize_drag(
+            start_scale,
+            event.x_root - start_x,
+            event.y_root - start_y,
+            self._base_total_w,
+            self._base_total_h,
+        )
+        self._apply_window_scale(scale)
+        return "break"
+
+    def _end_resize(self, _event: tk.Event) -> str:
+        self._resize_start = None
+        return "break"
+
     # ── Event pump ───────────────────────────────────────────────────────────
 
     def _poll_events(self) -> None:
@@ -1819,6 +1923,7 @@ class PetWindow:
                 self._render_image(self.current_mood)
             if visual_changed:
                 self._update_stage_layout()
+                self._fit_root_to_content()
             gacha = payload.get("gacha") or {}
             active_options = gacha.get("active_option_ids")
             if isinstance(active_options, list):
