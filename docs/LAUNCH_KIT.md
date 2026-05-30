@@ -48,7 +48,7 @@ See [PUBLIC_BETA_READINESS.md](PUBLIC_BETA_READINESS.md).
 After `main` is pushed and before creating a tag:
 
 ```bash
-make release-check TAG=v1.4.12
+make release-check TAG=v1.4.13
 ```
 
 See [RELEASE_PROCESS.md](RELEASE_PROCESS.md).
@@ -78,7 +78,7 @@ Still needed before broad launch:
 1. Run `xvfb-run -a make public-beta-check`.
 2. Generate or refresh release assets with `chibi-share` if visuals changed.
 3. Package VS Code extension with `./scripts/package-vscode.sh` if you need a local `.vsix`.
-4. Push `main`, then run `make release-check TAG=v1.4.12`.
+4. Push `main`, then run `make release-check TAG=v1.4.13`.
 5. Validate sample packs:
    - `chibi-pack validate examples/packs/spring-hwajeon`
    - `chibi-pack validate examples/packs/team-sprint`

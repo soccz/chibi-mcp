@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.12"
+    assert __version__ == "1.4.13"
 
 
 def test_stdio_startup_does_not_write_non_protocol_output():
@@ -48,6 +48,57 @@ def test_stdio_startup_does_not_write_non_protocol_output():
         assert result.returncode == 0
         assert result.stdout == b""
         assert result.stderr == b""
+
+
+def test_stdio_jsonrpc_handles_initialize_list_and_call():
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT / "server")
+    env["CHIBI_ASSET_DIR"] = str(ROOT / "server" / "chibi_mcp" / "assets")
+    messages = [
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-11-25",
+                "capabilities": {},
+                "clientInfo": {"name": "pytest", "version": "0"},
+            },
+        },
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        {
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {"name": "get_catalog", "arguments": {}},
+        },
+    ]
+    payload = "".join(json.dumps(message) + "\n" for message in messages)
+
+    result = subprocess.run(
+        [sys.executable, "-m", "chibi_mcp", "--no-ws"],
+        cwd=ROOT,
+        env=env,
+        input=payload.encode(),
+        capture_output=True,
+        timeout=5,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == b""
+    responses = [json.loads(line) for line in result.stdout.decode().splitlines()]
+    assert [response["id"] for response in responses] == [1, 2, 3]
+    assert responses[0]["result"]["serverInfo"] == {
+        "name": "chibi-mcp",
+        "version": "1.4.13",
+    }
+    tools = {tool["name"] for tool in responses[1]["result"]["tools"]}
+    assert {"get_catalog", "get_pet_state", "pull_gacha"}.issubset(tools)
+    call_result = responses[2]["result"]
+    assert call_result["isError"] is False
+    assert call_result["structuredContent"]["total_in_tier"] >= 8
 
 
 def test_check_finds_packaged_assets():

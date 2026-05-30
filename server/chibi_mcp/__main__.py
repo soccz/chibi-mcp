@@ -1,7 +1,7 @@
 """chibi-mcp entry point.
 
-Runs the FastMCP server (stdio transport for Claude Code) AND a localhost
-WebSocket server (for the desktop app) in the same asyncio loop.
+Runs the MCP stdio transport for Claude Code AND a localhost WebSocket server
+(for the desktop app) in the same asyncio loop.
 
 Install:
     pip install chibi-mcp
@@ -16,22 +16,25 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import inspect
 import json
 import logging
 import os
 import signal
 import sys
+import threading
 from contextlib import suppress
 from pathlib import Path
 
 from . import __version__
-from .server import _resolve_asset_dir, mcp
+from . import server as server_tools
+from .server import _resolve_asset_dir
 from .ws_server import DEFAULT_WS_HOST, DEFAULT_WS_PORT, run_ws_server
 
 
 def _setup_logging() -> None:
     level_name = os.environ.get("CHIBI_LOG_LEVEL", "WARNING").upper()
-    level = getattr(logging, level_name, logging.INFO)
+    level = getattr(logging, level_name, logging.WARNING)
     # Log to stderr — stdout is reserved for MCP stdio transport
     logging.basicConfig(
         level=level,
@@ -70,9 +73,9 @@ async def _run_concurrent(ws_enabled: bool = True) -> None:
     host, port = _ws_endpoint()
 
     ws_task = asyncio.create_task(_run_ws_optional(host=host, port=port)) if ws_enabled else None
-    # FastMCP's banner writes to stdout, which corrupts stdio MCP framing.
-    # stdout must contain JSON-RPC messages only.
-    mcp_task = asyncio.create_task(mcp.run_stdio_async(show_banner=False, log_level="ERROR"))
+    # Keep stdout under our control. FastMCP's stdio transport currently emits
+    # startup output and has caused Claude Code health checks to fail.
+    mcp_task = asyncio.create_task(_run_mcp_stdio())
 
     # Graceful shutdown on SIGTERM/SIGINT
     loop = asyncio.get_running_loop()
@@ -104,6 +107,177 @@ async def _run_concurrent(ws_enabled: bool = True) -> None:
                 t.cancel()
         with suppress(asyncio.CancelledError):
             await asyncio.gather(*(t for t in (mcp_task, ws_task) if t is not None), return_exceptions=True)
+
+
+_TOOL_FUNCTIONS = {
+    "get_pet_state": server_tools.get_pet_state,
+    "pet_say": server_tools.pet_say,
+    "slice_now": server_tools.slice_now,
+    "get_license_status": server_tools.get_license_status,
+    "get_catalog": server_tools.get_catalog,
+    "get_options": server_tools.get_options,
+    "set_active_options": server_tools.set_active_options,
+    "clear_active_options": server_tools.clear_active_options,
+    "open_pet_window": server_tools.open_pet_window,
+    "close_pet_window": server_tools.close_pet_window,
+    "set_slice_interval": server_tools.set_slice_interval,
+    "pull_gacha": server_tools.pull_gacha,
+    "get_inventory": server_tools.get_inventory,
+    "set_active_character": server_tools.set_active_character,
+    "rename_character": server_tools.rename_character,
+    "add_ticket": server_tools.add_ticket,
+}
+
+
+def _annotation_schema(annotation: object) -> dict:
+    if annotation in {str, str | None, "str", "str | None"}:
+        return {"type": "string"}
+    if annotation in {int, "int"}:
+        return {"type": "integer"}
+    if annotation in {list[str], list, "list[str]", "list"}:
+        return {"type": "array", "items": {"type": "string"}}
+    return {}
+
+
+def _tool_schema(fn) -> dict:
+    signature = inspect.signature(fn)
+    properties: dict[str, dict] = {}
+    required: list[str] = []
+    for name, parameter in signature.parameters.items():
+        properties[name] = _annotation_schema(parameter.annotation)
+        if parameter.default is inspect.Parameter.empty:
+            required.append(name)
+    schema: dict = {"type": "object", "properties": properties}
+    if required:
+        schema["required"] = required
+    return schema
+
+
+def _tool_descriptor(name: str, fn) -> dict:
+    return {
+        "name": name,
+        "description": inspect.getdoc(fn) or "",
+        "inputSchema": _tool_schema(fn),
+    }
+
+
+def _jsonrpc_result(message_id, result: dict) -> dict:
+    return {"jsonrpc": "2.0", "id": message_id, "result": result}
+
+
+def _jsonrpc_error(message_id, code: int, message: str) -> dict:
+    return {"jsonrpc": "2.0", "id": message_id, "error": {"code": code, "message": message}}
+
+
+def _write_jsonrpc(message: dict) -> None:
+    sys.stdout.write(json.dumps(message, ensure_ascii=False, separators=(",", ":")) + "\n")
+    sys.stdout.flush()
+
+
+def _call_tool(name: str, arguments: dict | None) -> dict:
+    fn = _TOOL_FUNCTIONS.get(name)
+    if fn is None:
+        payload = {"ok": False, "reason": f"unknown tool: {name}"}
+        return {
+            "content": [{"type": "text", "text": json.dumps(payload, ensure_ascii=False)}],
+            "structuredContent": payload,
+            "isError": True,
+        }
+
+    try:
+        if arguments is None:
+            arguments = {}
+        if not isinstance(arguments, dict):
+            raise TypeError("tool arguments must be an object")
+        payload = fn(**arguments)
+        is_error = False
+    except Exception as exc:
+        payload = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        is_error = True
+
+    return {
+        "content": [{"type": "text", "text": json.dumps(payload, ensure_ascii=False)}],
+        "structuredContent": payload,
+        "isError": is_error,
+    }
+
+
+def _handle_mcp_message(message: dict) -> dict | None:
+    method = message.get("method")
+    message_id = message.get("id")
+    params = message.get("params") or {}
+
+    if method == "initialize":
+        requested_version = (
+            params.get("protocolVersion") if isinstance(params, dict) else None
+        ) or "2025-11-25"
+        return _jsonrpc_result(
+            message_id,
+            {
+                "protocolVersion": requested_version,
+                "capabilities": {"tools": {"listChanged": True}},
+                "serverInfo": {"name": "chibi-mcp", "version": __version__},
+            },
+        )
+    if method and str(method).startswith("notifications/"):
+        return None
+    if method == "ping":
+        return _jsonrpc_result(message_id, {})
+    if method == "tools/list":
+        return _jsonrpc_result(
+            message_id,
+            {
+                "tools": [
+                    _tool_descriptor(name, fn) for name, fn in sorted(_TOOL_FUNCTIONS.items())
+                ]
+            },
+        )
+    if method == "tools/call":
+        if not isinstance(params, dict):
+            return _jsonrpc_error(message_id, -32602, "invalid tools/call params")
+        return _jsonrpc_result(
+            message_id,
+            _call_tool(str(params.get("name") or ""), params.get("arguments") or {}),
+        )
+    if method == "resources/list":
+        return _jsonrpc_result(message_id, {"resources": []})
+    if method == "resources/templates/list":
+        return _jsonrpc_result(message_id, {"resourceTemplates": []})
+    if method == "prompts/list":
+        return _jsonrpc_result(message_id, {"prompts": []})
+    if method == "logging/setLevel":
+        return _jsonrpc_result(message_id, {})
+    return _jsonrpc_error(message_id, -32601, f"method not found: {method}")
+
+
+async def _run_mcp_stdio() -> None:
+    queue: asyncio.Queue[str | None] = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+
+    def _read_stdin_lines() -> None:
+        try:
+            for stdin_line in sys.stdin:
+                loop.call_soon_threadsafe(queue.put_nowait, stdin_line)
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, None)
+
+    threading.Thread(target=_read_stdin_lines, daemon=True).start()
+
+    while True:
+        line = await queue.get()
+        if line is None:
+            return
+        if not line.strip():
+            continue
+        try:
+            message = json.loads(line)
+            if not isinstance(message, dict):
+                raise ValueError("message must be an object")
+            response = _handle_mcp_message(message)
+        except Exception as exc:
+            response = _jsonrpc_error(None, -32700, f"parse error: {exc}")
+        if response is not None:
+            _write_jsonrpc(response)
 
 
 async def _run_ws_only() -> None:
