@@ -116,6 +116,20 @@ def test_status_warning_matches_mood_thresholds():
     assert not window._metric_is_warn({"cpu_percent": math.inf, "battery_percent": math.nan})
 
 
+def test_metric_meters_and_rhythm_progress_are_bounded():
+    system = {
+        "cpu_percent": 82.3,
+        "ram_percent": 91.8,
+        "battery_percent": 17.2,
+        "battery_plugged": False,
+    }
+    assert window._metric_meter_values(system) == {"CPU": 82, "RAM": 92, "BAT": 17}
+    assert window._metric_alerts(system) == {"CPU", "RAM", "BAT"}
+    assert window._rhythm_fraction({"calls_since_slice": 4, "slice_interval": 10}) == 0.4
+    assert window._rhythm_fraction({"calls_since_slice": 99, "slice_interval": 10}) == 1.0
+    assert window._rhythm_fraction({"calls_since_slice": 1, "slice_interval": 0}) == 0.0
+
+
 def test_tool_idle_and_mood_reason_labels_are_compact():
     assert window._format_tool_idle({"idle_seconds": 42}) == "툴 42초"
     assert window._format_tool_idle({"idle_seconds": 180}) == "툴 3분"

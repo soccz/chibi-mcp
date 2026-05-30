@@ -6,6 +6,11 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Upgraded the floating status card from text-only metrics to product-style
+  rhythm and CPU/RAM/BAT meters, with warning colors that match the active
+  mood logic.
+- Added a mood-aware stage glow behind the character and a click ripple effect
+  so state changes feel visual even before reading the card.
 - Floating windows now persist size and screen position as well as view mode,
   so a resized/debug/compact setup survives close, restart, and fresh MCP
   launches.

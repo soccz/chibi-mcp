@@ -55,6 +55,10 @@ STATUS_METRIC_BG = "#edfdf4"
 STATUS_METRIC_BORDER = "#b7e4c7"
 STATUS_WARN_BG = "#fff2d7"
 STATUS_WARN_BORDER = "#e2b35b"
+METER_TRACK = "#ead7c3"
+METER_GOOD = "#55bd83"
+METER_WARN = "#f4a23a"
+METER_DANGER = "#f05f4b"
 BUTTON_SECONDARY_BG = "#fffdf7"
 BUTTON_SECONDARY_HOVER = "#edfdf4"
 BUTTON_SECONDARY_ACTIVE = "#d7f4e2"
@@ -131,6 +135,16 @@ MOOD_BOB_PROFILES: dict[str, tuple[int, float]] = {
     "drowsy": (2, 0.35),
     "lonely": (2, 0.42),
     "surprised": (5, 1.05),
+}
+
+MOOD_STAGE_COLORS: dict[str, tuple[str, str]] = {
+    "calm": ("#ffe8f0", "#d8c1aa"),
+    "happy": ("#fff0b8", "#d8bd79"),
+    "joyful": ("#ffe0f2", "#d7a9c7"),
+    "panting": ("#ffe0db", "#d7a39a"),
+    "drowsy": ("#e6e3ff", "#b8b0d5"),
+    "lonely": ("#ece7df", "#c8bbae"),
+    "surprised": ("#fff3bf", "#d7be79"),
 }
 
 VIEW_MODE_BUTTONS: dict[str, tuple[str, str]] = {
@@ -340,6 +354,46 @@ def _metric_is_warn(system: dict) -> bool:
     cpu_warn = cpu_value is not None and cpu_value >= 80
     battery_warn = battery_value is not None and battery_value < 20 and plugged is False
     return cpu_warn or battery_warn
+
+
+def _metric_percent_value(value: object) -> int | None:
+    number = _finite_number(value)
+    if number is None:
+        return None
+    return max(0, min(100, round(number)))
+
+
+def _metric_meter_values(system: dict) -> dict[str, int | None]:
+    system = _as_dict(system)
+    return {
+        "CPU": _metric_percent_value(system.get("cpu_percent")),
+        "RAM": _metric_percent_value(system.get("ram_percent")),
+        "BAT": _metric_percent_value(system.get("battery_percent")),
+    }
+
+
+def _metric_alerts(system: dict) -> set[str]:
+    system = _as_dict(system)
+    alerts: set[str] = set()
+    cpu = _metric_percent_value(system.get("cpu_percent"))
+    ram = _metric_percent_value(system.get("ram_percent"))
+    battery = _metric_percent_value(system.get("battery_percent"))
+    if cpu is not None and cpu >= 80:
+        alerts.add("CPU")
+    if ram is not None and ram >= 90:
+        alerts.add("RAM")
+    if battery is not None and battery < 20 and system.get("battery_plugged") is False:
+        alerts.add("BAT")
+    return alerts
+
+
+def _rhythm_fraction(counters: dict) -> float:
+    counters = _as_dict(counters)
+    calls = _finite_number(counters.get("calls_since_slice"))
+    interval = _finite_number(counters.get("slice_interval"))
+    if calls is None or interval is None or interval <= 0:
+        return 0.0
+    return max(0.0, min(1.0, calls / interval))
 
 
 def _format_tool_idle(timing: dict) -> str:
@@ -967,11 +1021,14 @@ class ChibiStatusCard(tk.Canvas):
         self._progress = "리듬 준비"
         self._system_hud = "CPU -- · RAM -- · BAT --"
         self._system_warn = False
+        self._rhythm_fraction = 0.0
+        self._metric_values: dict[str, int | None] = {"CPU": None, "RAM": None, "BAT": None}
+        self._metric_alerts: set[str] = set()
         self._debug_hud = "상세 준비"
         self._view_mode = "normal"
         self._card_width = width
-        self._normal_card_height = 84
-        self._debug_card_height = 112
+        self._normal_card_height = 98
+        self._debug_card_height = 132
         self._scale = 1.0
         self._card_height = self._scaled_card_height()
         super().__init__(
@@ -1028,6 +1085,9 @@ class ChibiStatusCard(tk.Canvas):
         system_hud: str | None = None,
         system_warn: bool | None = None,
         debug_hud: str | None = None,
+        rhythm_fraction: float | None = None,
+        metric_values: dict[str, int | None] | None = None,
+        metric_alerts: set[str] | None = None,
     ) -> None:
         self._progress = progress or "리듬 준비"
         if system_hud is not None:
@@ -1036,6 +1096,12 @@ class ChibiStatusCard(tk.Canvas):
             self._system_warn = system_warn
         if debug_hud is not None:
             self._debug_hud = debug_hud or "상세 준비"
+        if rhythm_fraction is not None:
+            self._rhythm_fraction = max(0.0, min(1.0, float(rhythm_fraction)))
+        if metric_values is not None:
+            self._metric_values = {key: metric_values.get(key) for key in ("CPU", "RAM", "BAT")}
+        if metric_alerts is not None:
+            self._metric_alerts = set(metric_alerts)
         self._draw()
 
     def _rounded_rect(self, x1: int, y1: int, x2: int, y2: int, radius: int, **kwargs) -> int:
@@ -1070,11 +1136,95 @@ class ChibiStatusCard(tk.Canvas):
     def _s(self, value: int) -> int:
         return max(1, round(value * self._scale))
 
+    def _meter_color(self, label: str, value: int | None) -> str:
+        if label in self._metric_alerts:
+            return METER_DANGER
+        if value is None:
+            return "#cdbdaa"
+        if label == "BAT" and value < 35:
+            return METER_WARN
+        if label == "CPU" and value >= 65:
+            return METER_WARN
+        if label == "RAM" and value >= 80:
+            return METER_WARN
+        return METER_GOOD
+
+    def _draw_metric_meter(
+        self,
+        *,
+        label: str,
+        value: int | None,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+    ) -> None:
+        alert = label in self._metric_alerts
+        fill = STATUS_WARN_BG if alert else STATUS_METRIC_BG
+        outline = STATUS_WARN_BORDER if alert else STATUS_METRIC_BORDER
+        self._rounded_rect(
+            x1,
+            y1,
+            x2,
+            y2,
+            self._s(8),
+            fill=fill,
+            outline=outline,
+            width=max(1, self._s(1)),
+            tags=("metric_meter",),
+        )
+        self.create_text(
+            x1 + self._s(9),
+            y1 + self._s(10),
+            text=label,
+            anchor="w",
+            fill="#6f5d50",
+            font=("Helvetica", max(5, self._s(7)), "bold"),
+            tags=("metric_meter",),
+        )
+        value_text = "--" if value is None else f"{value}"
+        self.create_text(
+            x2 - self._s(8),
+            y1 + self._s(10),
+            text=value_text,
+            anchor="e",
+            fill=TEXT_FG if value is not None else "#9b8b7d",
+            font=("Helvetica", max(6, self._s(8)), "bold"),
+            tags=("metric_meter",),
+        )
+        track_x1 = x1 + self._s(8)
+        track_x2 = x2 - self._s(8)
+        track_y1 = y2 - self._s(8)
+        track_y2 = y2 - self._s(4)
+        self._rounded_rect(
+            track_x1,
+            track_y1,
+            track_x2,
+            track_y2,
+            self._s(3),
+            fill=METER_TRACK,
+            outline="",
+            tags=("metric_meter",),
+        )
+        if value is not None:
+            fill_w = max(self._s(3), round((track_x2 - track_x1) * (value / 100)))
+            self._rounded_rect(
+                track_x1,
+                track_y1,
+                min(track_x2, track_x1 + fill_w),
+                track_y2,
+                self._s(3),
+                fill=self._meter_color(label, value),
+                outline="",
+                tags=("metric_meter",),
+            )
+
     def _draw(self) -> None:
         width = max(self._s(280), int(self.winfo_width() or self._card_width))
         height = self._card_height
         mood_label, mood_icon = MOOD_LABELS.get(self._mood, (self._mood, "•"))
         stars = "★" * self._rarity + "☆" * max(0, 5 - self._rarity)
+        mood_glow, _shadow = MOOD_STAGE_COLORS.get(self._mood, MOOD_STAGE_COLORS["calm"])
 
         self.delete("all")
         self._rounded_rect(
@@ -1095,6 +1245,15 @@ class ChibiStatusCard(tk.Canvas):
             fill=STATUS_BG,
             outline=STATUS_BORDER,
             width=max(1, self._s(1)),
+        )
+        self._rounded_rect(
+            self._s(10),
+            self._s(8),
+            self._s(15),
+            height - self._s(18),
+            self._s(4),
+            fill=mood_glow,
+            outline="",
         )
         self.create_text(
             self._s(18),
@@ -1138,46 +1297,86 @@ class ChibiStatusCard(tk.Canvas):
             fill=MUTED_FG,
             font=("Helvetica", max(7, self._s(9))),
         )
-        metric_bg = STATUS_WARN_BG if self._system_warn else STATUS_METRIC_BG
-        metric_border = STATUS_WARN_BORDER if self._system_warn else STATUS_METRIC_BORDER
+        bar_x1 = self._s(104)
+        bar_x2 = width - self._s(24)
+        bar_y1 = self._s(58)
+        bar_y2 = self._s(63)
         self._rounded_rect(
-            self._s(16),
-            self._s(63),
-            width - self._s(20),
-            self._s(86) if self._view_mode == "debug" else height - self._s(10),
-            self._s(8),
-            fill=metric_bg,
-            outline=metric_border,
-            width=max(1, self._s(1)),
+            bar_x1,
+            bar_y1,
+            bar_x2,
+            bar_y2,
+            self._s(4),
+            fill="#ead7c3",
+            outline="",
+            tags=("rhythm_meter",),
         )
-        self.create_text(
-            self._s(28),
-            self._s(77) if self._view_mode == "debug" else height - self._s(20),
-            text=self._system_hud,
-            anchor="w",
-            fill="#405247" if not self._system_warn else "#77521b",
-            font=("Helvetica", max(6, self._s(8)), "bold"),
-        )
-        if self._view_mode != "debug":
-            return
+        fill_x2 = bar_x1 + max(self._s(4), round((bar_x2 - bar_x1) * self._rhythm_fraction))
         self._rounded_rect(
-            self._s(16),
-            self._s(88),
-            width - self._s(20),
-            height - self._s(10),
-            self._s(8),
-            fill="#eef4ff",
-            outline="#b9c9ed",
-            width=max(1, self._s(1)),
+            bar_x1,
+            bar_y1,
+            min(bar_x2, fill_x2),
+            bar_y2,
+            self._s(4),
+            fill="#ff6b9d" if self._rhythm_fraction >= 0.8 else "#55bd83",
+            outline="",
+            tags=("rhythm_meter",),
         )
-        self.create_text(
-            self._s(28),
-            height - self._s(20),
-            text=self._debug_hud,
-            anchor="w",
-            fill="#41506b",
-            font=("Helvetica", max(6, self._s(8)), "bold"),
-        )
+
+        meter_y1 = self._s(68)
+        meter_y2 = self._s(91)
+        gap = self._s(6)
+        meter_x1 = self._s(16)
+        available = width - self._s(36) - gap * 2
+        meter_w = max(self._s(70), available // 3)
+        for idx, label in enumerate(("CPU", "RAM", "BAT")):
+            x1 = meter_x1 + idx * (meter_w + gap)
+            self._draw_metric_meter(
+                label=label,
+                value=self._metric_values.get(label),
+                x1=x1,
+                y1=meter_y1,
+                x2=min(width - self._s(20), x1 + meter_w),
+                y2=meter_y2,
+            )
+
+        if self._view_mode == "debug":
+            self._rounded_rect(
+                self._s(16),
+                self._s(96),
+                width - self._s(20),
+                height - self._s(10),
+                self._s(8),
+                fill="#eef4ff",
+                outline="#b9c9ed",
+                width=max(1, self._s(1)),
+            )
+            self.create_text(
+                self._s(28),
+                height - self._s(23),
+                text=self._debug_hud,
+                anchor="w",
+                fill="#41506b",
+                font=("Helvetica", max(6, self._s(8)), "bold"),
+            )
+        elif self._system_warn:
+            self.create_text(
+                width - self._s(24),
+                height - self._s(17),
+                text="상태 체크",
+                anchor="e",
+                fill="#77521b",
+                font=("Helvetica", max(5, self._s(7)), "bold"),
+            )
+        else:
+            self.create_text(
+                width - self._s(24),
+                height - self._s(17),
+                text="stable",
+                anchor="e",
+                fill="#6d8777",
+                font=("Helvetica", max(5, self._s(7)), "bold"),
+            )
 
 
 # ── Tk window ────────────────────────────────────────────────────────────────
@@ -1288,13 +1487,23 @@ class PetWindow:
         self.canvas.pack()
         self._canvas_center = (total_w // 2, canvas_h // 2)
 
+        self._stage_glow_id = self.canvas.create_oval(
+            0,
+            0,
+            1,
+            1,
+            fill=MOOD_STAGE_COLORS.get(mood, MOOD_STAGE_COLORS["calm"])[0],
+            outline="",
+            stipple="gray25",
+            tags=("stage_glow",),
+        )
         shadow_w, shadow_y = self._shadow_metrics(total_w, canvas_h)
         self._shadow_id = self.canvas.create_oval(
             self._canvas_center[0] - shadow_w // 2,
             shadow_y - self._s(5),
             self._canvas_center[0] + shadow_w // 2,
             shadow_y + self._s(5),
-            fill="#d8c1aa",
+            fill=MOOD_STAGE_COLORS.get(mood, MOOD_STAGE_COLORS["calm"])[1],
             outline="",
             stipple="gray50",
         )
@@ -1307,6 +1516,7 @@ class PetWindow:
             anchor="center",
         )
         self._refresh_mood_fx(force=True)
+        self._update_stage_chrome()
 
         self.status_card = ChibiStatusCard(
             self.root,
@@ -1489,6 +1699,36 @@ class PetWindow:
         )
         return shadow_w, shadow_y
 
+    def _update_stage_chrome(self) -> None:
+        if not hasattr(self, "canvas"):
+            return
+        glow, shadow = MOOD_STAGE_COLORS.get(self.current_mood, MOOD_STAGE_COLORS["calm"])
+        glow_w = max(self._s(132), self._img_w + self._s(58))
+        glow_h = max(self._s(92), self._img_h + self._s(38))
+        glow_y = self._canvas_center[1] - self._s(4)
+        shadow_w, shadow_y = self._shadow_metrics(int(self.canvas.cget("width")), int(self.canvas.cget("height")))
+        with contextlib.suppress(tk.TclError):
+            self.canvas.coords(
+                self._stage_glow_id,
+                self._canvas_center[0] - glow_w // 2,
+                glow_y - glow_h // 2,
+                self._canvas_center[0] + glow_w // 2,
+                glow_y + glow_h // 2,
+            )
+            self.canvas.itemconfigure(self._stage_glow_id, fill=glow)
+            self.canvas.coords(
+                self._shadow_id,
+                self._canvas_center[0] - shadow_w // 2,
+                shadow_y - self._s(5),
+                self._canvas_center[0] + shadow_w // 2,
+                shadow_y + self._s(5),
+            )
+            self.canvas.itemconfigure(self._shadow_id, fill=shadow)
+            self.canvas.tag_lower(self._stage_glow_id)
+            self.canvas.tag_raise(self._shadow_id, self._stage_glow_id)
+            if hasattr(self, "_image_id"):
+                self.canvas.tag_raise(self._image_id, self._shadow_id)
+
     def _point_near_character(self, x_frac: float, y_frac: float) -> tuple[int, int]:
         left = self._canvas_center[0] - self._img_w // 2
         top = self._canvas_center[1] - self._img_h // 2
@@ -1668,6 +1908,7 @@ class PetWindow:
             self._canvas_center[0] + shadow_w // 2,
             shadow_y + self._s(5),
         )
+        self._update_stage_chrome()
         self.status_card.configure(width=max(self._s(260), total_w - self._s(20)))
         self._last_bob_offset = 0
         self._refresh_mood_fx(force=True)
@@ -1899,6 +2140,7 @@ class PetWindow:
         self._photo = ImageTk.PhotoImage(img)
         self.canvas.itemconfigure(self._image_id, image=self._photo)
         self.current_mood = mood
+        self._update_stage_chrome()
         if scale is None:
             self._refresh_mood_fx(force=True)
 
@@ -2024,6 +2266,9 @@ class PetWindow:
             system_hud=_format_system_hud(system),
             system_warn=_metric_is_warn(system),
             debug_hud=_format_debug_hud(payload),
+            rhythm_fraction=_rhythm_fraction(counters),
+            metric_values=_metric_meter_values(system),
+            metric_alerts=_metric_alerts(system),
         )
 
     # ── Built-in controls ───────────────────────────────────────────────────
@@ -2463,11 +2708,34 @@ class PetWindow:
         cy = self._canvas_center[1] - self._s(52)
         colors = ("#ff9dbd", "#f4c542", "#55bd83")
         items: list[int] = []
+        ring_r = max(self._s(28), min(self._img_w, self._img_h) // 3)
+        ring = self.canvas.create_oval(
+            self._canvas_center[0] - ring_r,
+            self._canvas_center[1] - ring_r,
+            self._canvas_center[0] + ring_r,
+            self._canvas_center[1] + ring_r,
+            fill="",
+            outline="#ff9dbd",
+            width=max(1, self._s(2)),
+            tags=("click_fx",),
+        )
+        items.append(ring)
         for idx, color in enumerate(colors):
             x = cx + self._s((idx - 1) * 13)
             y = cy + self._s((idx % 2) * 9)
             r = self._s(4)
-            items.append(self.canvas.create_oval(x - r, y - r, x + r, y + r, fill=color, outline=""))
+            items.append(
+                self.canvas.create_oval(
+                    x - r,
+                    y - r,
+                    x + r,
+                    y + r,
+                    fill=color,
+                    outline="",
+                    tags=("click_fx",),
+                )
+            )
+        self.canvas.tag_raise("click_fx")
 
         def tick(step: int = 0) -> None:
             if step >= 10:
@@ -2477,7 +2745,22 @@ class PetWindow:
                 return
             with contextlib.suppress(tk.TclError):
                 for idx, item in enumerate(items):
-                    self.canvas.move(item, self._s(idx - 1), -self._s(2))
+                    if item == ring:
+                        grow = self._s(2)
+                        self.canvas.coords(
+                            ring,
+                            self.canvas.coords(ring)[0] - grow,
+                            self.canvas.coords(ring)[1] - grow,
+                            self.canvas.coords(ring)[2] + grow,
+                            self.canvas.coords(ring)[3] + grow,
+                        )
+                        self.canvas.itemconfigure(
+                            ring,
+                            outline="#ffd5e3" if step > 5 else "#ff9dbd",
+                            width=max(1, self._s(2 - step // 6)),
+                        )
+                    else:
+                        self.canvas.move(item, self._s(idx - 2), -self._s(2))
             self._after(35, lambda: tick(step + 1))
 
         tick()

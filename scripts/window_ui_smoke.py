@@ -105,6 +105,12 @@ def main() -> int:
             assert pet.active_option_ids == ["honey_glaze"]
             assert pet.status_card._system_warn is True
             assert "CPU 82%" in pet.status_card._system_hud
+            assert pet.status_card._metric_values == {"CPU": 82, "RAM": 48, "BAT": 17}
+            assert pet.status_card._metric_alerts == {"CPU", "BAT"}
+            assert abs(pet.status_card._rhythm_fraction - 0.1) < 0.01
+            assert pet.status_card.find_withtag("metric_meter")
+            assert pet.status_card.find_withtag("rhythm_meter")
+            assert pet.canvas.find_withtag("stage_glow")
             assert pet.canvas.find_withtag("mood_fx")
 
             pet._start_drag(SimpleNamespace(x_root=10, y_root=10, widget=pet.canvas))
