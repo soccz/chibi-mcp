@@ -44,6 +44,11 @@ PANEL_BG_2 = "#fff1df"
 PANEL_BORDER = "#e7c9a6"
 TEXT_FG = "#2a211a"
 MUTED_FG = "#806f62"
+STATUS_BG = "#fffdf8"
+STATUS_BORDER = "#efd8bf"
+STATUS_SHADOW = "#ead8c1"
+STATUS_CHIP_BG = "#ffe5ec"
+STATUS_CHIP_BORDER = "#ffc4d5"
 BUTTON_SECONDARY_BG = "#fffdf7"
 BUTTON_SECONDARY_HOVER = "#edfdf4"
 BUTTON_SECONDARY_ACTIVE = "#d7f4e2"
@@ -530,6 +535,20 @@ class ChibiButton(tk.Canvas):
             self.configure(cursor="hand2" if enabled else "")
         self._draw()
 
+    def set_style(
+        self,
+        colors: dict[str, str],
+        *,
+        icon: str | None = None,
+        text: str | None = None,
+    ) -> None:
+        self._colors = colors
+        self._icon = icon
+        if text is not None:
+            self._text = text
+        self._tone = "bg"
+        self._draw()
+
     def invoke(self) -> None:
         if self._enabled:
             self._command()
@@ -627,6 +646,135 @@ class ChibiButton(tk.Canvas):
         )
 
 
+class ChibiStatusCard(tk.Canvas):
+    """Compact identity/status surface for the floating pet."""
+
+    def __init__(
+        self,
+        parent: tk.Misc,
+        *,
+        name: str,
+        rarity: int,
+        mood: str,
+        width: int,
+        panel_bg: str,
+    ):
+        self._display_name = name
+        self._rarity = rarity
+        self._mood = mood
+        self._progress = "리듬 준비"
+        self._card_width = width
+        self._card_height = 66
+        super().__init__(
+            parent,
+            width=width,
+            height=self._card_height,
+            bg=panel_bg,
+            bd=0,
+            highlightthickness=0,
+        )
+        self.bind("<Configure>", lambda _event: self._draw())
+        self._draw()
+
+    def set_mood(self, mood: str) -> None:
+        self._mood = mood
+        self._draw()
+
+    def set_progress(self, progress: str) -> None:
+        self._progress = progress or "리듬 준비"
+        self._draw()
+
+    def _rounded_rect(self, x1: int, y1: int, x2: int, y2: int, radius: int, **kwargs) -> int:
+        points = [
+            x1 + radius,
+            y1,
+            x2 - radius,
+            y1,
+            x2,
+            y1,
+            x2,
+            y1 + radius,
+            x2,
+            y2 - radius,
+            x2,
+            y2,
+            x2 - radius,
+            y2,
+            x1 + radius,
+            y2,
+            x1,
+            y2,
+            x1,
+            y2 - radius,
+            x1,
+            y1 + radius,
+            x1,
+            y1,
+        ]
+        return self.create_polygon(points, smooth=True, splinesteps=12, **kwargs)
+
+    def _draw(self) -> None:
+        width = max(280, int(self.winfo_width() or self._card_width))
+        height = self._card_height
+        mood_label, mood_icon = MOOD_LABELS.get(self._mood, (self._mood, "•"))
+        stars = "★" * self._rarity + "☆" * max(0, 5 - self._rarity)
+
+        self.delete("all")
+        self._rounded_rect(6, 8, width - 5, height - 2, 18, fill=STATUS_SHADOW, outline="")
+        self._rounded_rect(
+            3,
+            2,
+            width - 8,
+            height - 8,
+            18,
+            fill=STATUS_BG,
+            outline=STATUS_BORDER,
+            width=1,
+        )
+        self.create_text(
+            18,
+            19,
+            text=self._display_name,
+            anchor="w",
+            fill=TEXT_FG,
+            font=("Helvetica", 13, "bold"),
+        )
+        self.create_text(
+            width - 24,
+            19,
+            text=stars,
+            anchor="e",
+            fill="#5f4d3f",
+            font=("Helvetica", 10, "bold"),
+        )
+
+        self._rounded_rect(
+            16,
+            36,
+            92,
+            57,
+            10,
+            fill=STATUS_CHIP_BG,
+            outline=STATUS_CHIP_BORDER,
+            width=1,
+        )
+        self.create_text(
+            54,
+            46,
+            text=f"{mood_label} {mood_icon}",
+            fill=TEXT_FG,
+            font=("Helvetica", 9, "bold"),
+        )
+        self.create_text(
+            104,
+            46,
+            text=self._progress,
+            anchor="w",
+            fill=MUTED_FG,
+            font=("Helvetica", 9),
+        )
+
+
 # ── Tk window ────────────────────────────────────────────────────────────────
 
 
@@ -716,8 +864,8 @@ class PetWindow:
                 with contextlib.suppress(tk.TclError):
                     self.root.wm_attributes("-alpha", 1.0)
 
-        # Total window: canvas + name label + mood label
-        total_w = max(CANVAS_SIZE, self._img_w + 24)
+        # Total window: character stage + compact identity/status card.
+        total_w = max(CANVAS_SIZE + 72, self._img_w + 80)
         canvas_h = self._img_h + 28
 
         self.canvas = tk.Canvas(
@@ -751,37 +899,15 @@ class PetWindow:
             anchor="center",
         )
 
-        fg = TEXT_FG
-        meta_fg = MUTED_FG
-
-        stars = "★" * rarity + "☆" * max(0, 5 - rarity)
-        self.name_label = tk.Label(
+        self.status_card = ChibiStatusCard(
             self.root,
-            text=f"{name}  {stars}",
-            bg=bg,
-            fg=fg,
-            font=("Helvetica", 13, "bold"),
+            name=name,
+            rarity=rarity,
+            mood=mood,
+            width=total_w - 20,
+            panel_bg=bg,
         )
-        self.name_label.pack(pady=(2, 0))
-
-        self.mood_label = tk.Label(
-            self.root,
-            text=f"기분: {mood}",
-            bg=bg,
-            fg=meta_fg,
-            font=("Helvetica", 10),
-        )
-        self.mood_label.pack(pady=(2, 6))
-        self._update_mood_label(mood)
-
-        self.progress_label = tk.Label(
-            self.root,
-            text="",
-            bg=bg,
-            fg=meta_fg,
-            font=("Helvetica", 9),
-        )
-        self.progress_label.pack(pady=(0, 8))
+        self.status_card.pack(pady=(2, 8), padx=10, fill="x")
 
         self.toolbar = tk.Frame(self.root, bg=bg)
         self.toolbar.pack(pady=(0, 10), padx=8)
@@ -835,7 +961,7 @@ class PetWindow:
         self._bubble_hide_after: str | None = None
 
         # Bind drag + clicks on canvas and labels
-        for w in (self.canvas, self.name_label, self.mood_label, self.progress_label):
+        for w in (self.canvas, self.status_card):
             w.bind("<Button-1>", self._start_drag)
             w.bind("<B1-Motion>", self._do_drag)
             w.bind("<Button-3>", lambda _e: self.shutdown())  # right-click close
@@ -917,8 +1043,7 @@ class PetWindow:
         self.current_mood = mood
 
     def _update_mood_label(self, mood: str) -> None:
-        label, emoji = MOOD_LABELS.get(mood, (mood, "•"))
-        self.mood_label.configure(text=f"{label} {emoji}")
+        self.status_card.set_mood(mood)
 
     def _update_progress_label(self, payload: dict) -> None:
         counters = payload.get("counters") or {}
@@ -935,7 +1060,7 @@ class PetWindow:
             parts.append(f"리듬 {slices}")
         if tickets is not None:
             parts.append(f"티켓 {tickets}")
-        self.progress_label.configure(text=" · ".join(parts))
+        self.status_card.set_progress(" · ".join(parts))
 
     # ── Built-in controls ───────────────────────────────────────────────────
 
@@ -1095,26 +1220,27 @@ class PetWindow:
         options = _released_items(self.catalog, "options")
 
         self._drawer_header("옵션 · 최대 3개")
-        self._option_vars: dict[str, tk.IntVar] = {}
+        self._option_vars: dict[str, tk.IntVar | ChibiButton] = {}
         grid = tk.Frame(self.drawer, bg=PANEL_BG_2)
         grid.pack(fill="x")
+        grid.columnconfigure(0, weight=1)
+        grid.columnconfigure(1, weight=1)
         for idx, option in enumerate(options[:12]):
             option_id = str(option.get("id") or "")
             var = tk.IntVar(value=1 if option_id in selected_ids else 0)
             self._option_vars[option_id] = var
-            cb = tk.Checkbutton(
+            selected = int(var.get()) == 1
+            btn = self._make_button(
                 grid,
-                text=str(option.get("name_ko") or option_id),
-                variable=var,
-                bg=PANEL_BG_2,
-                fg=TEXT_FG,
-                activebackground=PANEL_BG_2,
-                activeforeground=TEXT_FG,
-                selectcolor=PANEL_BG,
+                str(option.get("name_ko") or option_id),
+                lambda oid=option_id: self._toggle_option_chip(oid),
+                kind="selected" if selected else "secondary",
+                icon="✓" if selected else "·",
+                min_width=126,
                 anchor="w",
-                font=("Helvetica", 8),
             )
-            cb.grid(row=idx // 2, column=idx % 2, sticky="w", padx=(0, 8), pady=1)
+            btn.grid(row=idx // 2, column=idx % 2, sticky="ew", padx=(0, 6), pady=2)
+            self._option_vars[f"{option_id}__button"] = btn
 
         actions = tk.Frame(self.drawer, bg=PANEL_BG_2)
         actions.pack(anchor="w", pady=(8, 0))
@@ -1134,11 +1260,33 @@ class PetWindow:
             min_width=74,
         ).pack(side="left")
 
+    def _toggle_option_chip(self, option_id: str) -> None:
+        var = self._option_vars.get(option_id)
+        btn = self._option_vars.get(f"{option_id}__button")
+        if not isinstance(var, tk.IntVar) or not isinstance(btn, ChibiButton):
+            return
+        selected = int(var.get()) == 1
+        if not selected:
+            selected_count = sum(
+                int(value.get()) == 1
+                for key, value in self._option_vars.items()
+                if not key.endswith("__button") and isinstance(value, tk.IntVar)
+            )
+            if selected_count >= 3:
+                self.show_bubble("옵션은 3개까지")
+                return
+        var.set(0 if selected else 1)
+        now_selected = int(var.get()) == 1
+        btn.set_style(
+            self._button_colors("selected" if now_selected else "secondary"),
+            icon="✓" if now_selected else "·",
+        )
+
     def _apply_options_from_drawer(self) -> None:
         selected = [
             option_id
             for option_id, var in getattr(self, "_option_vars", {}).items()
-            if int(var.get()) == 1
+            if isinstance(var, tk.IntVar) and int(var.get()) == 1
         ]
         if len(selected) > 3:
             self.show_bubble("옵션은 3개까지")

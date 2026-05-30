@@ -279,19 +279,21 @@ class PetViewProvider implements vscode.WebviewViewProvider {
 <meta charset="UTF-8">
 <style>
 :root { color-scheme: dark; }
-body { margin: 0; padding: 12px; font-family: var(--vscode-font-family); color: var(--vscode-foreground); }
-.pet { text-align: center; padding: 16px 0; }
+body { margin: 0; padding: 12px; font-family: var(--vscode-font-family); color: var(--vscode-foreground); background: linear-gradient(180deg, rgba(255,107,157,0.08), rgba(183,228,199,0.04) 34%, transparent 72%); }
+.pet { text-align: center; padding: 16px 10px 12px; border: 1px solid rgba(255,157,189,0.28); border-radius: 8px; background: color-mix(in srgb, var(--vscode-editor-background) 88%, #ffe5ec); box-shadow: inset 0 1px rgba(255,255,255,0.08), 0 1px 8px rgba(0,0,0,0.14); }
 .pet-stage { position: relative; width: 180px; height: 180px; margin: 0 auto; display: grid; place-items: center; }
+.pet-stage::after { content: ""; position: absolute; bottom: 18px; width: 124px; height: 12px; border-radius: 999px; background: radial-gradient(ellipse, rgba(95,77,63,0.24), transparent 72%); z-index: 0; }
 .pet-stage img { position: absolute; max-width: 180px; max-height: 180px; object-fit: contain; }
-#active-img { z-index: 1; cursor: pointer; transition: transform 0.3s; }
+#active-img { z-index: 1; cursor: pointer; transition: transform 0.3s; filter: drop-shadow(0 5px 8px rgba(0,0,0,0.18)); }
 #active-img:hover { transform: scale(1.04); }
 #active-img.squish { animation: squish 0.45s ease-out 1; }
 .pet-option { z-index: 2; pointer-events: none; }
 @keyframes squish { 0%,100%{transform:scaleX(1) scaleY(1)} 35%{transform:scaleX(1.18) scaleY(0.78)} 70%{transform:scaleX(0.95) scaleY(1.05)} }
-.pet .name { margin-top: 8px; font-weight: 600; }
-.pet .rarity { font-size: 11px; opacity: 0.7; margin-top: 2px; letter-spacing: 1px; }
-.bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 12px; }
-.bar .tickets { color: var(--vscode-textLink-foreground); font-weight: 600; }
+.pet .name { margin: 8px auto 0; max-width: 180px; font-weight: 700; }
+.pet .rarity { display: inline-block; font-size: 11px; color: #ffd166; opacity: 0.95; margin-top: 3px; letter-spacing: 1px; }
+.bar { display: flex; justify-content: space-between; align-items: center; gap: 7px; padding: 10px 0 2px; font-size: 12px; }
+.bar span { flex: 1; padding: 6px 8px; border-radius: 999px; background: rgba(183,228,199,0.12); border: 1px solid rgba(183,228,199,0.32); }
+.bar .tickets { color: #ffd166; font-weight: 700; }
 .actions { display: flex; gap: 7px; margin: 8px 0 14px; }
 .actions button { flex: 1; min-height: 34px; padding: 8px 10px; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: 1px solid var(--vscode-button-border, transparent); border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 700; box-shadow: inset 0 1px rgba(255,255,255,0.18), 0 2px 0 rgba(0,0,0,0.18); transition: transform 80ms ease, background 120ms ease, border-color 120ms ease, box-shadow 120ms ease; }
 .actions button:hover { background: var(--vscode-button-hoverBackground); transform: translateY(-1px); }
@@ -300,20 +302,20 @@ body { margin: 0; padding: 12px; font-family: var(--vscode-font-family); color: 
 #btn-gacha:hover { background: linear-gradient(135deg, #ff7fac, #ffe08a); }
 #btn-clear-options { background: rgba(183,228,199,0.18); border-color: rgba(183,228,199,0.58); }
 #btn-clear-options:hover { background: rgba(183,228,199,0.28); }
-.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 300px; overflow-y: auto; }
-.option-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
-.cell { background: var(--vscode-editor-inactiveSelectionBackground); border: 1.5px solid transparent; border-radius: 8px; padding: 6px 3px; text-align: center; cursor: pointer; transition: transform 0.12s; }
-.cell.owned:hover { transform: translateY(-1px); }
-.cell.option:hover { transform: translateY(-1px); }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; max-height: 300px; overflow-y: auto; }
+.option-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 12px; }
+.cell { background: color-mix(in srgb, var(--vscode-editor-inactiveSelectionBackground) 78%, #fffdf7); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 7px 4px; text-align: center; cursor: pointer; transition: transform 0.12s, border-color 0.12s, background 0.12s; }
+.cell.owned:hover { transform: translateY(-1px); border-color: rgba(255,209,102,0.45); }
+.cell.option:hover { transform: translateY(-1px); border-color: rgba(183,228,199,0.58); }
 .cell.locked { opacity: 0.4; cursor: default; }
-.cell.active, .cell.option-active { border-color: var(--vscode-focusBorder); }
+.cell.active, .cell.option-active { border-color: #ff9dbd; background: rgba(255,107,157,0.13); }
 .cell img { width: 48px; height: 48px; object-fit: contain; }
 .cell .locked-icon { width: 48px; height: 48px; line-height: 48px; color: var(--vscode-descriptionForeground); font-size: 20px; }
 .cell .cname { font-size: 10px; margin-top: 2px; }
 .cell .crarity { font-size: 9px; opacity: 0.7; letter-spacing: 1px; }
 .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--vscode-notificationsInfoIcon-foreground); color: var(--vscode-editor-background); padding: 6px 14px; border-radius: 16px; font-size: 12px; opacity: 0; transition: opacity 0.3s; }
 .toast.show { opacity: 1; }
-h3 { margin: 12px 0 6px; font-size: 12px; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.6px; }
+h3 { margin: 13px 0 7px; font-size: 11px; opacity: 0.78; text-transform: uppercase; letter-spacing: 0.6px; }
 </style>
 </head>
 <body>

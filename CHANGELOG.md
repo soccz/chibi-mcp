@@ -46,6 +46,9 @@ Commercial-readiness polish without enabling paid gates.
 - Strengthened floating-window and VS Code action button styling with
   Canvas-drawn pill buttons, clearer primary/secondary/selected/close states,
   and pressed/hover feedback.
+- Reworked the floating-window identity/status area and option drawer so the
+  non-character UI feels like a polished chibi product surface instead of
+  native Tk defaults.
 - Expanded built-in local ASMR-style sounds: squish, slice, normal gacha, rare gacha, option brush, and bubble pop are generated as free local wav files with no network or paid sound packs.
 - Expanded installer self-repair beyond macOS: Linux bash installers now try Tk repair across `apt`, `dnf`, `yum`, `pacman`, `zypper`, and `apk`; Windows PowerShell installers can bootstrap Python with `winget` before installing `pipx`.
 - Made the Claude/Codex installers more self-healing: they install `pipx` when it is missing, suppress confusing `pipx ensurepath` noise, attempt macOS Homebrew Tk repair automatically in bash, reinstall the pipx app after Tk repair, and re-run the health check.
