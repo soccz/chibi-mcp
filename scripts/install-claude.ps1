@@ -19,7 +19,7 @@ if (-not $McpName) {
     $McpName = "chibi"
 }
 if (-not $ExpectedVersion) {
-    $ExpectedVersion = "1.4.34"
+    $ExpectedVersion = "1.4.35"
 }
 
 function Require-Command($Name) {
@@ -132,6 +132,29 @@ function Sync-ClaudePlugin {
     }
 }
 
+function Show-ClaudeAuthStatus {
+    & claude auth status *> $null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Claude auth: ok"
+    } else {
+        Write-Warning "Claude auth is not ready. Run /login in Claude Code or 'claude auth login' in a terminal before using /chibi-mcp:chibi."
+    }
+}
+
+function Refresh-ClaudeMcp {
+    param([string]$ChibiCmd)
+
+    Write-Host "Refreshing Claude MCP '$McpName' registration..."
+    & claude mcp remove $McpName *> $null
+    & claude mcp add $McpName -- $ChibiCmd
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Claude MCP '$McpName' registered."
+    } else {
+        Write-Warning "Claude MCP registration failed. Run /login in Claude Code if needed, then run: claude mcp add $McpName -- $ChibiCmd"
+        Write-Warning "Full diagnostic: $ChibiCmd --doctor --mcp-name $McpName"
+    }
+}
+
 function Get-UserBase {
     $python = Get-Command py -ErrorAction SilentlyContinue
     if ($python) {
@@ -236,15 +259,13 @@ try {
     Write-Warning "Could not parse chibi-mcp --check output."
 }
 
-Write-Host "Refreshing Claude MCP '$McpName' registration..."
-& claude mcp remove $McpName *> $null
-& claude mcp add $McpName -- $chibiCmd
-if ($LASTEXITCODE -ne 0) {
-    throw "claude mcp add failed"
-}
+Refresh-ClaudeMcp $chibiCmd
 
 Sync-ClaudePlugin
+
+Show-ClaudeAuthStatus
 
 Write-Host "Claude install complete. Restart Claude Code, then try: /chibi-mcp:chibi"
 Write-Host "If Claude says 'Please run /login' or 'API Error: 401 Invalid authentication credentials', run /login in Claude Code first; that error happens before chibi runs."
 Write-Host "To test the local pet without Claude auth, run: $chibiCmd --open"
+Write-Host "To check Claude, Codex, VS Code, MCP registration, and local runtime together, run: $chibiCmd --doctor --mcp-name $McpName"

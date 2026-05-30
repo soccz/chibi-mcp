@@ -19,7 +19,7 @@ if (-not $McpName) {
     $McpName = "chibi"
 }
 if (-not $ExpectedVersion) {
-    $ExpectedVersion = "1.4.34"
+    $ExpectedVersion = "1.4.35"
 }
 
 function Require-Command($Name) {
@@ -106,6 +106,29 @@ function Invoke-Pipx {
     $allArgs += $script:PipxPrefix
     $allArgs += $PipxArgs
     & $script:PipxCommand @allArgs
+}
+
+function Show-CodexAuthStatus {
+    & codex login status *> $null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Codex auth: ok"
+    } else {
+        Write-Warning "Codex auth is not ready. Run 'codex login' before asking Codex to use chibi."
+    }
+}
+
+function Refresh-CodexMcp {
+    param([string]$ChibiCmd)
+
+    Write-Host "Refreshing Codex MCP '$McpName' registration..."
+    & codex mcp remove $McpName *> $null
+    & codex mcp add $McpName -- $ChibiCmd
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Codex MCP '$McpName' registered."
+    } else {
+        Write-Warning "Codex MCP registration failed. Run 'codex login' if needed, then run: codex mcp add $McpName -- $ChibiCmd"
+        Write-Warning "Full diagnostic: $ChibiCmd --doctor --mcp-name $McpName"
+    }
 }
 
 function Get-UserBase {
@@ -212,16 +235,15 @@ try {
     Write-Warning "Could not parse chibi-mcp --check output."
 }
 
-Write-Host "Refreshing Codex MCP '$McpName' registration..."
-& codex mcp remove $McpName *> $null
-& codex mcp add $McpName -- $chibiCmd
-if ($LASTEXITCODE -ne 0) {
-    throw "codex mcp add failed"
-}
+Refresh-CodexMcp $chibiCmd
 
 & codex plugin marketplace add $Marketplace
 if ($LASTEXITCODE -ne 0) {
     Write-Warning "Codex plugin marketplace add failed; MCP registration is still complete."
 }
 
+Show-CodexAuthStatus
+
 Write-Host "Codex install complete. Try: chibi 보여줘"
+Write-Host "To test the local pet without Codex auth, run: $chibiCmd --open"
+Write-Host "To check Claude, Codex, VS Code, MCP registration, and local runtime together, run: $chibiCmd --doctor --mcp-name $McpName"

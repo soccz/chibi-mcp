@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_URL="${CHIBI_REPO_URL:-git+https://github.com/soccz/chibi-mcp.git#subdirectory=server}"
 MARKETPLACE="${CHIBI_MARKETPLACE:-soccz/chibi-mcp}"
 MCP_NAME="${CHIBI_MCP_NAME:-chibi}"
-EXPECTED_VERSION="${CHIBI_EXPECT_VERSION:-1.4.34}"
+EXPECTED_VERSION="${CHIBI_EXPECT_VERSION:-1.4.35}"
 PYTHON_BIN=""
 PIPX_CMD=()
 
@@ -57,6 +57,14 @@ claude_run() {
     gtimeout 45s claude "$@"
   else
     claude "$@"
+  fi
+}
+
+print_claude_auth_status() {
+  if claude_run auth status >/dev/null 2>&1; then
+    echo "Claude auth: ok"
+  else
+    echo "warning: Claude auth is not ready. Run /login in Claude Code or 'claude auth login' in a terminal before using /chibi-mcp:chibi." >&2
   fi
 }
 
@@ -264,15 +272,27 @@ sync_claude_plugin() {
   fi
 }
 
+refresh_claude_mcp() {
+  echo "Refreshing Claude MCP '$MCP_NAME' registration..."
+  claude_run mcp remove "$MCP_NAME" >/dev/null 2>&1 || true
+  if claude_run mcp add "$MCP_NAME" -- "$CHIBI_CMD"; then
+    echo "Claude MCP '$MCP_NAME' registered."
+  else
+    echo "warning: Claude MCP registration failed. Run /login in Claude Code if needed, then run: claude mcp add $MCP_NAME -- $CHIBI_CMD" >&2
+    echo "warning: Full diagnostic: $CHIBI_CMD --doctor --mcp-name $MCP_NAME" >&2
+  fi
+}
+
 install_or_upgrade_server
 run_check_and_repair
 
-echo "Refreshing Claude MCP '$MCP_NAME' registration..."
-claude_run mcp remove "$MCP_NAME" >/dev/null 2>&1 || true
-claude_run mcp add "$MCP_NAME" -- "$CHIBI_CMD"
+refresh_claude_mcp
 
 sync_claude_plugin
+
+print_claude_auth_status
 
 echo "Claude install complete. Restart Claude Code, then try: /chibi-mcp:chibi"
 echo "If Claude says 'Please run /login' or 'API Error: 401 Invalid authentication credentials', run /login in Claude Code first; that error happens before chibi runs."
 echo "To test the local pet without Claude auth, run: $CHIBI_CMD --open"
+echo "To check Claude, Codex, VS Code, MCP registration, and local runtime together, run: $CHIBI_CMD --doctor --mcp-name $MCP_NAME"

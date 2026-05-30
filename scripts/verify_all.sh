@@ -371,6 +371,7 @@ shared_required = [
     "zypper --non-interactive install python3-tk",
     "apk add py3-tkinter",
     "brew install",
+    "--doctor --mcp-name",
 ]
 for rel in ["scripts/install-claude.sh", "scripts/install-codex.sh"]:
     text = (root / rel).read_text(encoding="utf-8")
@@ -378,6 +379,7 @@ for rel in ["scripts/install-claude.sh", "scripts/install-codex.sh"]:
     assert not missing, f"{rel} missing {missing}"
     assert "mcp remove \"$MCP_NAME\"" in text, f"{rel} must refresh stale MCP registrations"
     assert "mcp add \"$MCP_NAME\" -- \"$CHIBI_CMD\"" in text, f"{rel} must re-add MCP registration"
+    assert "MCP registration failed" in text, f"{rel} must warn instead of stopping when client registration fails"
     forbidden = ["pipx_run reinstall chibi-mcp", "pipx_run upgrade chibi-mcp", "already exists"]
     found = [item for item in forbidden if item in text]
     assert not found, f"{rel} must not use stale pipx source commands: {found}"
@@ -389,6 +391,8 @@ claude_shell_required = [
     "plugin install \"chibi@chibi-mcp\"",
     "plugin update chibi",
     "Restart Claude Code",
+    "claude_run auth status",
+    "Claude auth is not ready",
 ]
 text = (root / "scripts/install-claude.sh").read_text(encoding="utf-8")
 missing = [item for item in claude_shell_required if item not in text]
@@ -402,16 +406,24 @@ windows_required = [
     "Verify-ChibiVersion",
     "Invoke-Pipx uninstall chibi-mcp",
     "ConvertFrom-Json",
+    "--doctor --mcp-name",
 ]
 for rel in ["scripts/install-claude.ps1", "scripts/install-codex.ps1"]:
     text = (root / rel).read_text(encoding="utf-8")
     missing = [item for item in windows_required if item not in text]
     assert not missing, f"{rel} missing {missing}"
     assert "mcp remove $McpName" in text, f"{rel} must refresh stale MCP registrations"
-    assert "mcp add $McpName -- $chibiCmd" in text, f"{rel} must re-add MCP registration"
+    assert (
+        "mcp add $McpName -- $chibiCmd" in text
+        or "mcp add $McpName -- $ChibiCmd" in text
+    ), f"{rel} must re-add MCP registration"
+    assert "MCP registration failed" in text, f"{rel} must warn instead of stopping when client registration fails"
     forbidden = ["Invoke-Pipx reinstall chibi-mcp", "Invoke-Pipx upgrade chibi-mcp", "pipx reinstall chibi-mcp", "pipx upgrade chibi-mcp", "already exists"]
     found = [item for item in forbidden if item in text]
     assert not found, f"{rel} must not use stale pipx source commands: {found}"
+
+assert "throw \"claude mcp add failed\"" not in (root / "scripts/install-claude.ps1").read_text(encoding="utf-8")
+assert "throw \"codex mcp add failed\"" not in (root / "scripts/install-codex.ps1").read_text(encoding="utf-8")
 
 claude_windows_required = [
     "Sync-ClaudePlugin",
@@ -420,10 +432,31 @@ claude_windows_required = [
     "plugin install \"chibi@chibi-mcp\"",
     "plugin update chibi",
     "Restart Claude Code",
+    "claude auth status",
+    "Claude auth is not ready",
 ]
 text = (root / "scripts/install-claude.ps1").read_text(encoding="utf-8")
 missing = [item for item in claude_windows_required if item not in text]
 assert not missing, f"scripts/install-claude.ps1 missing {missing}"
+
+codex_auth_required = [
+    "codex login status",
+    "Codex auth is not ready",
+    "--doctor --mcp-name",
+]
+for rel in ["scripts/install-codex.sh", "scripts/install-codex.ps1"]:
+    text = (root / rel).read_text(encoding="utf-8")
+    missing = [item for item in codex_auth_required if item not in text]
+    assert not missing, f"{rel} missing {missing}"
+
+vscode_installer_required = [
+    "code --list-extensions",
+    "soccz.chibi-mcp",
+]
+for rel in ["scripts/install-vscode.sh", "scripts/install-vscode.ps1"]:
+    text = (root / rel).read_text(encoding="utf-8")
+    missing = [item for item in vscode_installer_required if item not in text]
+    assert not missing, f"{rel} missing {missing}"
 
 public_docs = [
     "README.md",
@@ -443,6 +476,7 @@ for rel in public_docs:
     text = (root / rel).read_text(encoding="utf-8")
     if rel in {"README.md", "INSTALL.md", "docs/TROUBLESHOOTING.md", "server/README.md"}:
         assert "chibi-mcp --open" in text, f"{rel} must document direct window testing"
+        assert "chibi-mcp --doctor" in text, f"{rel} must document cross-client diagnostics"
     for item in doc_forbidden:
         if item in text:
             violations.append(f"{rel}: {item}")

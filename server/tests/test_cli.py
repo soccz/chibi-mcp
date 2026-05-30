@@ -13,7 +13,7 @@ from PIL import Image
 from chibi_mcp import __main__ as main_mod
 from chibi_mcp import __version__
 from chibi_mcp import cli as cli_mod
-from chibi_mcp.__main__ import _check, _ws_endpoint
+from chibi_mcp.__main__ import _check, _doctor, _ws_endpoint
 from chibi_mcp.commercial import (
     _missing_project_files,
     build_trust_audit,
@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.34"
+    assert __version__ == "1.4.35"
 
 
 def test_chibi_say_message_builder_supports_tool_call_events():
@@ -104,7 +104,7 @@ def test_stdio_jsonrpc_handles_initialize_list_and_call():
     assert [response["id"] for response in responses] == [1, 2, 3]
     assert responses[0]["result"]["serverInfo"] == {
         "name": "chibi-mcp",
-        "version": "1.4.34",
+        "version": "1.4.35",
     }
     tools = {tool["name"] for tool in responses[1]["result"]["tools"]}
     assert {"get_catalog", "get_pet_state", "pull_gacha"}.issubset(tools)
@@ -120,6 +120,104 @@ def test_check_finds_packaged_assets():
     assert result["option_count"] >= 12
     assert result["free_assets_missing"] == []
     assert result["free_options_missing"] == []
+
+
+def test_doctor_separates_client_auth_from_local_runtime(monkeypatch):
+    def fake_run_client_command(args, timeout=8.0):
+        command = tuple(args)
+        if command == ("claude", "auth", "status"):
+            return {
+                "installed": True,
+                "returncode": 0,
+                "stdout": json.dumps(
+                    {
+                        "loggedIn": True,
+                        "authMethod": "claude.ai",
+                        "apiProvider": "firstParty",
+                        "email": "hidden@example.com",
+                    }
+                ),
+                "stderr": "",
+                "status": "ok",
+            }
+        if command == ("codex", "login", "status"):
+            return {
+                "installed": True,
+                "returncode": 1,
+                "stdout": "",
+                "stderr": "API Error: 401 Invalid authentication credentials",
+                "status": "error",
+            }
+        if command == ("claude", "mcp", "get", "chibi"):
+            return {"installed": True, "returncode": 0, "stdout": "Status: Connected", "stderr": ""}
+        if command == ("codex", "mcp", "get", "chibi"):
+            return {"installed": True, "returncode": 1, "stdout": "", "stderr": "not found"}
+        if command == ("code", "--list-extensions"):
+            return {"installed": True, "returncode": 0, "stdout": "soccz.chibi-mcp\n", "stderr": ""}
+        raise AssertionError(command)
+
+    monkeypatch.setattr(main_mod, "_run_client_command", fake_run_client_command)
+
+    result = _doctor()
+
+    assert result["ok"] is True
+    assert result["clients"]["claude"]["auth"]["status"] == "ok"
+    assert result["clients"]["claude"]["auth"]["auth_method"] == "claude.ai"
+    assert "email" not in result["clients"]["claude"]["auth"]
+    assert result["clients"]["codex"]["auth"]["status"] == "login_required"
+    assert result["clients"]["codex"]["mcp"]["status"] == "not_registered"
+    assert result["clients"]["vscode"]["status"] == "ok"
+    assert result["client_ready"] == {"claude": True, "codex": False, "vscode": True}
+    assert result["ready"] is False
+    assert any("codex login" in step for step in result["next_steps"])
+
+
+def test_doctor_cli_prints_json(monkeypatch, capsys):
+    monkeypatch.setattr(
+        main_mod,
+        "_doctor",
+        lambda mcp_name="chibi": {
+            "ok": True,
+            "version": __version__,
+            "local": {"ok": True},
+            "clients": {},
+            "next_steps": [],
+            "mcp_name": mcp_name,
+        },
+    )
+
+    assert main_mod.main(["--doctor", "--mcp-name", "pet"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["mcp_name"] == "pet"
+
+
+def test_doctor_does_not_call_mcp_timeout_not_registered(monkeypatch):
+    def fake_run_client_command(args, timeout=8.0):
+        command = tuple(args)
+        if command in {
+            ("claude", "auth", "status"),
+            ("codex", "login", "status"),
+            ("code", "--list-extensions"),
+        }:
+            return {"installed": False, "returncode": None, "stdout": "", "stderr": ""}
+        if command == ("claude", "mcp", "get", "chibi"):
+            return {
+                "installed": True,
+                "returncode": None,
+                "stdout": "",
+                "stderr": "timed out",
+                "status": "timeout",
+            }
+        if command == ("codex", "mcp", "get", "chibi"):
+            return {"installed": False, "returncode": None, "stdout": "", "stderr": ""}
+        raise AssertionError(command)
+
+    monkeypatch.setattr(main_mod, "_run_client_command", fake_run_client_command)
+
+    result = _doctor()
+
+    assert result["clients"]["claude"]["mcp"]["status"] == "unknown"
+    assert "mcp get chibi" in result["clients"]["claude"]["mcp"]["next_step"]
 
 
 def test_open_cli_reports_direct_window_result(monkeypatch, capsys):

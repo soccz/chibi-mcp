@@ -46,3 +46,14 @@ curl -fL "$asset_url" -o "$vsix"
 code --install-extension "$vsix" --force
 
 echo "VS Code install complete. Open the chibi activity bar view."
+extensions="$(code --list-extensions 2>/dev/null || true)"
+if printf '%s\n' "$extensions" | grep -qi '^soccz\.chibi-mcp$'; then
+  echo "VS Code extension check: soccz.chibi-mcp installed."
+else
+  echo "warning: Could not verify soccz.chibi-mcp with code --list-extensions. Open VS Code once, then rerun if the chibi activity bar view is missing." >&2
+fi
+if command -v chibi-mcp >/dev/null 2>&1; then
+  echo "Full cross-client diagnostics: chibi-mcp --doctor"
+else
+  echo "For Claude/Codex MCP diagnostics, install the chibi-mcp server, then run: chibi-mcp --doctor"
+fi

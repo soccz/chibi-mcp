@@ -20,7 +20,9 @@ import inspect
 import json
 import logging
 import os
+import shutil
 import signal
+import subprocess
 import sys
 import threading
 from contextlib import suppress
@@ -361,6 +363,209 @@ def _check() -> dict:
     }
 
 
+def _run_client_command(args: list[str], timeout: float = 8.0) -> dict:
+    executable = shutil.which(args[0])
+    if executable is None:
+        return {
+            "installed": False,
+            "returncode": None,
+            "stdout": "",
+            "stderr": "",
+            "status": "missing",
+        }
+    try:
+        completed = subprocess.run(
+            [executable, *args[1:]],
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "installed": True,
+            "returncode": None,
+            "stdout": "",
+            "stderr": "timed out",
+            "status": "timeout",
+        }
+    except OSError as exc:
+        return {
+            "installed": True,
+            "returncode": None,
+            "stdout": "",
+            "stderr": f"{type(exc).__name__}: {exc}",
+            "status": "error",
+        }
+    return {
+        "installed": True,
+        "returncode": completed.returncode,
+        "stdout": completed.stdout or "",
+        "stderr": completed.stderr or "",
+        "status": "ok" if completed.returncode == 0 else "error",
+    }
+
+
+def _compact_output(text: str) -> str:
+    return " ".join(text.strip().split())[:240]
+
+
+def _auth_status_from_output(client: str, result: dict) -> dict:
+    if not result.get("installed"):
+        return {
+            "installed": False,
+            "status": "missing",
+            "next_step": f"Install {client} CLI first.",
+        }
+
+    stdout = str(result.get("stdout") or "")
+    stderr = str(result.get("stderr") or "")
+    combined = f"{stdout}\n{stderr}".strip()
+    lower = combined.lower()
+
+    if result.get("returncode") == 0:
+        if client == "claude":
+            try:
+                payload = json.loads(stdout)
+            except json.JSONDecodeError:
+                payload = {}
+            if payload.get("loggedIn") is False:
+                return {
+                    "installed": True,
+                    "status": "login_required",
+                    "next_step": "Run /login in Claude Code or `claude auth login` in a terminal.",
+                }
+            return {
+                "installed": True,
+                "status": "ok",
+                "auth_method": payload.get("authMethod") or "detected",
+                "api_provider": payload.get("apiProvider"),
+            }
+        return {"installed": True, "status": "ok"}
+
+    if any(term in lower for term in ("401", "login", "log in", "not authenticated", "auth")):
+        next_step = (
+            "Run /login in Claude Code or `claude auth login` in a terminal."
+            if client == "claude"
+            else "Run `codex login`, then retry the chibi command."
+        )
+        return {
+            "installed": True,
+            "status": "login_required",
+            "next_step": next_step,
+            "message": _compact_output(combined),
+        }
+
+    return {
+        "installed": True,
+        "status": "unknown",
+        "next_step": f"Run `{client} --help` and check the CLI install.",
+        "message": _compact_output(combined),
+    }
+
+
+def _mcp_registration_status(client: str, mcp_name: str) -> dict:
+    result = _run_client_command([client, "mcp", "get", mcp_name], timeout=12.0)
+    if not result.get("installed"):
+        return {"status": "missing_client"}
+    combined = f"{result.get('stdout') or ''}\n{result.get('stderr') or ''}"
+    if result.get("returncode") == 0:
+        return {"status": "registered"}
+    if result.get("status") == "timeout":
+        return {
+            "status": "unknown",
+            "next_step": f"Run `{client} mcp get {mcp_name}` directly; the client did not answer the doctor check in time.",
+            "message": _compact_output(combined),
+        }
+    if "no mcp server" not in combined.lower() and "not found" not in combined.lower():
+        return {
+            "status": "unknown",
+            "next_step": f"Run `{client} mcp get {mcp_name}` directly and inspect the client output.",
+            "message": _compact_output(combined),
+        }
+    return {
+        "status": "not_registered",
+        "next_step": f"Run `{client} mcp add {mcp_name} -- chibi-mcp`.",
+        "message": _compact_output(combined),
+    }
+
+
+def _vscode_status() -> dict:
+    result = _run_client_command(["code", "--list-extensions"], timeout=12.0)
+    if not result.get("installed"):
+        return {
+            "installed": False,
+            "status": "missing",
+            "next_step": "Install VS Code and add the `code` command to PATH.",
+        }
+    combined = f"{result.get('stdout') or ''}\n{result.get('stderr') or ''}"
+    if result.get("returncode") != 0:
+        return {
+            "installed": True,
+            "status": "unknown",
+            "next_step": "Open VS Code once, install the `code` command in PATH, then rerun.",
+            "message": _compact_output(combined),
+        }
+    extensions = {line.strip().lower() for line in str(result.get("stdout") or "").splitlines()}
+    if "soccz.chibi-mcp" in extensions:
+        return {"installed": True, "status": "ok", "extension": "soccz.chibi-mcp"}
+    return {
+        "installed": True,
+        "status": "extension_missing",
+        "next_step": "Run the VS Code installer or `code --install-extension chibi-mcp-*.vsix --force`.",
+    }
+
+
+def _doctor(mcp_name: str = "chibi") -> dict:
+    local = _check()
+    claude_auth = _auth_status_from_output(
+        "claude", _run_client_command(["claude", "auth", "status"], timeout=8.0)
+    )
+    codex_auth = _auth_status_from_output(
+        "codex", _run_client_command(["codex", "login", "status"], timeout=8.0)
+    )
+    clients = {
+        "claude": {
+            "auth": claude_auth,
+            "mcp": _mcp_registration_status("claude", mcp_name),
+        },
+        "codex": {
+            "auth": codex_auth,
+            "mcp": _mcp_registration_status("codex", mcp_name),
+        },
+        "vscode": _vscode_status(),
+    }
+    client_ready = {
+        "claude": clients["claude"]["auth"].get("status") == "ok"
+        and clients["claude"]["mcp"].get("status") == "registered",
+        "codex": clients["codex"]["auth"].get("status") == "ok"
+        and clients["codex"]["mcp"].get("status") == "registered",
+        "vscode": clients["vscode"].get("status") == "ok",
+    }
+    next_steps: list[str] = []
+    if not local.get("tkinter"):
+        next_steps.append("Install Python tkinter/Tcl-Tk support, then reinstall chibi-mcp.")
+    for client_name, client_status in clients.items():
+        if client_name in {"claude", "codex"}:
+            for section in ("auth", "mcp"):
+                step = client_status[section].get("next_step")
+                if step:
+                    next_steps.append(step)
+        else:
+            step = client_status.get("next_step")
+            if step:
+                next_steps.append(step)
+    return {
+        "ok": bool(local.get("ok")),
+        "ready": bool(local.get("ok")) and all(client_ready.values()),
+        "version": __version__,
+        "local": local,
+        "clients": clients,
+        "client_ready": client_ready,
+        "next_steps": next_steps,
+    }
+
+
 def _open_window_once(character_id: str | None = None, view_mode: str | None = None) -> dict:
     """Open the floating window from the CLI and return the MCP tool payload."""
     return server_tools.open_pet_window(character_id=character_id, view_mode=view_mode)
@@ -373,6 +578,16 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     )
     parser.add_argument("--version", action="store_true", help="Print version and exit")
     parser.add_argument("--check", action="store_true", help="Check assets and local runtime support")
+    parser.add_argument(
+        "--doctor",
+        action="store_true",
+        help="Check local runtime plus Claude, Codex, and VS Code client state",
+    )
+    parser.add_argument(
+        "--mcp-name",
+        default="chibi",
+        help="MCP server name to inspect with --doctor",
+    )
     parser.add_argument(
         "--open",
         action="store_true",
@@ -401,6 +616,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.check:
         result = _check()
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+    if args.doctor:
+        result = _doctor(mcp_name=args.mcp_name)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1
     if args.open:

@@ -30,6 +30,22 @@ try {
         throw "code --install-extension failed"
     }
     Write-Host "VS Code install complete. Open the chibi activity bar view."
+    $extensions = @()
+    try {
+        $extensions = (& code --list-extensions)
+    } catch {
+        $extensions = @()
+    }
+    if ($extensions -contains "soccz.chibi-mcp") {
+        Write-Host "VS Code extension check: soccz.chibi-mcp installed."
+    } else {
+        Write-Warning "Could not verify soccz.chibi-mcp with code --list-extensions. Open VS Code once, then rerun if the chibi activity bar view is missing."
+    }
+    if (Get-Command chibi-mcp -ErrorAction SilentlyContinue) {
+        Write-Host "Full cross-client diagnostics: chibi-mcp --doctor"
+    } else {
+        Write-Host "For Claude/Codex MCP diagnostics, install the chibi-mcp server, then run: chibi-mcp --doctor"
+    }
 } finally {
     Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
 }

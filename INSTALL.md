@@ -83,6 +83,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubus
 
 The Claude/Codex scripts install `pipx` if needed, install or upgrade the `chibi-mcp` server, run `chibi-mcp --check`, then refresh the MCP server registration with the selected client. If Tk is missing, bash installers try platform repair: Homebrew `python-tk@X.Y` on macOS and common Linux package managers (`apt`, `dnf`, `yum`, `pacman`, `zypper`, `apk`). Windows PowerShell installers can bootstrap Python with `winget` before installing `pipx`, then warn if Tk support is still unavailable. The VS Code scripts download the latest `.vsix` from GitHub Releases and install it with `code --install-extension`.
 
+After a Claude or Codex install, run this for a single cross-client report:
+
+```bash
+chibi-mcp --doctor
+```
+
+It separates local runtime issues from Claude auth, Codex auth, MCP
+registration, and VS Code extension visibility.
+`ok: true` means the local chibi runtime is healthy. `ready: true` means the
+checked Claude, Codex, and VS Code paths are also ready. If an installer warns
+that MCP registration failed, log in to that client and rerun
+`chibi-mcp --doctor` before retrying the slash command.
+
 ## Manual server install
 
 Install the MCP server directly from GitHub:
@@ -105,6 +118,7 @@ Verify the install:
 
 ```bash
 chibi-mcp --check
+chibi-mcp --doctor
 ```
 
 Open the floating window directly, without Claude/Codex:
@@ -147,6 +161,13 @@ chibi 뽑기 한 번
 chibi 보관함 열어
 ```
 
+If Codex reports a login/authentication error, run:
+
+```bash
+codex login
+chibi-mcp --doctor
+```
+
 ## Claude Code
 
 Direct MCP registration:
@@ -174,6 +195,7 @@ without Claude authentication, run:
 ```bash
 chibi-mcp --check
 chibi-mcp --open
+chibi-mcp --doctor
 ```
 
 If `/chibi-mcp:chibi` still reports `Unknown command: /chibi`, the installed
@@ -264,7 +286,7 @@ images, and hidden legacy brand-name leaks.
 For maintainer release-tag readiness after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.34
+make release-check TAG=v1.4.35
 ```
 
 See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
@@ -289,14 +311,14 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push `main`, then run:
 
 ```bash
-make release-check TAG=v1.4.34
+make release-check TAG=v1.4.35
 ```
 
 3. Push a tag:
 
 ```bash
-git tag v1.4.34
-git push origin v1.4.34
+git tag v1.4.35
+git push origin v1.4.35
 ```
 
 4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.

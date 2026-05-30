@@ -18,6 +18,9 @@ Commercial-readiness polish without enabling paid gates.
 - Claude install docs now distinguish Claude Code `/login` / 401 authentication
   failures from local chibi runtime failures, with `chibi-mcp --open` as the
   no-auth local window test.
+- Added `chibi-mcp --doctor` for cross-client diagnostics covering local runtime,
+  Claude auth/MCP registration, Codex auth/MCP registration, and VS Code
+  extension visibility.
 - Added committed launch demo assets: `docs/demo.gif`, Claude Code preview,
   Codex terminal preview, and VS Code sidebar preview, all regenerated from
   local project assets.

@@ -9,11 +9,11 @@
 It is local-first: no telemetry, localhost WebSocket by default, open-source code, and `chibi-mcp --check` for install diagnostics.
 
 <p align="center">
-  <img src="assets/social-preview.png?v=1.4.34-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
+  <img src="assets/social-preview.png?v=1.4.35-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif?v=1.4.34-chibi" alt="animated chibi-mcp demo showing install commands, local status, and the floating pet window" width="720">
+  <img src="docs/demo.gif?v=1.4.35-chibi" alt="animated chibi-mcp demo showing install commands, local status, and the floating pet window" width="720">
 </p>
 
 ## Public Beta Status
@@ -29,7 +29,7 @@ xvfb-run -a make public-beta-check
 Release-tag preflight after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.34
+make release-check TAG=v1.4.35
 ```
 
 See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist and [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging.
@@ -74,15 +74,15 @@ still throttled so the pet does not talk on every command.
 ## Client Previews
 
 <p align="center">
-  <img src="docs/screenshots/claude-code.png?v=1.4.34-chibi" alt="chibi-mcp Claude Code preview with local floating pet window" width="720">
+  <img src="docs/screenshots/claude-code.png?v=1.4.35-chibi" alt="chibi-mcp Claude Code preview with local floating pet window" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/codex-terminal.png?v=1.4.34-chibi" alt="chibi-mcp Codex terminal preview with local diagnostics and floating pet" width="720">
+  <img src="docs/screenshots/codex-terminal.png?v=1.4.35-chibi" alt="chibi-mcp Codex terminal preview with local diagnostics and floating pet" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/vscode-sidebar.png?v=1.4.34-chibi" alt="chibi-mcp VS Code sidebar preview with status meters and floating pet" width="720">
+  <img src="docs/screenshots/vscode-sidebar.png?v=1.4.35-chibi" alt="chibi-mcp VS Code sidebar preview with status meters and floating pet" width="720">
 </p>
 
 ## Who It Is For
@@ -139,7 +139,8 @@ If Claude replies `Please run /login` or `API Error: 401 Invalid authentication
 credentials`, Claude Code failed authentication before the chibi command could
 run. Run `/login` in Claude Code, then retry `/chibi-mcp:chibi`. To verify the
 local pet without Claude authentication, run `chibi-mcp --check` and
-`chibi-mcp --open` in a terminal.
+`chibi-mcp --open` in a terminal. To check Claude, Codex, VS Code, MCP
+registration, and the local runtime together, run `chibi-mcp --doctor`.
 
 ### Codex
 
@@ -164,6 +165,10 @@ chibi 보관함 열어
 chibi 꿀 글레이즈 옵션 적용해줘
 ```
 
+If Codex reports a login/authentication error before it can use the MCP server,
+run `codex login`, then retry. `chibi-mcp --doctor` reports Codex auth and MCP
+registration separately from the local chibi runtime.
+
 ### VS Code
 
 Linux/macOS:
@@ -186,6 +191,10 @@ code --install-extension chibi-mcp-*.vsix
 
 Open the `chibi` activity bar view in VS Code after install.
 
+If the activity bar view is missing, run `code --list-extensions` and confirm
+`soccz.chibi-mcp` is listed. `chibi-mcp --doctor` includes this check when the
+server CLI is installed.
+
 See [INSTALL.md](INSTALL.md) for the full Claude/Codex/VS Code and Linux/macOS/Windows install matrix.
 
 ## Verify Install
@@ -194,6 +203,7 @@ Run either command:
 
 ```bash
 chibi-mcp --check
+chibi-mcp --doctor
 chibi-check
 ```
 
@@ -205,8 +215,13 @@ Expected output includes:
 - catalog count
 - option count
 - `tkinter: true` if the floating window can open
+- `clients` from `--doctor`, including Claude auth, Codex auth, MCP registration, and VS Code extension visibility
+- `ready: true` from `--doctor` only when the local runtime and every detected client path are ready
 
 If `tkinter` is false or no display session is available, MCP tools still work, but the floating pet window will return a diagnostic instead of opening.
+If `ok` is true but `ready` is false, chibi itself is installed; follow the
+printed `next_steps` for Claude login, Codex login/MCP registration, or VS Code
+extension visibility.
 
 ## Use It
 
@@ -272,11 +287,11 @@ bridge for save/task/debug reactions.
 ## Visual Assets
 
 <p align="center">
-  <img src="docs/screenshots/starter-lineup.png?v=1.4.34-chibi" alt="chibi-mcp starter character lineup" width="720">
+  <img src="docs/screenshots/starter-lineup.png?v=1.4.35-chibi" alt="chibi-mcp starter character lineup" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/option-showcase.png?v=1.4.34-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
+  <img src="docs/screenshots/option-showcase.png?v=1.4.35-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
 </p>
 
 ## Troubleshooting

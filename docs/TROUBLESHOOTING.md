@@ -8,6 +8,7 @@ Run:
 
 ```bash
 chibi-mcp --check
+chibi-mcp --doctor
 ```
 
 or:
@@ -123,6 +124,7 @@ Verify the server command exists:
 
 ```bash
 chibi-mcp --check
+chibi-mcp --doctor
 ```
 
 Then test the actual floating window outside Claude/Codex:
@@ -170,7 +172,14 @@ from a normal terminal:
 ```bash
 chibi-mcp --check
 chibi-mcp --open
+chibi-mcp --doctor
 ```
+
+`chibi-mcp --doctor` reports Claude auth and MCP registration separately, so a
+Claude 401 does not get mistaken for a local chibi failure. If `ok` is true but
+`ready` is false, use the printed `next_steps`; the local server is installed,
+but at least one client login, MCP registration, or VS Code extension check is
+not ready.
 
 If `/chibi-mcp:chibi` prints `Unknown command: /chibi`, Claude is still using
 an old plugin command. Rerun the installer, then restart Claude Code:
@@ -212,6 +221,7 @@ Verify the server command exists:
 
 ```bash
 chibi-mcp --check
+chibi-mcp --doctor
 ```
 
 Register it manually:
@@ -224,6 +234,19 @@ Optional local plugin marketplace registration from a clone:
 
 ```bash
 codex plugin marketplace add .
+```
+
+If `clients.codex.auth.status` is `login_required`, run:
+
+```bash
+codex login
+```
+
+If `clients.codex.mcp.status` is `not_registered`, refresh the MCP entry:
+
+```bash
+codex mcp remove chibi || true
+codex mcp add chibi -- chibi-mcp
 ```
 
 ## VS Code Installer Fails
@@ -242,7 +265,12 @@ Manual install from a downloaded `.vsix`:
 
 ```bash
 code --install-extension chibi-mcp-*.vsix --force
+code --list-extensions
 ```
+
+`chibi-mcp --doctor` reports whether `soccz.chibi-mcp` is visible to the `code`
+CLI. If `code --list-extensions` cannot connect to VS Code, open VS Code once
+and reinstall the `code` shell command.
 
 Windows PowerShell from a clone:
 

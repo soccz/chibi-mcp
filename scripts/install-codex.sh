@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_URL="${CHIBI_REPO_URL:-git+https://github.com/soccz/chibi-mcp.git#subdirectory=server}"
 MARKETPLACE="${CHIBI_MARKETPLACE:-soccz/chibi-mcp}"
 MCP_NAME="${CHIBI_MCP_NAME:-chibi}"
-EXPECTED_VERSION="${CHIBI_EXPECT_VERSION:-1.4.34}"
+EXPECTED_VERSION="${CHIBI_EXPECT_VERSION:-1.4.35}"
 PYTHON_BIN=""
 PIPX_CMD=()
 
@@ -48,6 +48,14 @@ setup_pipx() {
 
 pipx_run() {
   "${PIPX_CMD[@]}" "$@"
+}
+
+print_codex_auth_status() {
+  if codex login status >/dev/null 2>&1; then
+    echo "Codex auth: ok"
+  else
+    echo "warning: Codex auth is not ready. Run 'codex login' before asking Codex to use chibi." >&2
+  fi
 }
 
 run_privileged() {
@@ -236,13 +244,26 @@ run_check_and_repair() {
   fi
 }
 
+refresh_codex_mcp() {
+  echo "Refreshing Codex MCP '$MCP_NAME' registration..."
+  codex mcp remove "$MCP_NAME" >/dev/null 2>&1 || true
+  if codex mcp add "$MCP_NAME" -- "$CHIBI_CMD"; then
+    echo "Codex MCP '$MCP_NAME' registered."
+  else
+    echo "warning: Codex MCP registration failed. Run 'codex login' if needed, then run: codex mcp add $MCP_NAME -- $CHIBI_CMD" >&2
+    echo "warning: Full diagnostic: $CHIBI_CMD --doctor --mcp-name $MCP_NAME" >&2
+  fi
+}
+
 install_or_upgrade_server
 run_check_and_repair
 
-echo "Refreshing Codex MCP '$MCP_NAME' registration..."
-codex mcp remove "$MCP_NAME" >/dev/null 2>&1 || true
-codex mcp add "$MCP_NAME" -- "$CHIBI_CMD"
+refresh_codex_mcp
 
 codex plugin marketplace add "$MARKETPLACE" || true
 
+print_codex_auth_status
+
 echo "Codex install complete. Try: chibi 보여줘"
+echo "To test the local pet without Codex auth, run: $CHIBI_CMD --open"
+echo "To check Claude, Codex, VS Code, MCP registration, and local runtime together, run: $CHIBI_CMD --doctor --mcp-name $MCP_NAME"
