@@ -61,24 +61,24 @@ METER_TRACK = "#ead7c3"
 METER_GOOD = "#55bd83"
 METER_WARN = "#f4a23a"
 METER_DANGER = "#f05f4b"
-BUTTON_SECONDARY_BG = "#fffdf7"
-BUTTON_SECONDARY_HOVER = "#edfdf4"
-BUTTON_SECONDARY_ACTIVE = "#d7f4e2"
-BUTTON_SECONDARY_BORDER = "#b7e4c7"
-BUTTON_SECONDARY_SHADOW = "#ead7be"
-BUTTON_SECONDARY_ICON_BG = "#e8f8ee"
-BUTTON_PRIMARY_BG = "#ff6b9d"
-BUTTON_PRIMARY_HOVER = "#ff7fac"
-BUTTON_PRIMARY_ACTIVE = "#f6558e"
-BUTTON_PRIMARY_BORDER = "#ff9dbd"
-BUTTON_PRIMARY_SHADOW = "#d8497a"
-BUTTON_PRIMARY_ICON_BG = "#ffd5e3"
-BUTTON_DANGER_BG = "#fff2f0"
-BUTTON_DANGER_HOVER = "#ffe0dc"
-BUTTON_DANGER_ACTIVE = "#ffc7bf"
-BUTTON_DANGER_BORDER = "#ffb0a6"
-BUTTON_DANGER_SHADOW = "#e7b1a9"
-BUTTON_DANGER_ICON_BG = "#ffd8d2"
+BUTTON_SECONDARY_BG = "#fffdf8"
+BUTTON_SECONDARY_HOVER = "#f0fff6"
+BUTTON_SECONDARY_ACTIVE = "#e0f7eb"
+BUTTON_SECONDARY_BORDER = "#9fd9b6"
+BUTTON_SECONDARY_SHADOW = "#d9c2a8"
+BUTTON_SECONDARY_ICON_BG = "#e5f6ec"
+BUTTON_PRIMARY_BG = "#ff5f98"
+BUTTON_PRIMARY_HOVER = "#ff78aa"
+BUTTON_PRIMARY_ACTIVE = "#f04b86"
+BUTTON_PRIMARY_BORDER = "#f13e82"
+BUTTON_PRIMARY_SHADOW = "#bc3c6d"
+BUTTON_PRIMARY_ICON_BG = "#ffd8e6"
+BUTTON_DANGER_BG = "#fff6f2"
+BUTTON_DANGER_HOVER = "#ffe8e1"
+BUTTON_DANGER_ACTIVE = "#ffd5ca"
+BUTTON_DANGER_BORDER = "#f0a194"
+BUTTON_DANGER_SHADOW = "#d7aaa1"
+BUTTON_DANGER_ICON_BG = "#ffddd6"
 BUTTON_DANGER_FG = "#7d302a"
 BUTTON_DISABLED_BG = "#eee0d2"
 BUTTON_DISABLED_FG = "#9b8b7d"
@@ -852,6 +852,16 @@ def _load_catalog(asset_dir: Path | None) -> dict:
     return _load_json_file(asset_dir / "meta.json")
 
 
+def _parse_initial_state(raw: str | None) -> dict:
+    if not raw:
+        return {}
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
 def _released_items(catalog: dict, key: str) -> list[dict]:
     items = catalog.get(key)
     if not isinstance(items, list):
@@ -861,6 +871,113 @@ def _released_items(catalog: dict, key: str) -> list[dict]:
         for item in items
         if isinstance(item, dict) and not item.get("locked") and item.get("tier") == "free"
     ]
+
+
+class ChibiBubble(tk.Canvas):
+    """Soft rounded speech/status bubble drawn without native label chrome."""
+
+    def __init__(self, parent: tk.Misc, *, width: int, panel_bg: str):
+        self._scale = 1.0
+        self._bubble_width = width
+        self._text = ""
+        self._bubble_height = 44
+        super().__init__(
+            parent,
+            width=width,
+            height=self._bubble_height,
+            bg=panel_bg,
+            bd=0,
+            highlightthickness=0,
+        )
+        self.bind("<Configure>", lambda _event: self._draw())
+
+    def _s(self, value: int) -> int:
+        return max(1, round(value * self._scale))
+
+    def _font(self) -> tuple[str, int, str]:
+        return ("Helvetica", max(8, self._s(10)), "bold")
+
+    def _rounded_rect(self, x1: int, y1: int, x2: int, y2: int, radius: int, **kwargs) -> int:
+        points = [
+            x1 + radius,
+            y1,
+            x2 - radius,
+            y1,
+            x2,
+            y1,
+            x2,
+            y1 + radius,
+            x2,
+            y2 - radius,
+            x2,
+            y2,
+            x2 - radius,
+            y2,
+            x1 + radius,
+            y2,
+            x1,
+            y2,
+            x1,
+            y2 - radius,
+            x1,
+            y1 + radius,
+            x1,
+            y1,
+        ]
+        return self.create_polygon(points, smooth=True, splinesteps=12, **kwargs)
+
+    def set_layout(self, width: int, scale: float) -> None:
+        self._scale = _clamp_window_scale(scale)
+        self._bubble_width = max(self._s(180), width)
+        self._draw()
+
+    def set_message(self, text: str, *, width: int, scale: float) -> None:
+        self._text = text
+        self.set_layout(width, scale)
+
+    def _draw(self) -> None:
+        width = max(self._s(180), int(self.winfo_width() or self._bubble_width))
+        text_width = max(self._s(120), width - self._s(38))
+        self.delete("all")
+        text_id = self.create_text(
+            width // 2,
+            self._s(11),
+            text=self._text,
+            width=text_width,
+            anchor="n",
+            justify="center",
+            fill=TEXT_FG,
+            font=self._font(),
+            tags=("bubble_text",),
+        )
+        text_box = self.bbox(text_id) or (0, 0, width, self._s(18))
+        target_height = max(self._s(42), (text_box[3] - text_box[1]) + self._s(22))
+        if target_height != self._bubble_height or int(self.cget("width")) != self._bubble_width:
+            self._bubble_height = target_height
+            self.configure(width=self._bubble_width, height=self._bubble_height)
+        shadow = self._rounded_rect(
+            self._s(5),
+            self._s(7),
+            width - self._s(4),
+            self._bubble_height - self._s(2),
+            self._s(10),
+            fill="#ead8c1",
+            outline="",
+            tags=("bubble_bg",),
+        )
+        bg = self._rounded_rect(
+            self._s(2),
+            self._s(2),
+            width - self._s(7),
+            self._bubble_height - self._s(7),
+            self._s(10),
+            fill="#fffaf3",
+            outline=PANEL_BORDER,
+            width=max(1, self._s(1)),
+            tags=("bubble_bg",),
+        )
+        self.tag_lower(bg, text_id)
+        self.tag_lower(shadow, bg)
 
 
 class ChibiButton(tk.Canvas):
@@ -883,7 +1000,7 @@ class ChibiButton(tk.Canvas):
         self._colors = colors
         self._icon = icon
         self._base_min_width = min_width
-        self._base_button_height = 34
+        self._base_button_height = 38
         self._scale = 1.0
         self._min_width = min_width
         self._button_height = self._base_button_height
@@ -911,6 +1028,7 @@ class ChibiButton(tk.Canvas):
         self.bind("<FocusOut>", lambda _event: self._set_focus(False))
         self.bind("<Return>", lambda _event: self.invoke())
         self.bind("<space>", lambda _event: self.invoke())
+        self._sync_dimensions()
         self._draw()
 
     def set_scale(self, scale: float) -> None:
@@ -918,10 +1036,23 @@ class ChibiButton(tk.Canvas):
         if abs(scale - self._scale) < 0.01:
             return
         self._scale = scale
-        self._min_width = max(44, round(self._base_min_width * scale))
-        self._button_height = max(24, round(self._base_button_height * scale))
-        self.configure(width=self._min_width, height=self._button_height)
+        self._sync_dimensions()
         self._draw()
+
+    def _sync_dimensions(self) -> None:
+        self._button_height = max(30, round(self._base_button_height * self._scale))
+        self._min_width = max(52, round(self._base_min_width * self._scale), self._content_width())
+        self.configure(width=self._min_width, height=self._button_height)
+
+    def _content_width(self) -> int:
+        try:
+            font_obj = tkfont.Font(font=self._text_font())
+            text_width = font_obj.measure(self._text)
+        except tk.TclError:
+            text_width = len(self._text) * self._s(10)
+        icon_width = self._s(28) if self._icon else 0
+        padding = self._s(22 if self._anchor == "center" else 18)
+        return text_width + icon_width + padding
 
     def set_enabled(self, enabled: bool) -> None:
         self._enabled = enabled
@@ -941,6 +1072,7 @@ class ChibiButton(tk.Canvas):
         if text is not None:
             self._text = text
         self._tone = "bg"
+        self._sync_dimensions()
         self._draw()
 
     def invoke(self) -> None:
@@ -995,6 +1127,9 @@ class ChibiButton(tk.Canvas):
     def _s(self, value: int) -> int:
         return max(1, round(value * self._scale))
 
+    def _text_font(self) -> tuple[str, int, str]:
+        return ("Helvetica", max(8, self._s(10)), "bold")
+
     def _draw(self) -> None:
         width = max(self._min_width, int(self.winfo_width() or self._min_width))
         height = self._button_height
@@ -1017,65 +1152,70 @@ class ChibiButton(tk.Canvas):
         self._rounded_rect(
             self._s(3),
             self._s(5),
-            width - self._s(2),
-            height - self._s(1),
-            self._s(13),
+            width - self._s(3),
+            height - self._s(2),
+            self._s(9),
             fill=shadow,
             outline="",
+            tags=("button_shadow",),
         )
         self._rounded_rect(
-            self._s(1),
+            self._s(2),
             self._s(1) + press_offset,
-            width - self._s(3),
-            height - self._s(5) + press_offset,
-            self._s(13),
+            width - self._s(4),
+            height - self._s(7) + press_offset,
+            self._s(9),
             fill=fill,
             outline=border,
             width=max(1, self._s(1)),
+            tags=("button_surface",),
         )
         if self._enabled:
             self.create_line(
                 self._s(12),
-                self._s(6) + press_offset,
+                self._s(7) + press_offset,
                 width - self._s(14),
-                self._s(6) + press_offset,
+                self._s(7) + press_offset,
                 fill="#ffffff",
                 width=max(1, self._s(1)),
                 capstyle="round",
+                tags=("button_highlight",),
             )
         if self._focused and self._enabled:
             self._rounded_rect(
-                self._s(3),
-                self._s(3) + press_offset,
-                width - self._s(5),
-                height - self._s(7) + press_offset,
-                self._s(11),
+                self._s(5),
+                self._s(4) + press_offset,
+                width - self._s(7),
+                height - self._s(10) + press_offset,
+                self._s(7),
                 fill="",
                 outline=TEXT_FG,
                 width=max(1, self._s(1)),
+                tags=("button_focus",),
             )
 
         text_anchor = "center"
         text_x = width // 2
-        center_y = height // 2 - self._s(1) + press_offset // 2
+        center_y = (height - self._s(5)) // 2 + press_offset // 2
         if self._anchor == "w":
             text_anchor = "w"
             text_x = self._s(16 if not self._colors.get("indicator") else 20)
 
         if self._colors.get("indicator"):
             self._rounded_rect(
-                self._s(8),
-                self._s(10) + press_offset,
-                self._s(12),
-                height - self._s(10) + press_offset,
+                self._s(7),
+                self._s(12) + press_offset,
+                self._s(11),
+                height - self._s(14) + press_offset,
                 self._s(3),
                 fill=self._colors["indicator"],
                 outline="",
+                tags=("button_indicator",),
             )
 
         if self._icon:
-            icon_left = self._s(8)
-            icon_size = self._s(17)
+            icon_left = self._s(9)
+            icon_size = self._s(19)
             icon_center = icon_left + icon_size // 2
             self.create_oval(
                 icon_left,
@@ -1084,15 +1224,17 @@ class ChibiButton(tk.Canvas):
                 center_y + icon_size // 2,
                 fill=icon_bg,
                 outline="",
+                tags=("button_icon_bg",),
             )
             self.create_text(
                 icon_center,
                 center_y,
                 text=self._icon,
                 fill=fg,
-                font=("Helvetica", max(6, self._s(8)), "bold"),
+                font=("Helvetica", max(7, self._s(9)), "bold"),
+                tags=("button_icon",),
             )
-            text_x = width // 2 + self._s(9) if self._anchor != "w" else self._s(32)
+            text_x = width // 2 + self._s(9) if self._anchor != "w" else self._s(36)
             text_anchor = "center" if self._anchor != "w" else "w"
 
         self.create_text(
@@ -1101,7 +1243,8 @@ class ChibiButton(tk.Canvas):
             text=self._text,
             anchor=text_anchor,
             fill=fg,
-            font=("Helvetica", max(7, self._s(9)), "bold"),
+            font=self._text_font(),
+            tags=("button_text",),
         )
 
 
@@ -1560,6 +1703,7 @@ class PetWindow:
         frameless: bool = True,
         sounds: bool = True,
         view_mode: str | None = None,
+        initial_state: dict | None = None,
     ):
         self.image_path = image_path
         self.name = name
@@ -1695,7 +1839,7 @@ class PetWindow:
         self.status_card.pack(pady=(2, 8), padx=10, fill="x")
 
         self.toolbar = tk.Frame(self.root, bg=bg)
-        self.toolbar.pack(pady=(0, 10), padx=8)
+        self.toolbar.pack(pady=(2, 14), padx=12)
         self.inventory_button = self._make_button(
             self.toolbar,
             "보관함",
@@ -1717,7 +1861,7 @@ class PetWindow:
             "설정",
             lambda: self._toggle_drawer("settings"),
             icon="⚙",
-            min_width=62,
+            min_width=68,
         )
         self.settings_button.pack(side="left", padx=3)
         mode_text, mode_icon = VIEW_MODE_BUTTONS[self.view_mode]
@@ -1727,7 +1871,7 @@ class PetWindow:
             self._cycle_view_mode,
             kind="selected" if self.view_mode != "normal" else "secondary",
             icon=mode_icon,
-            min_width=62,
+            min_width=68,
         )
         self.mode_button.pack(side="left", padx=3)
         self.pull_button = self._make_button(
@@ -1749,17 +1893,10 @@ class PetWindow:
         )
 
         # Speech bubble
-        self.bubble = tk.Label(
+        self.bubble = ChibiBubble(
             self.root,
-            text="",
-            bg="#fffdf7",
-            fg=TEXT_FG,
-            font=("Helvetica", 10),
-            wraplength=total_w - 30,
-            padx=10,
-            pady=6,
-            relief="solid",
-            borderwidth=1,
+            width=total_w - self._s(30),
+            panel_bg=bg,
         )
         self._bubble_hide_after: str | None = None
 
@@ -1824,6 +1961,8 @@ class PetWindow:
         self._layout_ready = True
         self._apply_window_scale(self._initial_window_scale_value, persist=False)
         self._apply_view_mode(self.view_mode, announce=False, persist=False)
+        if initial_state:
+            self._handle_event({"type": "state", "payload": initial_state})
         self._place_and_raise()
 
     def _place_and_raise(self) -> None:
@@ -1879,6 +2018,15 @@ class PetWindow:
             self._canvas_center[1] + self._img_h // 2 - self._s(8),
         )
         return shadow_w, shadow_y
+
+    def _bubble_width(self) -> int:
+        total_w, _canvas_h = self._stage_dimensions()
+        target = total_w - self._s(30)
+        with contextlib.suppress(tk.TclError):
+            root_w = max(self.root.winfo_width(), self.root.winfo_reqwidth())
+            if root_w > 1:
+                target = max(target, min(root_w - self._s(80), self._s(540)))
+        return max(self._s(180), target)
 
     def _update_stage_chrome(self) -> None:
         if not hasattr(self, "canvas"):
@@ -2093,12 +2241,7 @@ class PetWindow:
         self.status_card.configure(width=max(self._s(260), total_w - self._s(20)))
         self._last_bob_offset = 0
         self._refresh_mood_fx(force=True)
-        self.bubble.configure(
-            wraplength=max(self._s(160), total_w - self._s(30)),
-            font=("Helvetica", max(8, self._s(10))),
-            padx=self._s(10),
-            pady=self._s(6),
-        )
+        self.bubble.set_layout(self._bubble_width(), self._window_scale)
         self._draw_resize_grip()
 
     def _set_control_scale(self) -> None:
@@ -2120,7 +2263,7 @@ class PetWindow:
             )
         self._pack_toolbar_for_mode()
         self.drawer.configure(padx=self._s(8), pady=self._s(8))
-        self.toolbar.pack_configure(pady=(0, self._s(10)), padx=self._s(8))
+        self.toolbar.pack_configure(pady=(self._s(2), self._s(14)), padx=self._s(12))
         self._draw_resize_grip()
 
     def _fit_root_to_content(self) -> None:
@@ -2987,7 +3130,11 @@ class PetWindow:
         if not text:
             return
         clipped = text[:120] + ("…" if len(text) > 120 else "")
-        self.bubble.configure(text=clipped)
+        self.bubble.set_message(
+            clipped,
+            width=self._bubble_width(),
+            scale=self._window_scale,
+        )
         self._play_safe("bubble")
         try:
             self.bubble.pack(
@@ -3359,6 +3506,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--asset-dir", default=None, help="Directory containing assets/meta.json")
     parser.add_argument("--character-id", default=None, help="Current catalog character id")
     parser.add_argument("--ready-file", default=None, help="Write this file after Tk startup")
+    parser.add_argument("--initial-state", default=None, help="Initial state JSON before live WS updates")
     parser.add_argument("--ws", default=None, help="WebSocket URL for live updates")
     parser.add_argument(
         "--view-mode",
@@ -3391,6 +3539,7 @@ def main(argv: list[str] | None = None) -> int:
     if asset_dir is not None and not (asset_dir / "meta.json").exists():
         print(f"asset meta not found: {asset_dir / 'meta.json'}", file=sys.stderr)
         return 1
+    initial_state = _parse_initial_state(args.initial_state)
 
     win = PetWindow(
         image_path,
@@ -3404,6 +3553,7 @@ def main(argv: list[str] | None = None) -> int:
         frameless=not args.no_frameless,
         sounds=not args.no_sounds,
         view_mode=args.view_mode or os.environ.get("CHIBI_WINDOW_MODE"),
+        initial_state=initial_state,
     )
     _write_ready_file(args.ready_file)
     win.start(args.ws)

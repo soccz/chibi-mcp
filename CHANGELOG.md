@@ -21,6 +21,9 @@ Commercial-readiness polish without enabling paid gates.
 - Added `chibi-mcp --doctor` for cross-client diagnostics covering local runtime,
   Claude auth/MCP registration, Codex auth/MCP registration, and VS Code
   extension visibility.
+- Polished the floating window toolbar buttons and speech bubble styling, and
+  passed an initial state snapshot into standalone window launches so CPU/RAM/BAT
+  meters are populated before live WebSocket updates arrive.
 - Added committed launch demo assets: `docs/demo.gif`, Claude Code preview,
   Codex terminal preview, and VS Code sidebar preview, all regenerated from
   local project assets.

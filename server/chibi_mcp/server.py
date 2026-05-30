@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import logging
 import os
 import re
@@ -558,6 +559,8 @@ def open_pet_window(character_id: str | None = None, view_mode: str | None = Non
         mood,
         "--ws",
         f"ws://127.0.0.1:{os.environ.get('CHIBI_WS_PORT', '9876')}",
+        "--initial-state",
+        json.dumps(snap, ensure_ascii=False, separators=(",", ":")),
         "--asset-dir",
         str(asset_dir),
         "--character-id",

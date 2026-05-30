@@ -27,6 +27,13 @@ def test_write_ready_file(tmp_path):
     assert '"ready": true' in ready.read_text(encoding="utf-8")
 
 
+def test_initial_state_json_parser_is_defensive():
+    assert window._parse_initial_state('{"mood":"happy"}') == {"mood": "happy"}
+    assert window._parse_initial_state("[1, 2]") == {}
+    assert window._parse_initial_state("not json") == {}
+    assert window._parse_initial_state(None) == {}
+
+
 def test_window_scale_is_clamped():
     assert window._clamp_window_scale(0.1) == window.WINDOW_MIN_SCALE
     assert window._clamp_window_scale(1.2) == 1.2

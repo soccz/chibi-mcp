@@ -37,9 +37,43 @@ def main() -> int:
             character_id="white_tteok",
             frameless=False,
             sounds=False,
+            initial_state={
+                "mood": "calm",
+                "system": {
+                    "cpu_percent": 23.0,
+                    "ram_percent": 41.0,
+                    "battery_percent": 88.0,
+                    "battery_plugged": False,
+                },
+                "counters": {
+                    "calls_total": 4,
+                    "calls_since_slice": 4,
+                    "slice_interval": 10,
+                    "slices_today": 0,
+                },
+                "timing": {"idle_seconds": 12},
+                "gacha": {"active_character_id": "white_tteok", "active_option_ids": []},
+            },
         )
         try:
             pet.root.update_idletasks()
+            assert pet.status_card._metric_values == {"CPU": 23, "RAM": 41, "BAT": 88}
+            assert abs(pet.status_card._rhythm_fraction - 0.4) < 0.01
+            assert int(pet.bubble.cget("highlightthickness")) == 0
+            for button in (
+                pet.inventory_button,
+                pet.options_button,
+                pet.settings_button,
+                pet.mode_button,
+                pet.pull_button,
+                pet.close_button,
+            ):
+                assert button.find_withtag("button_surface")
+                assert button.find_withtag("button_text")
+                button_box = button.bbox("button_surface")
+                text_box = button.bbox("button_text")
+                assert button_box and text_box
+                assert button_box[1] <= text_box[1] < text_box[3] <= button_box[3] + 2
             base_photo = pet._photo.width(), pet._photo.height()
             base_canvas = int(pet.canvas.cget("width")), int(pet.canvas.cget("height"))
             base_root_h = pet.root.winfo_height()
@@ -67,7 +101,7 @@ def main() -> int:
                 pet._toggle_option_chip(option_id)
             pet._toggle_option_chip("rainbow_sprinkles")
             pet.root.update_idletasks()
-            assert "3" in str(pet.bubble.cget("text"))
+            assert "3" in pet.bubble._text
 
             pet._toggle_drawer("settings")
             pet.root.update_idletasks()
@@ -160,12 +194,13 @@ def main() -> int:
             pet._start_drag(SimpleNamespace(x_root=10, y_root=10, widget=pet.canvas))
             pet._end_drag(SimpleNamespace())
             pet.root.update_idletasks()
-            assert "CPU 82%" in str(pet.bubble.cget("text"))
+            assert "CPU 82%" in pet.bubble._text
+            assert pet.bubble.find_withtag("bubble_bg")
 
             pet._start_drag(SimpleNamespace(x_root=10, y_root=10, widget=pet.status_card))
             pet._end_drag(SimpleNamespace())
             pet.root.update_idletasks()
-            assert "리듬 1/10" in str(pet.bubble.cget("text"))
+            assert "리듬 1/10" in pet.bubble._text
 
             assert pet.view_mode == "normal"
             pet._cycle_view_mode()
