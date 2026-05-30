@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from datetime import datetime
 
 from chibi_mcp import window
 
@@ -166,6 +167,18 @@ def test_gacha_refill_lines_explain_free_pull_and_ticket_sources():
 
 
 def test_refill_duration_is_human_sized():
+    assert (
+        window._free_pull_status(
+            {
+                "gacha": {
+                    "last_free_pull_date": datetime.now().date().isoformat(),
+                    "next_free_in_seconds": 0,
+                }
+            },
+            {},
+        )
+        == "무료뽑기 곧 가능"
+    )
     assert window._format_refill_duration(30) == "30초"
     assert window._format_refill_duration(180) == "3분"
     assert window._format_refill_duration(3660) == "1시간 01분"

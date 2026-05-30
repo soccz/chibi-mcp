@@ -13,6 +13,8 @@ Commercial-readiness polish without enabling paid gates.
 - The floating window now surfaces server connection state, gacha refill
   context, size controls, and an in-window "작동 방식" guide for CPU, battery,
   tool-call, idle, and ticket logic.
+- Gacha refill copy now keeps the server-provided `0` second edge case as
+  "무료뽑기 곧 가능" instead of falling back to local midnight.
 - Added committed launch demo assets: `docs/demo.gif`, Claude Code preview,
   Codex terminal preview, and VS Code sidebar preview, all regenerated from
   local project assets.

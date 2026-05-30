@@ -370,8 +370,13 @@ def _free_pull_status(payload: dict, persisted_state: dict) -> str:
     )
     if last_free != today:
         return "무료뽑기 가능"
-    refill_seconds = gacha.get("next_free_in_seconds") or _seconds_until_midnight_local()
-    return f"무료뽑기 {_format_refill_duration(refill_seconds)} 후"
+    refill_seconds = gacha.get("next_free_in_seconds")
+    if refill_seconds is None:
+        refill_seconds = _seconds_until_midnight_local()
+    duration = _format_refill_duration(refill_seconds)
+    if duration == "곧":
+        return "무료뽑기 곧 가능"
+    return f"무료뽑기 {duration} 후"
 
 
 def _gacha_refill_lines(payload: dict, persisted_state: dict) -> list[str]:
