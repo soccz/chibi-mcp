@@ -162,10 +162,12 @@ Ensure-Pipx
 Require-Command codex
 
 $installed = (Invoke-Pipx list --short 2>$null) -match '^chibi-mcp(\s|$)'
+Write-Host "Installing/upgrading chibi-mcp from GitHub..."
 if ($installed) {
-    Invoke-Pipx upgrade chibi-mcp
+    Invoke-Pipx install --force $RepoUrl
     if ($LASTEXITCODE -ne 0) {
-        Invoke-Pipx reinstall chibi-mcp
+        Invoke-Pipx uninstall chibi-mcp
+        Invoke-Pipx install $RepoUrl
     }
 } else {
     Invoke-Pipx install $RepoUrl

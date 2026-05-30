@@ -340,6 +340,7 @@ from pathlib import Path
 root = Path(os.environ["ROOT"])
 shared_required = [
     "setup_pipx",
+    "pipx_run install --force \"$REPO_URL\"",
     "repair_linux_tkinter",
     "python3-tkinter",
     "pacman -Sy --noconfirm tk",
@@ -368,6 +369,7 @@ windows_required = [
     "Install-PythonWithWinget",
     "winget install --exact --id Python.Python.3.13",
     "Ensure-Pipx",
+    "Invoke-Pipx install --force $RepoUrl",
     "ConvertFrom-Json",
 ]
 for rel in ["scripts/install-claude.ps1", "scripts/install-codex.ps1"]:

@@ -197,8 +197,12 @@ repair_tkinter_if_possible() {
 }
 
 install_or_upgrade_server() {
+  echo "Installing/upgrading chibi-mcp from GitHub..."
   if pipx_run list --short 2>/dev/null | awk '{print $1}' | grep -qx "chibi-mcp"; then
-    pipx_run upgrade chibi-mcp || pipx_run reinstall chibi-mcp
+    pipx_run install --force "$REPO_URL" || {
+      pipx_run uninstall chibi-mcp || true
+      pipx_run install "$REPO_URL"
+    }
   else
     pipx_run install "$REPO_URL"
   fi

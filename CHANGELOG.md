@@ -22,6 +22,9 @@ Commercial-readiness polish without enabling paid gates.
   as `Failed to connect`.
 - MCP stdio now reads and writes UTF-8 bytes directly so Korean catalog/tool
   responses work on Windows consoles as well as Linux/macOS.
+- Claude/Codex installers now force `pipx` to reinstall from the GitHub server
+  subdirectory, avoiding stale installs that report old versions such as 1.1.0
+  as already latest.
 - Expanded built-in local ASMR-style sounds: squish, slice, normal gacha, rare gacha, option brush, and bubble pop are generated as free local wav files with no network or paid sound packs.
 - Expanded installer self-repair beyond macOS: Linux bash installers now try Tk repair across `apt`, `dnf`, `yum`, `pacman`, `zypper`, and `apk`; Windows PowerShell installers can bootstrap Python with `winget` before installing `pipx`.
 - Made the Claude/Codex installers more self-healing: they install `pipx` when it is missing, suppress confusing `pipx ensurepath` noise, attempt macOS Homebrew Tk repair automatically in bash, reinstall the pipx app after Tk repair, and re-run the health check.
