@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 from PIL import Image
@@ -22,7 +25,29 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.11"
+    assert __version__ == "1.4.12"
+
+
+def test_stdio_startup_does_not_write_non_protocol_output():
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(ROOT / "server")
+
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "chibi_mcp", "--no-ws"],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            timeout=1.5,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        assert exc.stdout in (None, b"")
+        assert exc.stderr in (None, b"")
+    else:
+        assert result.returncode == 0
+        assert result.stdout == b""
+        assert result.stderr == b""
 
 
 def test_check_finds_packaged_assets():

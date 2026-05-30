@@ -1,7 +1,7 @@
 {
   "name": "chibi-mcp",
   "description": "chibi — local desktop pet for Claude Code. Collect squishy characters, apply 12 free option layers, and let chibi react to your coding session.",
-  "version": "1.4.11",
+  "version": "1.4.12",
   "author": {
     "name": "soccz",
     "url": "https://github.com/soccz"

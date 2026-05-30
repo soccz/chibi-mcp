@@ -30,7 +30,7 @@ from .ws_server import DEFAULT_WS_HOST, DEFAULT_WS_PORT, run_ws_server
 
 
 def _setup_logging() -> None:
-    level_name = os.environ.get("CHIBI_LOG_LEVEL", "INFO").upper()
+    level_name = os.environ.get("CHIBI_LOG_LEVEL", "WARNING").upper()
     level = getattr(logging, level_name, logging.INFO)
     # Log to stderr — stdout is reserved for MCP stdio transport
     logging.basicConfig(
@@ -70,8 +70,9 @@ async def _run_concurrent(ws_enabled: bool = True) -> None:
     host, port = _ws_endpoint()
 
     ws_task = asyncio.create_task(_run_ws_optional(host=host, port=port)) if ws_enabled else None
-    # FastMCP's run_stdio_async is the asyncio variant of mcp.run()
-    mcp_task = asyncio.create_task(mcp.run_stdio_async())
+    # FastMCP's banner writes to stdout, which corrupts stdio MCP framing.
+    # stdout must contain JSON-RPC messages only.
+    mcp_task = asyncio.create_task(mcp.run_stdio_async(show_banner=False, log_level="ERROR"))
 
     # Graceful shutdown on SIGTERM/SIGINT
     loop = asyncio.get_running_loop()
