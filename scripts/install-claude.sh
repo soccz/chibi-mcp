@@ -274,3 +274,5 @@ claude_run mcp add "$MCP_NAME" -- "$CHIBI_CMD"
 sync_claude_plugin
 
 echo "Claude install complete. Restart Claude Code, then try: /chibi-mcp:chibi"
+echo "If Claude says 'Please run /login' or 'API Error: 401 Invalid authentication credentials', run /login in Claude Code first; that error happens before chibi runs."
+echo "To test the local pet without Claude auth, run: $CHIBI_CMD --open"

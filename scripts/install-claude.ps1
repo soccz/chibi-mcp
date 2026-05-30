@@ -246,3 +246,5 @@ if ($LASTEXITCODE -ne 0) {
 Sync-ClaudePlugin
 
 Write-Host "Claude install complete. Restart Claude Code, then try: /chibi-mcp:chibi"
+Write-Host "If Claude says 'Please run /login' or 'API Error: 401 Invalid authentication credentials', run /login in Claude Code first; that error happens before chibi runs."
+Write-Host "To test the local pet without Claude auth, run: $chibiCmd --open"

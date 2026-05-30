@@ -166,6 +166,16 @@ Plugin registration inside Claude Code:
 
 The plugin gives Claude the `/chibi-mcp:chibi` command and the `chibi` skill prompt. The MCP server must still be installed with `pipx` so the `chibi-mcp` command is available.
 
+If `/chibi-mcp:chibi` replies `Please run /login` or `API Error: 401 Invalid
+authentication credentials`, Claude Code is not authenticated and chibi has not
+run yet. Run `/login` in Claude Code, then retry. To test the local install
+without Claude authentication, run:
+
+```bash
+chibi-mcp --check
+chibi-mcp --open
+```
+
 If `/chibi-mcp:chibi` still reports `Unknown command: /chibi`, the installed
 Claude plugin is stale. Rerun the one-command installer; it updates the
 marketplace and installed plugin, then restart Claude Code.

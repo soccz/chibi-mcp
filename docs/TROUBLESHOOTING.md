@@ -146,6 +146,32 @@ claude mcp add chibi -- chibi-mcp
 
 If using the Claude plugin path, the plugin gives `/chibi-mcp:chibi` commands, but the Python server still has to be installed so the `chibi-mcp` command is available.
 
+## Claude Says `Please run /login` Or `401 Invalid Authentication`
+
+This is a Claude Code authentication failure, not a chibi runtime failure.
+Claude stops before it loads the `/chibi-mcp:chibi` command or calls the local
+MCP server.
+
+In Claude Code, run:
+
+```text
+/login
+```
+
+Then fully retry:
+
+```text
+/chibi-mcp:chibi
+```
+
+To prove the local chibi install works without Claude authentication, run these
+from a normal terminal:
+
+```bash
+chibi-mcp --check
+chibi-mcp --open
+```
+
 If `/chibi-mcp:chibi` prints `Unknown command: /chibi`, Claude is still using
 an old plugin command. Rerun the installer, then restart Claude Code:
 

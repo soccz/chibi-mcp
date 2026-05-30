@@ -135,6 +135,12 @@ Then in Claude Code:
 /chibi-mcp:chibi 보관함
 ```
 
+If Claude replies `Please run /login` or `API Error: 401 Invalid authentication
+credentials`, Claude Code failed authentication before the chibi command could
+run. Run `/login` in Claude Code, then retry `/chibi-mcp:chibi`. To verify the
+local pet without Claude authentication, run `chibi-mcp --check` and
+`chibi-mcp --open` in a terminal.
+
 ### Codex
 
 Linux/macOS:
