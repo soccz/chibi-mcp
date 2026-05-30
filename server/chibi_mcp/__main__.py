@@ -520,6 +520,28 @@ def _vscode_status() -> dict:
     }
 
 
+def _client_installed(client_name: str, client_status: dict) -> bool:
+    if client_name == "vscode":
+        return bool(client_status.get("installed"))
+    auth = client_status.get("auth")
+    return isinstance(auth, dict) and bool(auth.get("installed"))
+
+
+def _client_next_steps(client_name: str, client_status: dict) -> list[str]:
+    if client_name in {"claude", "codex"}:
+        steps: list[str] = []
+        for section in ("auth", "mcp"):
+            section_status = client_status.get(section)
+            if not isinstance(section_status, dict):
+                continue
+            step = section_status.get("next_step")
+            if step:
+                steps.append(str(step))
+        return steps
+    step = client_status.get("next_step")
+    return [str(step)] if step else []
+
+
 def _doctor(mcp_name: str = "chibi") -> dict:
     local = _check()
     server = _ws_status()
@@ -547,6 +569,14 @@ def _doctor(mcp_name: str = "chibi") -> dict:
         and clients["codex"]["mcp"].get("status") == "registered",
         "vscode": clients["vscode"].get("status") == "ok",
     }
+    installed_clients = [
+        name for name, status in clients.items() if _client_installed(name, status)
+    ]
+    usable_clients = [name for name, ready in client_ready.items() if ready]
+    optional_clients_missing = [
+        name for name, status in clients.items() if not _client_installed(name, status)
+    ]
+    standalone_ready = bool(local.get("ok")) and server.get("status") == "running"
     next_steps: list[str] = []
     if not local.get("tkinter"):
         next_steps.append("Install Python tkinter/Tcl-Tk support, then reinstall chibi-mcp.")
@@ -554,24 +584,25 @@ def _doctor(mcp_name: str = "chibi") -> dict:
         step = server.get("next_step")
         if step:
             next_steps.append(step)
-    for client_name, client_status in clients.items():
-        if client_name in {"claude", "codex"}:
-            for section in ("auth", "mcp"):
-                step = client_status[section].get("next_step")
-                if step:
-                    next_steps.append(step)
-        else:
-            step = client_status.get("next_step")
-            if step:
-                next_steps.append(step)
+    for client_name in installed_clients:
+        next_steps.extend(_client_next_steps(client_name, clients[client_name]))
+    if not installed_clients and not standalone_ready:
+        next_steps.append(
+            "Install/register Claude Code or Codex for MCP commands, or run `chibi-mcp --open` for the standalone pet."
+        )
     return {
         "ok": bool(local.get("ok")),
-        "ready": bool(local.get("ok")) and all(client_ready.values()),
+        "ready": bool(local.get("ok")) and (bool(usable_clients) or standalone_ready),
+        "all_clients_ready": bool(local.get("ok")) and all(client_ready.values()),
         "version": __version__,
         "local": local,
         "server": server,
         "clients": clients,
         "client_ready": client_ready,
+        "installed_clients": installed_clients,
+        "usable_clients": usable_clients,
+        "optional_clients_missing": optional_clients_missing,
+        "standalone_ready": standalone_ready,
         "next_steps": next_steps,
     }
 

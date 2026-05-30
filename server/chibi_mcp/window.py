@@ -255,6 +255,13 @@ BOB_AMPLITUDE_PX = 4
 BOB_HZ = 0.6
 BOB_TICK_MS = 30
 VIEW_MODES = ("normal", "debug", "compact")
+ACTION_PENDING_TIMEOUT_MS = 2400
+ACTION_BUSY_TEXT = {
+    "pull_gacha": "뽑는 중...",
+    "set_active_character": "불러오는 중",
+    "set_active_options": "옵션 적용 중",
+    "clear_active_options": "옵션 해제 중",
+}
 
 IDLE_BUBBLE_MIN_MS = 4 * 60_000
 IDLE_BUBBLE_MAX_MS = 7 * 60_000
@@ -1991,6 +1998,7 @@ class PetWindow:
         self._drag_moved = False
         self._last_state_payload: dict = {}
         self._last_pull_signature: str | None = None
+        self._pending_actions: set[str] = set()
         self._mood_fx_items: list[int] = []
         self._last_bob_offset = 0
         self._mood_fx_phase = 0
@@ -2922,6 +2930,7 @@ class PetWindow:
         if not hasattr(self, "inventory_button"):
             return
         inventory_badge, option_badge, ticket_badge, settings_badge = self._toolbar_badges()
+        pull_pending = "pull_gacha" in self._pending_actions
         self.inventory_button.set_style(
             self._button_colors("inventory_selected" if self.drawer_mode == "inventory" else "inventory"),
             icon="▣",
@@ -2951,9 +2960,10 @@ class PetWindow:
         self.pull_button.set_style(
             self._button_colors("primary"),
             icon="★",
-            text="뽑기",
-            badge=ticket_badge,
+            text="뽑는중" if pull_pending else "뽑기",
+            badge="..." if pull_pending else ticket_badge,
         )
+        self.pull_button.set_enabled(not pull_pending)
         self.close_button.set_style(
             self._button_colors("danger"),
             icon="x",
@@ -3351,16 +3361,41 @@ class PetWindow:
         self._send_action("set_active_options", option_ids=selected)
 
     def _pull_from_window(self) -> None:
-        self.show_bubble("뽑는 중...")
         self._send_action("pull_gacha")
 
     def _send_action(self, action: str, **payload) -> None:
+        if action in self._pending_actions:
+            self.show_bubble("처리 중")
+            return
+        busy_text = ACTION_BUSY_TEXT.get(action)
+        if busy_text:
+            self.show_bubble(busy_text)
+        self._set_action_pending(action)
         message = {"type": "action", "action": action, **payload}
         threading.Thread(
             target=_send_ws_action,
             args=(self.ws_url, message, self.event_queue),
             daemon=True,
         ).start()
+
+    def _set_action_pending(self, action: str) -> None:
+        self._pending_actions.add(action)
+        self._refresh_toolbar_styles()
+        self._after(
+            ACTION_PENDING_TIMEOUT_MS,
+            lambda action=action: self._clear_pending_action(action),
+        )
+
+    def _clear_pending_action(self, action: str | None = None) -> None:
+        if action is None:
+            if not self._pending_actions:
+                return
+            self._pending_actions.clear()
+        elif action in self._pending_actions:
+            self._pending_actions.discard(action)
+        else:
+            return
+        self._refresh_toolbar_styles()
 
     # ── Animations ───────────────────────────────────────────────────────────
 
@@ -3712,6 +3747,7 @@ class PetWindow:
     def _handle_event(self, evt: dict) -> None:
         kind = evt.get("type")
         if kind == "state":
+            self._clear_pending_action()
             payload = _as_dict(evt.get("payload"))
             had_state = bool(self._last_state_payload)
             pull_signature = _pull_signature(payload)
@@ -3750,6 +3786,7 @@ class PetWindow:
         elif kind == "slice":
             self._slice_flash()
         elif kind == "say":
+            self._clear_pending_action()
             self.show_bubble(evt.get("text", ""))
         elif kind == "sound":
             sound = str(evt.get("name") or "")

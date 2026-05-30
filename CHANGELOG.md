@@ -6,6 +6,11 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- `chibi-mcp --doctor` now separates usable clients from optional missing
+  clients, so a working Claude install no longer looks broken just because
+  Codex or VS Code is not configured.
+- Floating-window toolbar actions now show a short pending state and disable
+  duplicate pull clicks until a state/error response arrives.
 - Runtime state, logs, sounds, and window preferences now use one shared
   runtime directory (`~/.chibi-mcp` by default, `CHIBI_RUNTIME_DIR` when set),
   so standalone `--open`, WebSocket helpers, and Tk windows do not disagree

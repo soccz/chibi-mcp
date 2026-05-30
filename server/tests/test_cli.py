@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.38"
+    assert __version__ == "1.4.39"
 
 
 def test_chibi_say_message_builder_supports_tool_call_events():
@@ -104,7 +104,7 @@ def test_stdio_jsonrpc_handles_initialize_list_and_call():
     assert [response["id"] for response in responses] == [1, 2, 3]
     assert responses[0]["result"]["serverInfo"] == {
         "name": "chibi-mcp",
-        "version": "1.4.38",
+        "version": "1.4.39",
     }
     tools = {tool["name"] for tool in responses[1]["result"]["tools"]}
     assert {"get_catalog", "get_pet_state", "pull_gacha"}.issubset(tools)
@@ -170,7 +170,10 @@ def test_doctor_separates_client_auth_from_local_runtime(monkeypatch):
     assert result["clients"]["vscode"]["status"] == "ok"
     assert result["server"]["status"] == "not_running"
     assert result["client_ready"] == {"claude": True, "codex": False, "vscode": True}
-    assert result["ready"] is False
+    assert result["ready"] is True
+    assert result["all_clients_ready"] is False
+    assert result["usable_clients"] == ["claude", "vscode"]
+    assert result["optional_clients_missing"] == []
     assert any("codex login" in step for step in result["next_steps"])
 
 
@@ -220,6 +223,22 @@ def test_doctor_does_not_call_mcp_timeout_not_registered(monkeypatch):
 
     assert result["clients"]["claude"]["mcp"]["status"] == "unknown"
     assert "mcp get chibi" in result["clients"]["claude"]["mcp"]["next_step"]
+    assert "vscode" in result["optional_clients_missing"]
+    assert not any("Install VS Code" in step for step in result["next_steps"])
+
+
+def test_doctor_ready_when_standalone_server_is_running(monkeypatch):
+    def fake_run_client_command(_args, timeout=8.0):
+        return {"installed": False, "returncode": None, "stdout": "", "stderr": ""}
+
+    monkeypatch.setattr(main_mod, "_run_client_command", fake_run_client_command)
+    monkeypatch.setattr(main_mod, "_ws_accepts", lambda _host, _port: True)
+
+    result = _doctor()
+
+    assert result["ready"] is True
+    assert result["standalone_ready"] is True
+    assert result["usable_clients"] == []
 
 
 def test_open_cli_reports_direct_window_result(monkeypatch, capsys):

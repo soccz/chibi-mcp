@@ -182,11 +182,11 @@ chibi-mcp --open
 chibi-mcp --doctor
 ```
 
-`chibi-mcp --doctor` reports Claude auth and MCP registration separately, so a
-Claude 401 does not get mistaken for a local chibi failure. If `ok` is true but
-`ready` is false, use the printed `next_steps`; the local server is installed,
-but at least one client login, MCP registration, or VS Code extension check is
-not ready.
+`chibi-mcp --doctor` reports Claude auth, MCP registration, local server state,
+and optional clients separately, so a Claude 401 does not get mistaken for a
+local chibi failure. `ready: true` means at least one usable path is ready
+(`usable_clients` or the standalone local window). `all_clients_ready: false`
+can still be fine when Codex or VS Code is simply not configured.
 
 If `/chibi-mcp:chibi` prints `Unknown command: /chibi`, Claude is still using
 an old plugin command. Rerun the installer, then restart Claude Code:

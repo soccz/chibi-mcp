@@ -76,6 +76,16 @@ def main() -> int:
                 assert button_box and text_box
                 assert button_box[1] <= text_box[1] < text_box[3] <= button_box[3] + 2
             assert pet.inventory_button.find_withtag("button_badge")
+            pet._pull_from_window()
+            pet.root.update_idletasks()
+            assert "pull_gacha" in pet._pending_actions
+            assert pet.pull_button._enabled is False
+            assert pet.pull_button._text == "뽑는중"
+            assert pet.pull_button._badge == "..."
+            pet._handle_event({"type": "say", "text": "오늘 무료뽑기는 사용했고 티켓이 없어"})
+            pet.root.update_idletasks()
+            assert not pet._pending_actions
+            assert pet.pull_button._enabled is True
             base_photo = pet._photo.width(), pet._photo.height()
             base_canvas = int(pet.canvas.cget("width")), int(pet.canvas.cget("height"))
             base_root_h = pet.root.winfo_height()
