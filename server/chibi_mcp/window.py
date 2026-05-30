@@ -680,6 +680,11 @@ class ChibiStatusCard(tk.Canvas):
         self._mood = mood
         self._draw()
 
+    def set_identity(self, *, name: str, rarity: int) -> None:
+        self._display_name = name
+        self._rarity = rarity
+        self._draw()
+
     def set_progress(self, progress: str) -> None:
         self._progress = progress or "리듬 준비"
         self._draw()
@@ -803,6 +808,7 @@ class PetWindow:
         self.catalog = _load_catalog(asset_dir)
         self.ws_url: str | None = None
         self.drawer_mode: str | None = None
+        self._drawer_render_signature: tuple | None = None
         self.frameless = frameless
         self.sounds_enabled = sounds
 
@@ -1042,6 +1048,99 @@ class PetWindow:
         self.canvas.itemconfigure(self._image_id, image=self._photo)
         self.current_mood = mood
 
+    def _catalog_item(self, key: str, item_id: str) -> dict | None:
+        for item in self.catalog.get(key, []):
+            if isinstance(item, dict) and str(item.get("id") or "") == item_id:
+                return item
+        return None
+
+    def _catalog_image_path(self, item: dict | None) -> Path | None:
+        if not item:
+            return None
+        if self.asset_dir is None:
+            return None
+        asset_root = self.asset_dir.resolve()
+        item_id = str(item.get("id") or "").strip()
+        candidates: list[Path] = []
+        raw = str(item.get("image") or "").strip()
+        if raw:
+            path = Path(raw).expanduser()
+            if not path.is_absolute():
+                path = asset_root / path
+            candidates.append(path)
+        if item_id:
+            candidates.extend(
+                [
+                    asset_root / f"{item_id}.png",
+                    asset_root / "characters" / f"{item_id}.png",
+                    asset_root / "options" / f"{item_id}.png",
+                ]
+            )
+        for candidate in candidates:
+            resolved = candidate.resolve()
+            if resolved.exists() and resolved != asset_root and asset_root in resolved.parents:
+                return resolved
+        return None
+
+    def _display_name_for_character(self, character: dict) -> str:
+        character_id = str(character.get("id") or "")
+        state = _load_persisted_state()
+        inventory = state.get("inventory") if isinstance(state.get("inventory"), dict) else {}
+        owned = inventory.get(character_id) if isinstance(inventory.get(character_id), dict) else {}
+        nickname = str(owned.get("nickname") or "").strip()
+        if nickname:
+            return nickname
+        return str(character.get("name_ko") or character_id)
+
+    def _option_paths_for_ids(self, option_ids: list[str]) -> list[Path]:
+        paths: list[Path] = []
+        for option_id in option_ids:
+            option = self._catalog_item("options", option_id)
+            path = self._catalog_image_path(option)
+            if path is not None:
+                paths.append(path)
+        return paths
+
+    def _sync_visual_state(self, payload: dict) -> bool:
+        """Apply persisted character/option changes without reopening the window."""
+        gacha = payload.get("gacha") or {}
+        changed = False
+
+        active_id = str(gacha.get("active_character_id") or "").strip()
+        if active_id and active_id != self.character_id:
+            character = self._catalog_item("characters", active_id)
+            image_path = self._catalog_image_path(character)
+            if character is not None and image_path is not None:
+                try:
+                    self.base_image = _scale_to_fit(
+                        Image.open(image_path).convert("RGBA"), CANVAS_SIZE - 20
+                    )
+                except OSError as exc:
+                    log.warning("active character image skipped: %s", exc)
+                else:
+                    self.image_path = image_path
+                    self.character_id = active_id
+                    self.name = self._display_name_for_character(character)
+                    self.rarity = int(character.get("rarity", self.rarity) or self.rarity)
+                    self._img_w, self._img_h = self.base_image.size
+                    self._mood_image_cache.clear()
+                    self._option_cache.clear()
+                    self.status_card.set_identity(name=self.name, rarity=self.rarity)
+                    self.root.title(f"chibi — {self.name}")
+                    changed = True
+
+        active_options = gacha.get("active_option_ids")
+        if isinstance(active_options, list):
+            next_ids = [str(option_id) for option_id in active_options]
+            if next_ids != self.active_option_ids:
+                self.active_option_ids = next_ids
+                self.option_paths = self._option_paths_for_ids(next_ids)
+                self._mood_image_cache.clear()
+                self._option_cache.clear()
+                changed = True
+
+        return changed
+
     def _update_mood_label(self, mood: str) -> None:
         self.status_card.set_mood(mood)
 
@@ -1136,6 +1235,7 @@ class PetWindow:
         if self.drawer_mode == mode and self.drawer.winfo_ismapped():
             self.drawer.pack_forget()
             self.drawer_mode = None
+            self._drawer_render_signature = None
             return
         self.drawer_mode = mode
         self._render_drawer()
@@ -1149,6 +1249,41 @@ class PetWindow:
             self._render_inventory_drawer()
         elif self.drawer_mode == "options":
             self._render_options_drawer()
+        self._drawer_render_signature = self._current_drawer_signature()
+
+    def _current_drawer_signature(self) -> tuple:
+        state = _load_persisted_state()
+        if self.drawer_mode == "options":
+            option_ids = state.get("active_option_ids")
+            if not isinstance(option_ids, list):
+                option_ids = self.active_option_ids
+            return ("options", tuple(str(option_id) for option_id in option_ids))
+
+        inventory = state.get("inventory") if isinstance(state.get("inventory"), dict) else {}
+        inventory_sig = tuple(
+            sorted(
+                (
+                    str(character_id),
+                    int(value.get("count", 0) or 0) if isinstance(value, dict) else 0,
+                    str(value.get("nickname") or "") if isinstance(value, dict) else "",
+                )
+                for character_id, value in inventory.items()
+            )
+        )
+        return (
+            "inventory",
+            str(state.get("active_character_id") or self.character_id or ""),
+            int(state.get("tickets", 0) or 0),
+            int(state.get("total_pulls", 0) or 0),
+            inventory_sig,
+        )
+
+    def _refresh_drawer_if_state_changed(self) -> None:
+        if not self.drawer_mode or not self.drawer.winfo_ismapped():
+            return
+        signature = self._current_drawer_signature()
+        if signature != self._drawer_render_signature:
+            self._render_drawer()
 
     def _drawer_header(self, text: str) -> None:
         tk.Label(
@@ -1373,8 +1508,8 @@ class PetWindow:
         self.bubble.configure(text=clipped)
         self._play_safe("bubble")
         try:
-            self.bubble.pack(pady=(2, 10), padx=10, before=self.mood_label)
-        except tk.TclError:
+            self.bubble.pack(pady=(2, 10), padx=10, before=self.status_card)
+        except (AttributeError, tk.TclError):
             self.bubble.pack(pady=(2, 10), padx=10)
         if self._bubble_hide_after is not None:
             with contextlib.suppress(tk.TclError):
@@ -1446,17 +1581,19 @@ class PetWindow:
         kind = evt.get("type")
         if kind == "state":
             payload = evt.get("payload") or {}
+            visual_changed = self._sync_visual_state(payload)
             mood = payload.get("mood")
-            if mood and mood != self.current_mood:
+            if mood and (mood != self.current_mood or visual_changed):
                 self._render_image(mood)
                 self._update_mood_label(mood)
+            elif visual_changed:
+                self._render_image(self.current_mood)
             gacha = payload.get("gacha") or {}
             active_options = gacha.get("active_option_ids")
             if isinstance(active_options, list):
                 self.active_option_ids = [str(option_id) for option_id in active_options]
             self._update_progress_label(payload)
-            if self.drawer_mode and self.drawer.winfo_ismapped():
-                self._render_drawer()
+            self._refresh_drawer_if_state_changed()
         elif kind == "slice":
             self._slice_flash()
         elif kind == "say":

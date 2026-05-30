@@ -308,13 +308,8 @@ def set_active_options(option_ids: list[str]) -> dict:
     available = {option["id"] for option in options["options"] if option.get("image_exists")}
     state = get_state()
     result = state.set_active_options(cleaned, available)
-    if result.get("ok") and _WINDOW_PID_FILE.exists():
-        try:
-            window_result = open_pet_window()
-            if window_result.get("opened"):
-                _broadcast_sound("option")
-        except Exception as e:
-            log.warning("window reopen after set_active_options failed: %s", e)
+    if result.get("ok"):
+        _broadcast_sound("option")
     return result
 
 
@@ -679,12 +674,6 @@ def set_active_character(character_id: str) -> dict:
         return {"ok": False, "reason": f"invalid character id: {character_id!r}"}
     state = get_state()
     result = state.set_active(character_id)
-    if result.get("ok") and _WINDOW_PID_FILE.exists():
-        # Auto-reopen the window with the new character if one was open
-        try:
-            open_pet_window(character_id=character_id)
-        except Exception as e:
-            log.warning("window reopen after set_active failed: %s", e)
     return result
 
 

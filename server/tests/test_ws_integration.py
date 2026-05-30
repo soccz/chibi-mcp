@@ -23,6 +23,7 @@ from chibi_mcp.ws_server import (
     get_broadcaster,
     reset_broadcaster_for_tests,
     run_ws_server,
+    set_action_handler,
 )
 
 
@@ -50,6 +51,7 @@ async def ws_url():
         except OSError:
             continue
     yield f"ws://127.0.0.1:{port}"
+    set_action_handler(None)
     server_task.cancel()
     with contextlib.suppress(asyncio.CancelledError):
         await server_task
@@ -111,6 +113,25 @@ async def test_state_pushes_periodically(ws_url):
         await asyncio.wait_for(ws.recv(), timeout=2.0)
         # next message should be the periodic state (within ~3s)
         raw = await asyncio.wait_for(ws.recv(), timeout=3.5)
+        msg = json.loads(raw)
+        assert msg["type"] == "state"
+
+
+async def test_window_action_pushes_fresh_state(ws_url):
+    def handler(_message):
+        from chibi_mcp.state import get_state
+
+        get_state().grant_tickets(1)
+        return {"ok": True}
+
+    set_action_handler(handler)
+
+    async with connect(ws_url) as listener, connect(ws_url) as actor:
+        await asyncio.wait_for(listener.recv(), timeout=2.0)
+        await asyncio.wait_for(actor.recv(), timeout=2.0)
+        await actor.send(json.dumps({"type": "action", "action": "test"}))
+
+        raw = await asyncio.wait_for(listener.recv(), timeout=1.0)
         msg = json.loads(raw)
         assert msg["type"] == "state"
 

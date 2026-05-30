@@ -124,6 +124,8 @@ async def _handle_client(ws: ServerConnection) -> None:
                 if isinstance(result, dict) and result.get("ok") is False:
                     reason = str(result.get("reason") or "실패")
                     await broadcaster.broadcast({"type": "say", "text": reason[:_INBOUND_SAY_MAX_LEN]})
+                else:
+                    await broadcaster.broadcast({"type": "state", "payload": get_state().snapshot()})
     except ConnectionClosed:
         pass
     finally:

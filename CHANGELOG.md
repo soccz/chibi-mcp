@@ -6,6 +6,10 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Fixed floating-window action flicker: inventory/option drawers now refresh
+  only when persisted state changes, option/character changes apply live
+  through WebSocket state events, and action buttons no longer reopen the
+  whole pet window.
 - Replaced the floating window's black fallback surface with a light panel and
   fixed the macOS transparency helper so chibi does not appear inside a black box.
 - Added floating-window controls for inventory, option customization, gacha

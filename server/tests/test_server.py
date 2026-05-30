@@ -15,6 +15,7 @@ from chibi_mcp.server import (
     _window_startup_failure,
     clear_active_options,
     get_options,
+    set_active_character,
     set_active_options,
 )
 from chibi_mcp.state import get_state, reset_state_for_tests
@@ -96,6 +97,46 @@ def test_set_active_options_persists_selection(tmp_path, monkeypatch):
         result = clear_active_options()
         assert result["ok"] is True
         assert get_state().active_option_ids == []
+    finally:
+        reset_state_for_tests()
+
+
+def test_set_active_options_does_not_reopen_existing_window(tmp_path, monkeypatch):
+    monkeypatch.setattr(state_mod, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "state.json")
+    monkeypatch.setattr(server_mod, "_WINDOW_PID_FILE", tmp_path / "window.pid")
+    server_mod._WINDOW_PID_FILE.write_text("12345", encoding="utf-8")
+    monkeypatch.setattr(
+        server_mod,
+        "open_pet_window",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("reopened")),
+    )
+    reset_state_for_tests()
+    try:
+        result = set_active_options(["jocheong_drip"])
+        assert result["ok"] is True
+        assert get_state().active_option_ids == ["jocheong_drip"]
+    finally:
+        reset_state_for_tests()
+
+
+def test_set_active_character_does_not_reopen_existing_window(tmp_path, monkeypatch):
+    monkeypatch.setattr(state_mod, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "state.json")
+    monkeypatch.setattr(server_mod, "_WINDOW_PID_FILE", tmp_path / "window.pid")
+    server_mod._WINDOW_PID_FILE.write_text("12345", encoding="utf-8")
+    monkeypatch.setattr(
+        server_mod,
+        "open_pet_window",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("reopened")),
+    )
+    reset_state_for_tests()
+    try:
+        state = get_state()
+        state.inventory["white_tteok"] = {"count": 1, "nickname": "White Chibi"}
+        result = set_active_character("white_tteok")
+        assert result["ok"] is True
+        assert get_state().active_character_id == "white_tteok"
     finally:
         reset_state_for_tests()
 
