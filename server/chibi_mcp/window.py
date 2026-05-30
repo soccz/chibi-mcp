@@ -44,8 +44,19 @@ PANEL_BG_2 = "#fff1df"
 PANEL_BORDER = "#e7c9a6"
 TEXT_FG = "#2a211a"
 MUTED_FG = "#806f62"
-ACCENT_BG = "#ffe0b8"
-ACCENT_BG_ACTIVE = "#f7bd72"
+BUTTON_SECONDARY_BG = "#fffdf7"
+BUTTON_SECONDARY_HOVER = "#edfdf4"
+BUTTON_SECONDARY_ACTIVE = "#d7f4e2"
+BUTTON_SECONDARY_BORDER = "#b7e4c7"
+BUTTON_PRIMARY_BG = "#ff6b9d"
+BUTTON_PRIMARY_HOVER = "#ff7fac"
+BUTTON_PRIMARY_ACTIVE = "#f6558e"
+BUTTON_PRIMARY_BORDER = "#ff9dbd"
+BUTTON_DANGER_BG = "#fff2f0"
+BUTTON_DANGER_HOVER = "#ffe0dc"
+BUTTON_DANGER_ACTIVE = "#ffc7bf"
+BUTTON_DANGER_BORDER = "#ffb0a6"
+BUTTON_DANGER_FG = "#7d302a"
 RECONNECT_BACKOFF_MIN_S = 1.0
 RECONNECT_BACKOFF_MAX_S = 30.0
 POLL_INTERVAL_MS = 80
@@ -615,19 +626,23 @@ class PetWindow:
         self.progress_label.pack(pady=(0, 8))
 
         self.toolbar = tk.Frame(self.root, bg=bg)
-        self.toolbar.pack(pady=(0, 8))
+        self.toolbar.pack(pady=(0, 10))
         self.inventory_button = self._make_button(
-            self.toolbar, "보관함", lambda: self._toggle_drawer("inventory")
+            self.toolbar, "보관함", lambda: self._toggle_drawer("inventory"), min_width=6
         )
-        self.inventory_button.pack(side="left", padx=3)
+        self.inventory_button.pack(side="left", padx=4)
         self.options_button = self._make_button(
-            self.toolbar, "옵션", lambda: self._toggle_drawer("options")
+            self.toolbar, "옵션", lambda: self._toggle_drawer("options"), min_width=6
         )
-        self.options_button.pack(side="left", padx=3)
-        self.pull_button = self._make_button(self.toolbar, "뽑기", self._pull_from_window)
-        self.pull_button.pack(side="left", padx=3)
-        self.close_button = self._make_button(self.toolbar, "닫기", self.shutdown)
-        self.close_button.pack(side="left", padx=3)
+        self.options_button.pack(side="left", padx=4)
+        self.pull_button = self._make_button(
+            self.toolbar, "뽑기", self._pull_from_window, kind="primary", min_width=6
+        )
+        self.pull_button.pack(side="left", padx=4)
+        self.close_button = self._make_button(
+            self.toolbar, "닫기", self.shutdown, kind="danger", min_width=6
+        )
+        self.close_button.pack(side="left", padx=4)
 
         self.drawer = tk.Frame(
             self.root,
@@ -758,22 +773,81 @@ class PetWindow:
 
     # ── Built-in controls ───────────────────────────────────────────────────
 
-    def _make_button(self, parent: tk.Misc, text: str, command) -> tk.Button:
-        return tk.Button(
-            parent,
-            text=text,
-            command=command,
-            bg=ACCENT_BG,
-            activebackground=ACCENT_BG_ACTIVE,
-            fg=TEXT_FG,
-            activeforeground=TEXT_FG,
-            relief="flat",
-            borderwidth=0,
-            highlightthickness=0,
-            padx=9,
-            pady=4,
-            font=("Helvetica", 9, "bold"),
-        )
+    def _button_colors(self, kind: str) -> dict[str, str]:
+        if kind == "primary":
+            return {
+                "bg": BUTTON_PRIMARY_BG,
+                "hover": BUTTON_PRIMARY_HOVER,
+                "active": BUTTON_PRIMARY_ACTIVE,
+                "border": BUTTON_PRIMARY_BORDER,
+                "fg": TEXT_FG,
+            }
+        if kind == "danger":
+            return {
+                "bg": BUTTON_DANGER_BG,
+                "hover": BUTTON_DANGER_HOVER,
+                "active": BUTTON_DANGER_ACTIVE,
+                "border": BUTTON_DANGER_BORDER,
+                "fg": BUTTON_DANGER_FG,
+            }
+        if kind == "selected":
+            return {
+                "bg": BUTTON_SECONDARY_ACTIVE,
+                "hover": BUTTON_SECONDARY_HOVER,
+                "active": BUTTON_SECONDARY_ACTIVE,
+                "border": BUTTON_SECONDARY_BORDER,
+                "fg": TEXT_FG,
+            }
+        return {
+            "bg": BUTTON_SECONDARY_BG,
+            "hover": BUTTON_SECONDARY_HOVER,
+            "active": BUTTON_SECONDARY_ACTIVE,
+            "border": BUTTON_SECONDARY_BORDER,
+            "fg": TEXT_FG,
+        }
+
+    def _make_button(
+        self,
+        parent: tk.Misc,
+        text: str,
+        command,
+        *,
+        kind: str = "secondary",
+        min_width: int | None = None,
+    ) -> tk.Button:
+        colors = self._button_colors(kind)
+        button_options = {
+            "text": text,
+            "command": command,
+            "bg": colors["bg"],
+            "activebackground": colors["active"],
+            "fg": colors["fg"],
+            "activeforeground": colors["fg"],
+            "relief": "flat",
+            "borderwidth": 0,
+            "highlightthickness": 1,
+            "highlightbackground": colors["border"],
+            "highlightcolor": colors["border"],
+            "padx": 10,
+            "pady": 5,
+            "disabledforeground": MUTED_FG,
+            "font": ("Helvetica", 9, "bold"),
+        }
+        if min_width is not None:
+            button_options["width"] = min_width
+        button = tk.Button(parent, **button_options)
+        with contextlib.suppress(tk.TclError):
+            button.configure(cursor="hand2")
+        button.bind("<Enter>", lambda _e: self._set_button_tone(button, colors["hover"], colors))
+        button.bind("<Leave>", lambda _e: self._set_button_tone(button, colors["bg"], colors))
+        button.bind("<ButtonPress-1>", lambda _e: self._set_button_tone(button, colors["active"], colors))
+        button.bind("<ButtonRelease-1>", lambda _e: self._set_button_tone(button, colors["hover"], colors))
+        return button
+
+    def _set_button_tone(self, button: tk.Button, bg: str, colors: dict[str, str]) -> None:
+        if str(button.cget("state")) == "disabled":
+            return
+        button.configure(bg=bg, highlightbackground=colors["border"], highlightcolor=colors["border"])
 
     def _toggle_drawer(self, mode: str) -> None:
         if self.drawer_mode == mode and self.drawer.winfo_ismapped():
@@ -839,8 +913,9 @@ class PetWindow:
                 lambda character_id=cid: self._send_action(
                     "set_active_character", character_id=character_id
                 ),
+                kind="selected" if cid == active_id else "secondary",
             )
-            btn.configure(anchor="w", width=24, bg=ACCENT_BG_ACTIVE if cid == active_id else ACCENT_BG)
+            btn.configure(anchor="w", width=24)
             if count <= 0:
                 btn.configure(state="disabled")
             btn.pack(anchor="w", fill="x", pady=2)
@@ -877,7 +952,9 @@ class PetWindow:
 
         actions = tk.Frame(self.drawer, bg=PANEL_BG_2)
         actions.pack(anchor="w", pady=(8, 0))
-        self._make_button(actions, "적용", self._apply_options_from_drawer).pack(side="left", padx=(0, 6))
+        self._make_button(actions, "적용", self._apply_options_from_drawer, kind="primary").pack(
+            side="left", padx=(0, 6)
+        )
         self._make_button(actions, "해제", lambda: self._send_action("clear_active_options")).pack(
             side="left"
         )

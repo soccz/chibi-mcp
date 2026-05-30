@@ -292,9 +292,14 @@ body { margin: 0; padding: 12px; font-family: var(--vscode-font-family); color: 
 .pet .rarity { font-size: 11px; opacity: 0.7; margin-top: 2px; letter-spacing: 1px; }
 .bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 12px; }
 .bar .tickets { color: var(--vscode-textLink-foreground); font-weight: 600; }
-.actions { display: flex; gap: 6px; margin: 8px 0 14px; }
-.actions button { flex: 1; padding: 7px; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; }
-.actions button:hover { background: var(--vscode-button-hoverBackground); }
+.actions { display: flex; gap: 7px; margin: 8px 0 14px; }
+.actions button { flex: 1; min-height: 32px; padding: 8px 10px; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: 1px solid var(--vscode-button-border, transparent); border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 700; box-shadow: inset 0 1px rgba(255,255,255,0.14), 0 1px 3px rgba(0,0,0,0.18); transition: transform 80ms ease, background 120ms ease, border-color 120ms ease; }
+.actions button:hover { background: var(--vscode-button-hoverBackground); transform: translateY(-1px); }
+.actions button:active { transform: translateY(0); }
+#btn-gacha { background: #ff6b9d; color: #24141a; border-color: #ff9dbd; }
+#btn-gacha:hover { background: #ff7fac; }
+#btn-clear-options { background: rgba(183,228,199,0.16); border-color: rgba(183,228,199,0.45); }
+#btn-clear-options:hover { background: rgba(183,228,199,0.24); }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 300px; overflow-y: auto; }
 .option-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
 .cell { background: var(--vscode-editor-inactiveSelectionBackground); border: 1.5px solid transparent; border-radius: 8px; padding: 6px 3px; text-align: center; cursor: pointer; transition: transform 0.12s; }
