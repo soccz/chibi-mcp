@@ -48,15 +48,23 @@ BUTTON_SECONDARY_BG = "#fffdf7"
 BUTTON_SECONDARY_HOVER = "#edfdf4"
 BUTTON_SECONDARY_ACTIVE = "#d7f4e2"
 BUTTON_SECONDARY_BORDER = "#b7e4c7"
+BUTTON_SECONDARY_SHADOW = "#ead7be"
+BUTTON_SECONDARY_ICON_BG = "#e8f8ee"
 BUTTON_PRIMARY_BG = "#ff6b9d"
 BUTTON_PRIMARY_HOVER = "#ff7fac"
 BUTTON_PRIMARY_ACTIVE = "#f6558e"
 BUTTON_PRIMARY_BORDER = "#ff9dbd"
+BUTTON_PRIMARY_SHADOW = "#d8497a"
+BUTTON_PRIMARY_ICON_BG = "#ffd5e3"
 BUTTON_DANGER_BG = "#fff2f0"
 BUTTON_DANGER_HOVER = "#ffe0dc"
 BUTTON_DANGER_ACTIVE = "#ffc7bf"
 BUTTON_DANGER_BORDER = "#ffb0a6"
+BUTTON_DANGER_SHADOW = "#e7b1a9"
+BUTTON_DANGER_ICON_BG = "#ffd8d2"
 BUTTON_DANGER_FG = "#7d302a"
+BUTTON_DISABLED_BG = "#eee0d2"
+BUTTON_DISABLED_FG = "#9b8b7d"
 RECONNECT_BACKOFF_MIN_S = 1.0
 RECONNECT_BACKOFF_MAX_S = 30.0
 POLL_INTERVAL_MS = 80
@@ -469,6 +477,156 @@ def _released_items(catalog: dict, key: str) -> list[dict]:
     ]
 
 
+class ChibiButton(tk.Canvas):
+    """Small drawn pill button, avoiding platform-native Tk button chrome."""
+
+    def __init__(
+        self,
+        parent: tk.Misc,
+        text: str,
+        command,
+        colors: dict[str, str],
+        *,
+        panel_bg: str,
+        icon: str | None = None,
+        min_width: int = 70,
+        anchor: str = "center",
+    ):
+        self._text = text
+        self._command = command
+        self._colors = colors
+        self._icon = icon
+        self._min_width = min_width
+        self._button_height = 34
+        self._anchor = anchor
+        self._tone = "bg"
+        self._enabled = True
+        self._focused = False
+        super().__init__(
+            parent,
+            width=min_width,
+            height=self._button_height,
+            bg=panel_bg,
+            bd=0,
+            highlightthickness=0,
+            takefocus=1,
+        )
+        with contextlib.suppress(tk.TclError):
+            self.configure(cursor="hand2")
+        self.bind("<Configure>", lambda _event: self._draw())
+        self.bind("<Enter>", lambda _event: self._set_tone("hover"))
+        self.bind("<Leave>", lambda _event: self._set_tone("bg"))
+        self.bind("<ButtonPress-1>", lambda _event: self._set_tone("active"))
+        self.bind("<ButtonRelease-1>", self._release)
+        self.bind("<FocusIn>", lambda _event: self._set_focus(True))
+        self.bind("<FocusOut>", lambda _event: self._set_focus(False))
+        self.bind("<Return>", lambda _event: self.invoke())
+        self.bind("<space>", lambda _event: self.invoke())
+        self._draw()
+
+    def set_enabled(self, enabled: bool) -> None:
+        self._enabled = enabled
+        with contextlib.suppress(tk.TclError):
+            self.configure(cursor="hand2" if enabled else "")
+        self._draw()
+
+    def invoke(self) -> None:
+        if self._enabled:
+            self._command()
+
+    def _release(self, _event: tk.Event) -> None:
+        if not self._enabled:
+            return
+        self._set_tone("hover")
+        self.invoke()
+
+    def _set_tone(self, tone: str) -> None:
+        if not self._enabled:
+            return
+        self._tone = tone
+        self._draw()
+
+    def _set_focus(self, focused: bool) -> None:
+        self._focused = focused
+        self._draw()
+
+    def _rounded_rect(self, x1: int, y1: int, x2: int, y2: int, radius: int, **kwargs) -> int:
+        points = [
+            x1 + radius,
+            y1,
+            x2 - radius,
+            y1,
+            x2,
+            y1,
+            x2,
+            y1 + radius,
+            x2,
+            y2 - radius,
+            x2,
+            y2,
+            x2 - radius,
+            y2,
+            x1 + radius,
+            y2,
+            x1,
+            y2,
+            x1,
+            y2 - radius,
+            x1,
+            y1 + radius,
+            x1,
+            y1,
+        ]
+        return self.create_polygon(points, smooth=True, splinesteps=12, **kwargs)
+
+    def _draw(self) -> None:
+        width = max(self._min_width, int(self.winfo_width() or self._min_width))
+        height = self._button_height
+        self.delete("all")
+
+        if self._enabled:
+            fill = self._colors[self._tone]
+            fg = self._colors["fg"]
+            shadow = self._colors["shadow"]
+            border = self._colors["border"]
+            icon_bg = self._colors["icon_bg"]
+        else:
+            fill = BUTTON_DISABLED_BG
+            fg = BUTTON_DISABLED_FG
+            shadow = "#d7c8b9"
+            border = "#d6c4b2"
+            icon_bg = "#e8d9ca"
+
+        self._rounded_rect(3, 5, width - 2, height - 1, 13, fill=shadow, outline="")
+        self._rounded_rect(1, 1, width - 3, height - 5, 13, fill=fill, outline=border, width=1)
+        if self._focused and self._enabled:
+            self._rounded_rect(3, 3, width - 5, height - 7, 11, fill="", outline=TEXT_FG, width=1)
+
+        text_anchor = "center"
+        text_x = width // 2
+        if self._anchor == "w":
+            text_anchor = "w"
+            text_x = 16 if not self._colors.get("indicator") else 20
+
+        if self._colors.get("indicator"):
+            self._rounded_rect(8, 10, 12, 24, 3, fill=self._colors["indicator"], outline="")
+
+        if self._icon:
+            self.create_oval(8, 8, 25, 25, fill=icon_bg, outline="")
+            self.create_text(16, 16, text=self._icon, fill=fg, font=("Helvetica", 8, "bold"))
+            text_x = width // 2 + 9 if self._anchor != "w" else 32
+            text_anchor = "center" if self._anchor != "w" else "w"
+
+        self.create_text(
+            text_x,
+            16,
+            text=self._text,
+            anchor=text_anchor,
+            fill=fg,
+            font=("Helvetica", 9, "bold"),
+        )
+
+
 # ── Tk window ────────────────────────────────────────────────────────────────
 
 
@@ -626,23 +784,31 @@ class PetWindow:
         self.progress_label.pack(pady=(0, 8))
 
         self.toolbar = tk.Frame(self.root, bg=bg)
-        self.toolbar.pack(pady=(0, 10))
+        self.toolbar.pack(pady=(0, 10), padx=8)
         self.inventory_button = self._make_button(
-            self.toolbar, "보관함", lambda: self._toggle_drawer("inventory"), min_width=6
+            self.toolbar,
+            "보관함",
+            lambda: self._toggle_drawer("inventory"),
+            icon="▣",
+            min_width=74,
         )
-        self.inventory_button.pack(side="left", padx=4)
+        self.inventory_button.pack(side="left", padx=3)
         self.options_button = self._make_button(
-            self.toolbar, "옵션", lambda: self._toggle_drawer("options"), min_width=6
+            self.toolbar,
+            "옵션",
+            lambda: self._toggle_drawer("options"),
+            icon="✦",
+            min_width=68,
         )
-        self.options_button.pack(side="left", padx=4)
+        self.options_button.pack(side="left", padx=3)
         self.pull_button = self._make_button(
-            self.toolbar, "뽑기", self._pull_from_window, kind="primary", min_width=6
+            self.toolbar, "뽑기", self._pull_from_window, kind="primary", icon="★", min_width=68
         )
-        self.pull_button.pack(side="left", padx=4)
+        self.pull_button.pack(side="left", padx=3)
         self.close_button = self._make_button(
-            self.toolbar, "닫기", self.shutdown, kind="danger", min_width=6
+            self.toolbar, "닫기", self.shutdown, kind="danger", icon="x", min_width=68
         )
-        self.close_button.pack(side="left", padx=4)
+        self.close_button.pack(side="left", padx=3)
 
         self.drawer = tk.Frame(
             self.root,
@@ -780,6 +946,8 @@ class PetWindow:
                 "hover": BUTTON_PRIMARY_HOVER,
                 "active": BUTTON_PRIMARY_ACTIVE,
                 "border": BUTTON_PRIMARY_BORDER,
+                "shadow": BUTTON_PRIMARY_SHADOW,
+                "icon_bg": BUTTON_PRIMARY_ICON_BG,
                 "fg": TEXT_FG,
             }
         if kind == "danger":
@@ -788,6 +956,8 @@ class PetWindow:
                 "hover": BUTTON_DANGER_HOVER,
                 "active": BUTTON_DANGER_ACTIVE,
                 "border": BUTTON_DANGER_BORDER,
+                "shadow": BUTTON_DANGER_SHADOW,
+                "icon_bg": BUTTON_DANGER_ICON_BG,
                 "fg": BUTTON_DANGER_FG,
             }
         if kind == "selected":
@@ -796,6 +966,9 @@ class PetWindow:
                 "hover": BUTTON_SECONDARY_HOVER,
                 "active": BUTTON_SECONDARY_ACTIVE,
                 "border": BUTTON_SECONDARY_BORDER,
+                "shadow": BUTTON_SECONDARY_SHADOW,
+                "icon_bg": BUTTON_SECONDARY_ICON_BG,
+                "indicator": "#55bd83",
                 "fg": TEXT_FG,
             }
         return {
@@ -803,6 +976,8 @@ class PetWindow:
             "hover": BUTTON_SECONDARY_HOVER,
             "active": BUTTON_SECONDARY_ACTIVE,
             "border": BUTTON_SECONDARY_BORDER,
+            "shadow": BUTTON_SECONDARY_SHADOW,
+            "icon_bg": BUTTON_SECONDARY_ICON_BG,
             "fg": TEXT_FG,
         }
 
@@ -813,41 +988,24 @@ class PetWindow:
         command,
         *,
         kind: str = "secondary",
-        min_width: int | None = None,
-    ) -> tk.Button:
+        icon: str | None = None,
+        min_width: int = 70,
+        anchor: str = "center",
+    ) -> ChibiButton:
         colors = self._button_colors(kind)
-        button_options = {
-            "text": text,
-            "command": command,
-            "bg": colors["bg"],
-            "activebackground": colors["active"],
-            "fg": colors["fg"],
-            "activeforeground": colors["fg"],
-            "relief": "flat",
-            "borderwidth": 0,
-            "highlightthickness": 1,
-            "highlightbackground": colors["border"],
-            "highlightcolor": colors["border"],
-            "padx": 10,
-            "pady": 5,
-            "disabledforeground": MUTED_FG,
-            "font": ("Helvetica", 9, "bold"),
-        }
-        if min_width is not None:
-            button_options["width"] = min_width
-        button = tk.Button(parent, **button_options)
+        panel_bg = PANEL_BG
         with contextlib.suppress(tk.TclError):
-            button.configure(cursor="hand2")
-        button.bind("<Enter>", lambda _e: self._set_button_tone(button, colors["hover"], colors))
-        button.bind("<Leave>", lambda _e: self._set_button_tone(button, colors["bg"], colors))
-        button.bind("<ButtonPress-1>", lambda _e: self._set_button_tone(button, colors["active"], colors))
-        button.bind("<ButtonRelease-1>", lambda _e: self._set_button_tone(button, colors["hover"], colors))
-        return button
-
-    def _set_button_tone(self, button: tk.Button, bg: str, colors: dict[str, str]) -> None:
-        if str(button.cget("state")) == "disabled":
-            return
-        button.configure(bg=bg, highlightbackground=colors["border"], highlightcolor=colors["border"])
+            panel_bg = str(parent.cget("bg"))
+        return ChibiButton(
+            parent,
+            text,
+            command,
+            colors,
+            panel_bg=panel_bg,
+            icon=icon,
+            min_width=min_width,
+            anchor=anchor,
+        )
 
     def _toggle_drawer(self, mode: str) -> None:
         if self.drawer_mode == mode and self.drawer.winfo_ismapped():
@@ -896,7 +1054,14 @@ class PetWindow:
                 fg=MUTED_FG,
                 font=("Helvetica", 9),
             ).pack(anchor="w", pady=(0, 6))
-            self._make_button(self.drawer, "오늘 무료 뽑기", self._pull_from_window).pack(anchor="w")
+            self._make_button(
+                self.drawer,
+                "오늘 무료 뽑기",
+                self._pull_from_window,
+                kind="primary",
+                icon="★",
+                min_width=128,
+            ).pack(anchor="w")
             return
 
         for cid in owned_ids[:8]:
@@ -914,10 +1079,11 @@ class PetWindow:
                     "set_active_character", character_id=character_id
                 ),
                 kind="selected" if cid == active_id else "secondary",
+                min_width=224,
+                anchor="w",
             )
-            btn.configure(anchor="w", width=24)
             if count <= 0:
-                btn.configure(state="disabled")
+                btn.set_enabled(False)
             btn.pack(anchor="w", fill="x", pady=2)
 
     def _render_options_drawer(self) -> None:
@@ -952,12 +1118,21 @@ class PetWindow:
 
         actions = tk.Frame(self.drawer, bg=PANEL_BG_2)
         actions.pack(anchor="w", pady=(8, 0))
-        self._make_button(actions, "적용", self._apply_options_from_drawer, kind="primary").pack(
-            side="left", padx=(0, 6)
-        )
-        self._make_button(actions, "해제", lambda: self._send_action("clear_active_options")).pack(
-            side="left"
-        )
+        self._make_button(
+            actions,
+            "적용",
+            self._apply_options_from_drawer,
+            kind="primary",
+            icon="✓",
+            min_width=74,
+        ).pack(side="left", padx=(0, 6))
+        self._make_button(
+            actions,
+            "해제",
+            lambda: self._send_action("clear_active_options"),
+            icon="x",
+            min_width=74,
+        ).pack(side="left")
 
     def _apply_options_from_drawer(self) -> None:
         selected = [
