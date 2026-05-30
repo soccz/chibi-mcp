@@ -32,6 +32,14 @@ def test_window_scale_is_clamped():
     assert window._clamp_window_scale(10.0) == window.WINDOW_MAX_SCALE
 
 
+def test_view_mode_helpers_are_stable():
+    assert window._normalize_view_mode("debug") == "debug"
+    assert window._normalize_view_mode("bad") == "normal"
+    assert window._next_view_mode("normal") == "debug"
+    assert window._next_view_mode("debug") == "compact"
+    assert window._next_view_mode("compact") == "normal"
+
+
 def test_resize_drag_scale_uses_larger_axis():
     assert window._scale_from_resize_drag(1.0, 100, 10, 400, 300) == 1.25
     assert window._scale_from_resize_drag(1.0, 10, 90, 400, 300) == 1.3
@@ -116,3 +124,17 @@ def test_display_counters_are_bounded():
     assert window._format_counter(999) == "999"
     assert window._format_counter(1000) == "999+"
     assert window._format_counter(math.nan) is None
+
+
+def test_debug_hud_formats_next_ticket_context():
+    assert (
+        window._format_debug_hud(
+            {
+                "mood": "happy",
+                "timing": {"idle_seconds": 4},
+                "counters": {"calls_total": 123, "slices_today": 12},
+                "gacha": {"tickets": 2},
+            }
+        )
+        == "최근 tool call 4초 · 티켓 2 · call티켓 77 · slice티켓 8"
+    )

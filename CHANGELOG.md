@@ -6,6 +6,12 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Added mood-specific canvas effects in the floating window: high CPU shows
+  sweat/heat accents, low battery shows drowsy `Z` marks, recent tool activity
+  sparkles, and long idle shows a lonely cloud.
+- Added floating-window view modes. Users can cycle normal, debug, and compact
+  modes from the toolbar or keyboard; debug expands rhythm/ticket context while
+  compact keeps only the chibi and essential controls visible.
 - Added a developer HUD to the floating-window status card: CPU/RAM/BAT now
   render in the window, high CPU and low unplugged battery get warning styling,
   and the compact tool-idle label shows whether Claude/Codex has called a tool

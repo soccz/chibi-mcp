@@ -79,6 +79,7 @@ def main() -> int:
                             "total_pulls": 1,
                         },
                         "counters": {
+                            "calls_total": 21,
                             "calls_since_slice": 1,
                             "slice_interval": 10,
                             "slices_today": 0,
@@ -101,6 +102,7 @@ def main() -> int:
             assert pet.active_option_ids == ["honey_glaze"]
             assert pet.status_card._system_warn is True
             assert "CPU 82%" in pet.status_card._system_hud
+            assert pet.canvas.find_withtag("mood_fx")
 
             pet._start_drag(SimpleNamespace(x_root=10, y_root=10, widget=pet.canvas))
             pet._end_drag(SimpleNamespace())
@@ -112,6 +114,29 @@ def main() -> int:
             pet.root.update_idletasks()
             assert "리듬 1/10" in str(pet.bubble.cget("text"))
 
+            assert pet.view_mode == "normal"
+            pet._cycle_view_mode()
+            pet.root.update_idletasks()
+            assert pet.view_mode == "debug"
+            assert pet.status_card._view_mode == "debug"
+            assert "call티켓" in pet.status_card._debug_hud
+
+            pet._cycle_view_mode()
+            pet.root.update_idletasks()
+            assert pet.view_mode == "compact"
+            assert not pet.status_card.winfo_ismapped()
+            assert not pet.inventory_button.winfo_ismapped()
+            assert pet.mode_button.winfo_ismapped()
+            assert pet.close_button.winfo_ismapped()
+
+            pet._cycle_view_mode()
+            pet.root.update_idletasks()
+            assert pet.view_mode == "normal"
+            assert pet.status_card.winfo_ismapped()
+
+            pet._toggle_drawer("options")
+            pet.root.update_idletasks()
+            assert pet.drawer.winfo_ismapped()
             pet._toggle_drawer("options")
             pet.root.update_idletasks()
             assert not pet.drawer.winfo_ismapped()

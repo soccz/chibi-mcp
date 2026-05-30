@@ -83,6 +83,7 @@ BUBBLE_VISIBLE_MS = 4000
 BOB_AMPLITUDE_PX = 4
 BOB_HZ = 0.6
 BOB_TICK_MS = 30
+VIEW_MODES = ("normal", "debug", "compact")
 
 IDLE_BUBBLE_MIN_MS = 4 * 60_000
 IDLE_BUBBLE_MAX_MS = 7 * 60_000
@@ -118,6 +119,22 @@ MOOD_LABELS: dict[str, tuple[str, str]] = {
     "drowsy": ("졸림", "😴"),
     "lonely": ("시무룩", "🥺"),
     "surprised": ("깜짝", "😮"),
+}
+
+MOOD_BOB_PROFILES: dict[str, tuple[int, float]] = {
+    "calm": (4, 0.6),
+    "happy": (5, 0.85),
+    "joyful": (6, 0.95),
+    "panting": (7, 1.3),
+    "drowsy": (2, 0.35),
+    "lonely": (2, 0.42),
+    "surprised": (5, 1.05),
+}
+
+VIEW_MODE_BUTTONS: dict[str, tuple[str, str]] = {
+    "normal": ("일반", "◐"),
+    "debug": ("상세", "▤"),
+    "compact": ("작게", "•"),
 }
 
 
@@ -184,6 +201,17 @@ def _scale_from_resize_drag(
     return _clamp_window_scale(
         max((start_width + delta_x) / base_width, (start_height + delta_y) / base_height)
     )
+
+
+def _normalize_view_mode(value: object) -> str:
+    mode = str(value or "normal").strip().lower()
+    return mode if mode in VIEW_MODES else "normal"
+
+
+def _next_view_mode(mode: str) -> str:
+    current = _normalize_view_mode(mode)
+    idx = VIEW_MODES.index(current)
+    return VIEW_MODES[(idx + 1) % len(VIEW_MODES)]
 
 
 def _as_dict(value: object) -> dict:
@@ -280,6 +308,22 @@ def _mood_reason_for_payload(mood: str, payload: dict) -> str:
     if mood == "surprised":
         return "CPU 스파이크"
     return "안정적"
+
+
+def _format_debug_hud(payload: dict) -> str:
+    payload = _as_dict(payload)
+    counters = _as_dict(payload.get("counters"))
+    gacha = _as_dict(payload.get("gacha"))
+    mood = str(payload.get("mood") or "calm")
+    calls_total = _finite_number(counters.get("calls_total")) or 0
+    slices_today = _finite_number(counters.get("slices_today")) or 0
+    next_call_ticket = 100 - (int(calls_total) % 100)
+    next_slice_ticket = 10 - (int(slices_today) % 10)
+    tickets = _format_counter(gacha.get("tickets")) or "0"
+    return (
+        f"{_mood_reason_for_payload(mood, payload)} · "
+        f"티켓 {tickets} · call티켓 {next_call_ticket} · slice티켓 {next_slice_ticket}"
+    )
 
 
 def _click_reaction_for_payload(mood: str, payload: dict) -> str:
@@ -854,10 +898,13 @@ class ChibiStatusCard(tk.Canvas):
         self._progress = "리듬 준비"
         self._system_hud = "CPU -- · RAM -- · BAT --"
         self._system_warn = False
+        self._debug_hud = "상세 준비"
+        self._view_mode = "normal"
         self._card_width = width
-        self._base_card_height = 84
+        self._normal_card_height = 84
+        self._debug_card_height = 112
         self._scale = 1.0
-        self._card_height = self._base_card_height
+        self._card_height = self._scaled_card_height()
         super().__init__(
             parent,
             width=width,
@@ -869,12 +916,30 @@ class ChibiStatusCard(tk.Canvas):
         self.bind("<Configure>", lambda _event: self._draw())
         self._draw()
 
+    def _base_card_height(self) -> int:
+        return self._debug_card_height if self._view_mode == "debug" else self._normal_card_height
+
+    def _scaled_card_height(self) -> int:
+        minimum = 80 if self._view_mode == "debug" else 60
+        return max(minimum, round(self._base_card_height() * self._scale))
+
     def set_scale(self, scale: float) -> None:
         scale = _clamp_window_scale(scale)
         if abs(scale - self._scale) < 0.01:
             return
         self._scale = scale
-        self._card_height = max(60, round(self._base_card_height * scale))
+        self._card_height = self._scaled_card_height()
+        self.configure(height=self._card_height)
+        self._draw()
+
+    def set_view_mode(self, mode: str) -> None:
+        mode = _normalize_view_mode(mode)
+        if mode == "compact":
+            mode = "normal"
+        if mode == self._view_mode:
+            return
+        self._view_mode = mode
+        self._card_height = self._scaled_card_height()
         self.configure(height=self._card_height)
         self._draw()
 
@@ -893,12 +958,15 @@ class ChibiStatusCard(tk.Canvas):
         *,
         system_hud: str | None = None,
         system_warn: bool | None = None,
+        debug_hud: str | None = None,
     ) -> None:
         self._progress = progress or "리듬 준비"
         if system_hud is not None:
             self._system_hud = system_hud or "CPU -- · RAM -- · BAT --"
         if system_warn is not None:
             self._system_warn = system_warn
+        if debug_hud is not None:
+            self._debug_hud = debug_hud or "상세 준비"
         self._draw()
 
     def _rounded_rect(self, x1: int, y1: int, x2: int, y2: int, radius: int, **kwargs) -> int:
@@ -1007,7 +1075,7 @@ class ChibiStatusCard(tk.Canvas):
             self._s(16),
             self._s(63),
             width - self._s(20),
-            height - self._s(10),
+            self._s(86) if self._view_mode == "debug" else height - self._s(10),
             self._s(8),
             fill=metric_bg,
             outline=metric_border,
@@ -1015,10 +1083,30 @@ class ChibiStatusCard(tk.Canvas):
         )
         self.create_text(
             self._s(28),
-            height - self._s(20),
+            self._s(77) if self._view_mode == "debug" else height - self._s(20),
             text=self._system_hud,
             anchor="w",
             fill="#405247" if not self._system_warn else "#77521b",
+            font=("Helvetica", max(6, self._s(8)), "bold"),
+        )
+        if self._view_mode != "debug":
+            return
+        self._rounded_rect(
+            self._s(16),
+            self._s(88),
+            width - self._s(20),
+            height - self._s(10),
+            self._s(8),
+            fill="#eef4ff",
+            outline="#b9c9ed",
+            width=max(1, self._s(1)),
+        )
+        self.create_text(
+            self._s(28),
+            height - self._s(20),
+            text=self._debug_hud,
+            anchor="w",
+            fill="#41506b",
             font=("Helvetica", max(6, self._s(8)), "bold"),
         )
 
@@ -1039,6 +1127,7 @@ class PetWindow:
         active_option_ids: list[str] | None = None,
         frameless: bool = True,
         sounds: bool = True,
+        view_mode: str = "normal",
     ):
         self.image_path = image_path
         self.name = name
@@ -1051,6 +1140,7 @@ class PetWindow:
         self.catalog = _load_catalog(asset_dir)
         self.ws_url: str | None = None
         self.drawer_mode: str | None = None
+        self.view_mode = _normalize_view_mode(view_mode)
         self._drawer_render_signature: tuple | None = None
         self.frameless = frameless
         self.sounds_enabled = sounds
@@ -1066,6 +1156,8 @@ class PetWindow:
         self._drag_start: tuple[int, int, tk.Misc] | None = None
         self._drag_moved = False
         self._last_state_payload: dict = {}
+        self._mood_fx_items: list[int] = []
+        self._last_bob_offset = 0
         # Cache ((mood, max_side) → rendered RGBA). Variants bypass filter.
         self._mood_image_cache: dict[tuple[str, int], Image.Image] = {}
         self._option_cache: dict[tuple[int, int], list[Image.Image]] = {}
@@ -1142,6 +1234,7 @@ class PetWindow:
             image=self._photo,
             anchor="center",
         )
+        self._refresh_mood_fx(force=True)
 
         self.status_card = ChibiStatusCard(
             self.root,
@@ -1171,6 +1264,16 @@ class PetWindow:
             min_width=68,
         )
         self.options_button.pack(side="left", padx=3)
+        mode_text, mode_icon = VIEW_MODE_BUTTONS[self.view_mode]
+        self.mode_button = self._make_button(
+            self.toolbar,
+            mode_text,
+            self._cycle_view_mode,
+            kind="selected" if self.view_mode != "normal" else "secondary",
+            icon=mode_icon,
+            min_width=62,
+        )
+        self.mode_button.pack(side="left", padx=3)
         self.pull_button = self._make_button(
             self.toolbar, "뽑기", self._pull_from_window, kind="primary", icon="★", min_width=68
         )
@@ -1240,6 +1343,8 @@ class PetWindow:
         self.root.bind("<Control-minus>", lambda _e: self._nudge_window_scale(-0.1))
         self.root.bind("<Command-0>", lambda _e: self._reset_window_scale())
         self.root.bind("<Control-0>", lambda _e: self._reset_window_scale())
+        self.root.bind("<Command-m>", lambda _e: self._cycle_view_mode())
+        self.root.bind("<Control-m>", lambda _e: self._cycle_view_mode())
         self.root.bind("<Configure>", self._on_root_configure)
         self.root.protocol("WM_DELETE_WINDOW", self.shutdown)
 
@@ -1260,6 +1365,7 @@ class PetWindow:
         # avoid "invalid command name" errors firing on the destroyed root.
         self._after_ids: set[str] = set()
         self._layout_ready = True
+        self._apply_view_mode(self.view_mode, announce=False)
 
     def _place_and_raise(self) -> None:
         """Make the first window placement visible on desktop launch."""
@@ -1293,6 +1399,146 @@ class PetWindow:
         )
         return shadow_w, shadow_y
 
+    def _point_near_character(self, x_frac: float, y_frac: float) -> tuple[int, int]:
+        left = self._canvas_center[0] - self._img_w // 2
+        top = self._canvas_center[1] - self._img_h // 2
+        return (
+            left + round(self._img_w * x_frac),
+            top + round(self._img_h * y_frac),
+        )
+
+    def _clear_mood_fx(self) -> None:
+        for item in self._mood_fx_items:
+            with contextlib.suppress(tk.TclError):
+                self.canvas.delete(item)
+        self._mood_fx_items = []
+
+    def _add_mood_fx_item(self, item: int, *, bob: bool = True) -> None:
+        self._mood_fx_items.append(item)
+        with contextlib.suppress(tk.TclError):
+            self.canvas.addtag_withtag("mood_fx", item)
+            if bob:
+                self.canvas.addtag_withtag("mood_fx_bob", item)
+
+    def _refresh_mood_fx(self, *, force: bool = False) -> None:
+        if not force and self._mood_fx_items:
+            return
+        if not hasattr(self, "canvas"):
+            return
+        self._clear_mood_fx()
+        mood = self.current_mood
+        if mood == "panting":
+            self._draw_panting_fx()
+        elif mood == "drowsy":
+            self._draw_drowsy_fx()
+        elif mood in {"happy", "joyful"}:
+            self._draw_happy_fx(mood)
+        elif mood == "lonely":
+            self._draw_lonely_fx()
+        elif mood == "surprised":
+            self._draw_surprised_fx()
+        if self._last_bob_offset:
+            with contextlib.suppress(tk.TclError):
+                self.canvas.move("mood_fx_bob", 0, self._last_bob_offset)
+        with contextlib.suppress(tk.TclError):
+            self.canvas.tag_raise("mood_fx")
+
+    def _draw_panting_fx(self) -> None:
+        for x_frac, y_frac, size in ((0.78, 0.22, 7), (0.84, 0.36, 5)):
+            x, y = self._point_near_character(x_frac, y_frac)
+            r = self._s(size)
+            self._add_mood_fx_item(
+                self.canvas.create_oval(
+                    x - r,
+                    y - r,
+                    x + r,
+                    y + r,
+                    fill="#8bd3ff",
+                    outline="#4da9df",
+                    width=max(1, self._s(1)),
+                )
+            )
+        for x_frac in (0.18, 0.88):
+            x, y = self._point_near_character(x_frac, 0.52)
+            self._add_mood_fx_item(
+                self.canvas.create_line(
+                    x,
+                    y - self._s(18),
+                    x + self._s(8),
+                    y,
+                    x,
+                    y + self._s(18),
+                    fill="#ff8b7f",
+                    width=max(1, self._s(2)),
+                    smooth=True,
+                ),
+                bob=False,
+            )
+
+    def _draw_drowsy_fx(self) -> None:
+        for idx, (x_frac, y_frac) in enumerate(((0.78, 0.16), (0.86, 0.04), (0.92, -0.05))):
+            x, y = self._point_near_character(x_frac, y_frac)
+            self._add_mood_fx_item(
+                self.canvas.create_text(
+                    x,
+                    y,
+                    text="Z",
+                    fill="#6f83b7",
+                    font=("Helvetica", max(8, self._s(10 + idx * 2)), "bold"),
+                )
+            )
+
+    def _draw_happy_fx(self, mood: str) -> None:
+        colors = ("#ff9dbd", "#f4c542", "#55bd83", "#78a8ff")
+        points = ((0.20, 0.22), (0.82, 0.18), (0.16, 0.56), (0.88, 0.54))
+        for idx, (x_frac, y_frac) in enumerate(points):
+            x, y = self._point_near_character(x_frac, y_frac)
+            text = "✦" if mood == "joyful" or idx % 2 == 0 else "·"
+            self._add_mood_fx_item(
+                self.canvas.create_text(
+                    x,
+                    y,
+                    text=text,
+                    fill=colors[idx % len(colors)],
+                    font=("Helvetica", max(8, self._s(11)), "bold"),
+                )
+            )
+
+    def _draw_lonely_fx(self) -> None:
+        x, y = self._point_near_character(0.18, 0.20)
+        self._add_mood_fx_item(
+            self.canvas.create_oval(
+                x - self._s(15),
+                y - self._s(9),
+                x + self._s(18),
+                y + self._s(10),
+                fill="#e7e1da",
+                outline="#c8bbae",
+                width=max(1, self._s(1)),
+            )
+        )
+        self._add_mood_fx_item(
+            self.canvas.create_text(
+                x + self._s(1),
+                y - self._s(1),
+                text="...",
+                fill="#8d8177",
+                font=("Helvetica", max(7, self._s(9)), "bold"),
+            )
+        )
+
+    def _draw_surprised_fx(self) -> None:
+        x, y = self._point_near_character(0.80, 0.12)
+        self._add_mood_fx_item(
+            self.canvas.create_text(
+                x,
+                y,
+                text="!",
+                fill="#f05f4b",
+                font=("Helvetica", max(12, self._s(18)), "bold"),
+            )
+        )
+
     def _update_stage_layout(self) -> None:
         total_w, canvas_h = self._stage_dimensions()
         self.canvas.configure(width=total_w, height=canvas_h)
@@ -1307,6 +1553,8 @@ class PetWindow:
             shadow_y + self._s(5),
         )
         self.status_card.configure(width=max(self._s(260), total_w - self._s(20)))
+        self._last_bob_offset = 0
+        self._refresh_mood_fx(force=True)
         self.bubble.configure(
             wraplength=max(self._s(160), total_w - self._s(30)),
             font=("Helvetica", max(8, self._s(10))),
@@ -1319,17 +1567,19 @@ class PetWindow:
         for button in (
             self.inventory_button,
             self.options_button,
+            self.mode_button,
             self.pull_button,
             self.close_button,
         ):
             button.set_scale(self._window_scale)
-            button.pack_configure(padx=self._s(3))
         self.status_card.set_scale(self._window_scale)
-        self.status_card.pack_configure(
-            pady=(self._s(2), self._s(8)),
-            padx=self._s(10),
-            fill="x",
-        )
+        if self.status_card.winfo_ismapped():
+            self.status_card.pack_configure(
+                pady=(self._s(2), self._s(8)),
+                padx=self._s(10),
+                fill="x",
+            )
+        self._pack_toolbar_for_mode()
         self.drawer.configure(padx=self._s(8), pady=self._s(8))
         self.toolbar.pack_configure(pady=(0, self._s(10)), padx=self._s(8))
         self._draw_resize_grip()
@@ -1349,6 +1599,72 @@ class PetWindow:
                 self.root.update_idletasks()
         finally:
             self._suspend_resize_events = False
+
+    def _pack_status_card(self) -> None:
+        if self.status_card.winfo_ismapped():
+            return
+        try:
+            self.status_card.pack(
+                pady=(self._s(2), self._s(8)),
+                padx=self._s(10),
+                fill="x",
+                before=self.toolbar,
+            )
+        except (AttributeError, tk.TclError):
+            self.status_card.pack(pady=(self._s(2), self._s(8)), padx=self._s(10), fill="x")
+
+    def _pack_toolbar_for_mode(self) -> None:
+        for button in (
+            self.inventory_button,
+            self.options_button,
+            self.mode_button,
+            self.pull_button,
+            self.close_button,
+        ):
+            button.pack_forget()
+        if self.view_mode == "compact":
+            buttons = (self.mode_button, self.close_button)
+        else:
+            buttons = (
+                self.inventory_button,
+                self.options_button,
+                self.mode_button,
+                self.pull_button,
+                self.close_button,
+            )
+        for button in buttons:
+            button.pack(side="left", padx=self._s(3))
+
+    def _apply_view_mode(self, mode: str, *, announce: bool = True) -> str:
+        self.view_mode = _normalize_view_mode(mode)
+        status_mode = "debug" if self.view_mode == "debug" else "normal"
+        self.status_card.set_view_mode(status_mode)
+
+        text, icon = VIEW_MODE_BUTTONS[self.view_mode]
+        self.mode_button.set_style(
+            self._button_colors("selected" if self.view_mode != "normal" else "secondary"),
+            icon=icon,
+            text=text,
+        )
+
+        if self.view_mode == "compact":
+            self.status_card.pack_forget()
+            if self.drawer.winfo_ismapped():
+                self.drawer.pack_forget()
+                self.drawer_mode = None
+                self._drawer_render_signature = None
+        else:
+            self._pack_status_card()
+
+        self._pack_toolbar_for_mode()
+        self._fit_root_to_content()
+        if announce:
+            labels = {"normal": "일반 모드", "debug": "상세 모드", "compact": "작게 보기"}
+            self.show_bubble(labels[self.view_mode])
+        return "break"
+
+    def _cycle_view_mode(self) -> str:
+        return self._apply_view_mode(_next_view_mode(self.view_mode))
 
     def _draw_resize_grip(self) -> None:
         if not hasattr(self, "resize_grip"):
@@ -1463,6 +1779,8 @@ class PetWindow:
         self._photo = ImageTk.PhotoImage(img)
         self.canvas.itemconfigure(self._image_id, image=self._photo)
         self.current_mood = mood
+        if scale is None:
+            self._refresh_mood_fx(force=True)
 
     def _catalog_item(self, key: str, item_id: str) -> dict | None:
         for item in self.catalog.get(key, []):
@@ -1519,7 +1837,8 @@ class PetWindow:
 
     def _sync_visual_state(self, payload: dict) -> bool:
         """Apply persisted character/option changes without reopening the window."""
-        gacha = payload.get("gacha") or {}
+        payload = _as_dict(payload)
+        gacha = _as_dict(payload.get("gacha"))
         changed = False
 
         active_id = str(gacha.get("active_character_id") or "").strip()
@@ -1584,6 +1903,7 @@ class PetWindow:
             " · ".join(parts),
             system_hud=_format_system_hud(system),
             system_warn=_metric_is_warn(system),
+            debug_hud=_format_debug_hud(payload),
         )
 
     # ── Built-in controls ───────────────────────────────────────────────────
@@ -1882,10 +2202,15 @@ class PetWindow:
         if self.stop_event.is_set():
             return
         self._bob_phase += BOB_TICK_MS / 1000.0
-        offset = int(self._s(BOB_AMPLITUDE_PX) * math.sin(2 * math.pi * BOB_HZ * self._bob_phase))
+        amplitude, hz = MOOD_BOB_PROFILES.get(self.current_mood, (BOB_AMPLITUDE_PX, BOB_HZ))
+        offset = int(self._s(amplitude) * math.sin(2 * math.pi * hz * self._bob_phase))
         self.canvas.coords(
             self._image_id, self._canvas_center[0], self._canvas_center[1] + offset
         )
+        if offset != self._last_bob_offset:
+            with contextlib.suppress(tk.TclError):
+                self.canvas.move("mood_fx_bob", 0, offset - self._last_bob_offset)
+            self._last_bob_offset = offset
         self._after(BOB_TICK_MS, self._idle_bob_tick)
 
     def _squish(self, _event: tk.Event) -> None:
@@ -2108,7 +2433,7 @@ class PetWindow:
     def _handle_event(self, evt: dict) -> None:
         kind = evt.get("type")
         if kind == "state":
-            payload = evt.get("payload") or {}
+            payload = _as_dict(evt.get("payload"))
             visual_changed = self._sync_visual_state(payload)
             mood = payload.get("mood")
             if mood and (mood != self.current_mood or visual_changed):
@@ -2119,7 +2444,7 @@ class PetWindow:
             if visual_changed:
                 self._update_stage_layout()
                 self._fit_root_to_content()
-            gacha = payload.get("gacha") or {}
+            gacha = _as_dict(payload.get("gacha"))
             active_options = gacha.get("active_option_ids")
             if isinstance(active_options, list):
                 self.active_option_ids = [str(option_id) for option_id in active_options]
@@ -2190,6 +2515,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ready-file", default=None, help="Write this file after Tk startup")
     parser.add_argument("--ws", default=None, help="WebSocket URL for live updates")
     parser.add_argument(
+        "--view-mode",
+        choices=VIEW_MODES,
+        default=_normalize_view_mode(os.environ.get("CHIBI_WINDOW_MODE", "normal")),
+        help="Initial window display mode",
+    )
+    parser.add_argument(
         "--no-frameless", action="store_true",
         help="Show the OS title bar (default: frameless)",
     )
@@ -2226,6 +2557,7 @@ def main(argv: list[str] | None = None) -> int:
         active_option_ids=args.active_option_id,
         frameless=not args.no_frameless,
         sounds=not args.no_sounds,
+        view_mode=args.view_mode,
     )
     _write_ready_file(args.ready_file)
     win.start(args.ws)

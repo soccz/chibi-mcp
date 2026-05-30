@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_URL="${CHIBI_REPO_URL:-git+https://github.com/soccz/chibi-mcp.git#subdirectory=server}"
 MARKETPLACE="${CHIBI_MARKETPLACE:-soccz/chibi-mcp}"
 MCP_NAME="${CHIBI_MCP_NAME:-chibi}"
-EXPECTED_VERSION="${CHIBI_EXPECT_VERSION:-1.4.26}"
+EXPECTED_VERSION="${CHIBI_EXPECT_VERSION:-1.4.27}"
 PYTHON_BIN=""
 PIPX_CMD=()
 
