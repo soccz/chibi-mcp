@@ -12,6 +12,7 @@ from chibi_mcp.server import (
     _resolve_asset_dir,
     _sanitize_say,
     _window_runtime_issue,
+    _window_startup_failure,
     clear_active_options,
     get_options,
     set_active_options,
@@ -141,3 +142,52 @@ def test_window_runtime_issue_reports_missing_tkinter(monkeypatch):
     assert issue is not None
     assert issue["opened"] is False
     assert issue["reason"] == "python tkinter unavailable"
+
+
+class _FakeProc:
+    def __init__(self, code=None):
+        self.pid = 12345
+        self.code = code
+        self.terminated = False
+
+    def poll(self):
+        return self.code
+
+    def terminate(self):
+        self.terminated = True
+
+
+def test_window_startup_wait_accepts_ready_file(tmp_path):
+    ready = tmp_path / "ready.json"
+    ready.write_text('{"ready": true}', encoding="utf-8")
+    log = tmp_path / "window.log"
+
+    assert _window_startup_failure(_FakeProc(), ready, log, timeout_seconds=0.01) is None
+
+
+def test_window_startup_wait_reports_early_exit(tmp_path):
+    ready = tmp_path / "ready.json"
+    log = tmp_path / "window.log"
+    log.write_text("boom", encoding="utf-8")
+
+    result = _window_startup_failure(_FakeProc(code=11), ready, log, timeout_seconds=0.01)
+
+    assert result is not None
+    assert result["opened"] is False
+    assert "died before ready" in result["reason"]
+    assert result["log_tail"] == "boom"
+
+
+def test_window_startup_wait_times_out_and_terminates(tmp_path):
+    proc = _FakeProc()
+    ready = tmp_path / "ready.json"
+    log = tmp_path / "window.log"
+
+    result = _window_startup_failure(
+        proc, ready, log, timeout_seconds=0.01, poll_interval=0.001
+    )
+
+    assert result is not None
+    assert result["opened"] is False
+    assert "did not report ready" in result["reason"]
+    assert proc.terminated is True

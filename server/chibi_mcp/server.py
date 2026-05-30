@@ -10,6 +10,8 @@ import re
 import signal
 import subprocess
 import sys
+import time
+import uuid
 from pathlib import Path
 
 from fastmcp import FastMCP
@@ -27,6 +29,7 @@ log = logging.getLogger(__name__)
 # Tracks the spawned tk window process across MCP calls. A PID file persists
 # across MCP server restarts (the window is a detached subprocess).
 _WINDOW_PID_FILE = Path.home() / ".chibi-mcp" / "window.pid"
+_WINDOW_READY_TIMEOUT_SECONDS = 5.0
 
 mcp = FastMCP("chibi-mcp")
 
@@ -384,6 +387,51 @@ def _window_runtime_issue() -> dict | None:
     return None
 
 
+def _read_log_tail(log_path: Path) -> str:
+    try:
+        return log_path.read_text(encoding="utf-8", errors="replace")[-2000:]
+    except OSError:
+        return "(no log)"
+
+
+def _window_startup_failure(
+    proc: subprocess.Popen,
+    ready_path: Path,
+    log_path: Path,
+    *,
+    timeout_seconds: float = _WINDOW_READY_TIMEOUT_SECONDS,
+    poll_interval: float = 0.05,
+) -> dict | None:
+    """Return a failure payload unless the child reports Tk startup readiness."""
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        if ready_path.exists():
+            return None
+        exit_code = proc.poll()
+        if exit_code is not None:
+            return {
+                "opened": False,
+                "reason": f"window subprocess died before ready (exit {exit_code})",
+                "log_tail": _read_log_tail(log_path),
+                "log_path": str(log_path),
+                "ready_file": str(ready_path),
+                "next_step": "Run `chibi-mcp --open` and inspect the returned log_path.",
+            }
+        time.sleep(poll_interval)
+
+    with contextlib.suppress(OSError, ProcessLookupError):
+        proc.terminate()
+    return {
+        "opened": False,
+        "reason": "window subprocess did not report ready before timeout",
+        "pid": proc.pid,
+        "log_tail": _read_log_tail(log_path),
+        "log_path": str(log_path),
+        "ready_file": str(ready_path),
+        "next_step": "Run `chibi-mcp --open`; if it repeats, attach ~/.chibi-mcp/window.log.",
+    }
+
+
 @mcp.tool()
 def open_pet_window(character_id: str | None = None) -> dict:
     """Pop up a small always-on-top tk window showing the active chibi.
@@ -469,6 +517,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
     log_path = Path.home() / ".chibi-mcp" / "window.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_fh = log_path.open("ab")
+    ready_path = log_path.parent / f"window-ready-{uuid.uuid4().hex}.json"
 
     popen_kwargs: dict = {
         "stdin": subprocess.DEVNULL,
@@ -498,6 +547,8 @@ def open_pet_window(character_id: str | None = None) -> dict:
         str(asset_dir),
         "--character-id",
         ch["id"],
+        "--ready-file",
+        str(ready_path),
     ]
     for _option_id, option_path in option_images:
         command.extend(["--option-image", str(option_path)])
@@ -505,33 +556,13 @@ def open_pet_window(character_id: str | None = None) -> dict:
         command.extend(["--active-option-id", str(option_id)])
 
     proc = subprocess.Popen(command, **popen_kwargs)
-
-    # Tk import failures, missing display, etc. show up in the first 500ms.
-    # If the subprocess is already dead by then, surface the tail of its log.
-    import time as _time
-
-    _time.sleep(0.5)
-    exit_code = proc.poll()
-    # The subprocess inherits the fd; we don't need to keep the Python file
-    # object open in this process. Close it either way.
+    startup_failure = _window_startup_failure(proc, ready_path, log_path)
     with contextlib.suppress(OSError):
         log_fh.close()
-    if exit_code is not None:
-        try:
-            tail = log_path.read_text(encoding="utf-8", errors="replace")[-2000:]
-        except OSError:
-            tail = "(no log)"
-        return {
-            "opened": False,
-            "reason": f"window subprocess died (exit {exit_code})",
-            "log_tail": tail,
-            "log_path": str(log_path),
-            "hint": (
-                "macOS: ensure pipx is using a Python with tkinter "
-                "(python.org installer or the matching Homebrew `python-tk@X.Y` package). "
-                "Check with: python3 -c 'import tkinter'"
-            ),
-        }
+    if startup_failure is not None:
+        return startup_failure
+    with contextlib.suppress(OSError):
+        ready_path.unlink(missing_ok=True)
 
     pid_file_written = True
     pid_file_warning = None
@@ -552,6 +583,7 @@ def open_pet_window(character_id: str | None = None) -> dict:
         "image": str(image_path),
         "options": [option_id for option_id, _path in option_images],
         "log_path": str(log_path),
+        "ready": True,
         "pid_file": str(_WINDOW_PID_FILE),
         "pid_file_written": pid_file_written,
     }

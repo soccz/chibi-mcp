@@ -14,3 +14,11 @@ def test_macos_pyobjc_transparency_is_opt_in(monkeypatch):
             raise AssertionError("PyObjC path should not run by default")
 
     assert window._macos_make_transparent(Root()) is False
+
+
+def test_write_ready_file(tmp_path):
+    ready = tmp_path / "ready.json"
+
+    window._write_ready_file(str(ready))
+
+    assert '"ready": true' in ready.read_text(encoding="utf-8")

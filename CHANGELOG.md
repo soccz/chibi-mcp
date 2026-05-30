@@ -39,6 +39,10 @@ Commercial-readiness polish without enabling paid gates.
 - Disabled PyObjC macOS transparency by default and removed the PyObjC runtime
   dependency, avoiding native `_objc` segmentation faults on Homebrew Python
   3.14 + Tk 9. The stable default is now the Tk light-panel window.
+- Added a cross-platform Tk window ready-file handshake. `open_pet_window` now
+  waits for the child process to finish Tk startup before returning
+  `opened: true`, and reports timeout/early-exit logs consistently on macOS,
+  Linux, and Windows.
 - Expanded built-in local ASMR-style sounds: squish, slice, normal gacha, rare gacha, option brush, and bubble pop are generated as free local wav files with no network or paid sound packs.
 - Expanded installer self-repair beyond macOS: Linux bash installers now try Tk repair across `apt`, `dnf`, `yum`, `pacman`, `zypper`, and `apk`; Windows PowerShell installers can bootstrap Python with `winget` before installing `pipx`.
 - Made the Claude/Codex installers more self-healing: they install `pipx` when it is missing, suppress confusing `pipx ensurepath` noise, attempt macOS Homebrew Tk repair automatically in bash, reinstall the pipx app after Tk repair, and re-run the health check.

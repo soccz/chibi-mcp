@@ -176,6 +176,17 @@ def _macos_make_transparent(root: tk.Tk) -> bool:
         return False
 
 
+def _write_ready_file(path_value: str | None) -> None:
+    if not path_value:
+        return
+    try:
+        path = Path(path_value).expanduser().resolve()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"ready": True, "pid": os.getpid()}), encoding="utf-8")
+    except OSError as exc:
+        print(f"ready file write failed: {exc}", file=sys.stderr)
+
+
 # ── Procedural sounds ────────────────────────────────────────────────────────
 
 
@@ -1108,6 +1119,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--active-option-id", action="append", default=[], help="Selected option id")
     parser.add_argument("--asset-dir", default=None, help="Directory containing assets/meta.json")
     parser.add_argument("--character-id", default=None, help="Current catalog character id")
+    parser.add_argument("--ready-file", default=None, help="Write this file after Tk startup")
     parser.add_argument("--ws", default=None, help="WebSocket URL for live updates")
     parser.add_argument(
         "--no-frameless", action="store_true",
@@ -1147,6 +1159,7 @@ def main(argv: list[str] | None = None) -> int:
         frameless=not args.no_frameless,
         sounds=not args.no_sounds,
     )
+    _write_ready_file(args.ready_file)
     win.start(args.ws)
     return 0
 
