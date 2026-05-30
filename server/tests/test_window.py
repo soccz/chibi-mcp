@@ -45,11 +45,23 @@ def test_window_view_mode_prefs_round_trip(tmp_path, monkeypatch):
     monkeypatch.setattr(window, "WINDOW_PREFS_FILE", tmp_path / "prefs.json")
 
     assert window._initial_view_mode() == "normal"
-    window._save_window_prefs({"view_mode": "debug"})
+    assert window._initial_window_scale() == 1.0
+    window._save_window_prefs(
+        {
+            "view_mode": "debug",
+            "window_scale": 1.42,
+            "position": {"x": 900, "y": -50},
+        }
+    )
 
     assert window._load_window_prefs()["view_mode"] == "debug"
     assert window._initial_view_mode() == "debug"
     assert window._initial_view_mode("compact") == "compact"
+    assert window._initial_window_scale() == 1.42
+    assert window._window_position_from_prefs(screen_w=1000, screen_h=800, win_w=200, win_h=160) == (
+        776,
+        24,
+    )
 
 
 def test_resize_drag_scale_uses_larger_axis():
@@ -129,6 +141,23 @@ def test_click_reaction_prioritizes_system_context():
         window._click_reaction_for_payload("happy", {"timing": {"idle_seconds": 3}})
         == "최근 tool call 3초"
     )
+
+
+def test_pull_signature_requires_drawn_id_and_time():
+    assert (
+        window._pull_signature(
+            {
+                "gacha": {
+                    "last_pull": {
+                        "drawn": {"id": "mochi", "rarity": 3},
+                        "pulled_at": "2026-05-30T12:00:00",
+                    }
+                }
+            }
+        )
+        == "mochi:2026-05-30T12:00:00"
+    )
+    assert window._pull_signature({"gacha": {"last_pull": {"drawn": {"id": "mochi"}}}}) is None
 
 
 def test_display_counters_are_bounded():

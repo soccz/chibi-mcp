@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.28"
+    assert __version__ == "1.4.29"
 
 
 def test_stdio_startup_does_not_write_non_protocol_output():
@@ -93,7 +93,7 @@ def test_stdio_jsonrpc_handles_initialize_list_and_call():
     assert [response["id"] for response in responses] == [1, 2, 3]
     assert responses[0]["result"]["serverInfo"] == {
         "name": "chibi-mcp",
-        "version": "1.4.28",
+        "version": "1.4.29",
     }
     tools = {tool["name"] for tool in responses[1]["result"]["tools"]}
     assert {"get_catalog", "get_pet_state", "pull_gacha"}.issubset(tools)

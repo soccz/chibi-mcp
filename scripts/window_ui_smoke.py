@@ -57,6 +57,7 @@ def main() -> int:
             pet._reset_window_scale()
             pet.root.update_idletasks()
             assert abs(pet._window_scale - 1.0) < 0.01
+            assert window_mod._load_window_prefs()["window_scale"] == 1.0
 
             pet._toggle_drawer("options")
             pet.root.update_idletasks()

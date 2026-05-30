@@ -61,6 +61,7 @@ class ChibiState:
     slices_today: int = 0
     started_at: float = field(default_factory=time.time)
     last_call_at: float | None = None
+    last_activity_source: str | None = None
     last_cpu: float = 0.0
 
     # Persisted state
@@ -142,6 +143,7 @@ class ChibiState:
             self.call_count += 1
             self.calls_since_slice += 1
             self.last_call_at = time.time()
+            self.last_activity_source = "tool_call"
             sliced = False
             ticket_grants = 0
 
@@ -172,6 +174,23 @@ class ChibiState:
         if save_data is not None:
             self._save_data(save_data)
         return result
+
+    def note_activity(self, source: str = "activity") -> dict:
+        """Mark recent local activity without granting milestone tickets.
+
+        `chibi-say` and desktop-window actions are not always MCP tool calls,
+        but they still mean the user is actively working. Recording the recency
+        keeps the mood model honest without inflating gacha/ticket counters.
+        """
+        source = str(source or "activity").strip()[:32] or "activity"
+        now = time.time()
+        with self._lock:
+            self.last_call_at = now
+            self.last_activity_source = source
+            return {
+                "last_call_at": self.last_call_at,
+                "last_activity_source": self.last_activity_source,
+            }
 
     # ── Gacha ────────────────────────────────────────────────────────────────
 
@@ -365,6 +384,7 @@ class ChibiState:
                 "timing": {
                     "session_seconds": session_seconds,
                     "idle_seconds": idle_seconds,
+                    "last_activity_source": self.last_activity_source,
                 },
                 "gacha": {
                     "active_character_id": self.active_character_id,

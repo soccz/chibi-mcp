@@ -6,6 +6,14 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Floating windows now persist size and screen position as well as view mode,
+  so a resized/debug/compact setup survives close, restart, and fresh MCP
+  launches.
+- `chibi-say`/Claude hook events now mark recent local activity and push an
+  immediate state update before the speech bubble, so the pet actually turns
+  happy when tool-call reactions arrive.
+- Gacha state updates now trigger a small reveal halo/sparkle in the already
+  open window when a new pull becomes active.
 - Added mood-specific canvas effects in the floating window: high CPU shows
   sweat/heat accents, low battery shows drowsy `Z` marks, recent tool activity
   sparkles, and long idle shows a lonely cloud.

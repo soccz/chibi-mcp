@@ -18,7 +18,9 @@ import socket
 import pytest
 from websockets.asyncio.client import connect
 
+from chibi_mcp import state as state_mod
 from chibi_mcp.state import reset_state_for_tests
+from chibi_mcp.system_info import SystemSnapshot
 from chibi_mcp.ws_server import (
     get_broadcaster,
     reset_broadcaster_for_tests,
@@ -80,6 +82,32 @@ async def test_pet_say_broadcasts_to_client(ws_url):
         msg = json.loads(raw)
         assert msg["type"] == "say"
         assert msg["text"] == "hello!"
+
+
+async def test_inbound_say_marks_recent_activity_and_pushes_state(ws_url, monkeypatch):
+    monkeypatch.setattr(
+        state_mod,
+        "read_snapshot",
+        lambda interval=0.0: SystemSnapshot(
+            cpu_percent=10.0,
+            ram_percent=40.0,
+            battery_percent=80.0,
+            battery_plugged=False,
+        ),
+    )
+    async with connect(ws_url) as listener, connect(ws_url) as actor:
+        await asyncio.wait_for(listener.recv(), timeout=2.0)
+        await asyncio.wait_for(actor.recv(), timeout=2.0)
+
+        await actor.send(json.dumps({"type": "say", "text": "hook fired"}))
+
+        state_msg = json.loads(await asyncio.wait_for(listener.recv(), timeout=2.0))
+        say_msg = json.loads(await asyncio.wait_for(listener.recv(), timeout=2.0))
+        assert state_msg["type"] == "state"
+        assert state_msg["payload"]["mood"] == "happy"
+        assert state_msg["payload"]["timing"]["last_activity_source"] == "say"
+        assert say_msg["type"] == "say"
+        assert say_msg["text"] == "hook fired"
 
 
 async def test_slice_event_broadcasts_to_client(ws_url):

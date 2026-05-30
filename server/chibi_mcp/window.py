@@ -91,6 +91,7 @@ IDLE_BUBBLE_MAX_MS = 7 * 60_000
 SOUND_DIR = Path.home() / ".chibi-mcp" / "sounds"
 SOUND_VERSION = "2"
 WINDOW_PREFS_FILE = Path.home() / ".chibi-mcp" / "window-prefs.json"
+WINDOW_DEFAULT_POSITION_Y = 80
 
 IDLE_PHRASES_BY_MOOD: dict[str, list[str]] = {
     "calm":      ["말랑...", "심심해", "쉬자", "..."],
@@ -233,6 +234,37 @@ def _initial_view_mode(requested: object = None) -> str:
     return _normalize_view_mode(_load_window_prefs().get("view_mode"))
 
 
+def _initial_window_scale() -> float:
+    prefs = _load_window_prefs()
+    return _clamp_window_scale(_finite_number(prefs.get("window_scale")) or 1.0)
+
+
+def _window_position_from_prefs(
+    *,
+    screen_w: int,
+    screen_h: int,
+    win_w: int,
+    win_h: int,
+) -> tuple[int, int] | None:
+    prefs = _load_window_prefs()
+    position = prefs.get("position")
+    if not isinstance(position, dict):
+        return None
+    x = _finite_number(position.get("x"))
+    y = _finite_number(position.get("y"))
+    if x is None or y is None:
+        return None
+
+    # Keep restored windows reachable after monitor/layout changes.
+    margin = 24
+    max_x = max(margin, screen_w - max(1, win_w) - margin)
+    max_y = max(margin, screen_h - max(1, win_h) - margin)
+    return (
+        max(margin, min(max_x, round(x))),
+        max(margin, min(max_y, round(y))),
+    )
+
+
 def _next_view_mode(mode: str) -> str:
     current = _normalize_view_mode(mode)
     idx = VIEW_MODES.index(current)
@@ -367,6 +399,18 @@ def _click_reaction_for_payload(mood: str, payload: dict) -> str:
     import random as _r
 
     return _r.choice(pool)
+
+
+def _pull_signature(payload: dict) -> str | None:
+    payload = _as_dict(payload)
+    gacha = _as_dict(payload.get("gacha"))
+    last_pull = _as_dict(gacha.get("last_pull"))
+    drawn = _as_dict(last_pull.get("drawn"))
+    character_id = str(drawn.get("id") or "").strip()
+    pulled_at = str(last_pull.get("pulled_at") or "").strip()
+    if not character_id or not pulled_at:
+        return None
+    return f"{character_id}:{pulled_at}"
 
 
 def _load_image_for_mood(image_path: Path, mood: str) -> tuple[Image.Image, bool]:
@@ -1170,6 +1214,7 @@ class PetWindow:
         self.frameless = frameless
         self.sounds_enabled = sounds
 
+        self._initial_window_scale_value = _initial_window_scale()
         self._window_scale = 1.0
         self._render_max_side = CANVAS_SIZE - 20
         self._base_total_w = CANVAS_SIZE + 72
@@ -1181,6 +1226,7 @@ class PetWindow:
         self._drag_start: tuple[int, int, tk.Misc] | None = None
         self._drag_moved = False
         self._last_state_payload: dict = {}
+        self._last_pull_signature: str | None = None
         self._mood_fx_items: list[int] = []
         self._last_bob_offset = 0
         self._mood_fx_phase = 0
@@ -1383,29 +1429,47 @@ class PetWindow:
                 round(self._base_total_h * WINDOW_MIN_SCALE),
             )
 
-        self._place_and_raise()
-
         # Idle bob state
         self._bob_phase = 0.0
         # Track pending after() callbacks so shutdown can cancel them and
         # avoid "invalid command name" errors firing on the destroyed root.
         self._after_ids: set[str] = set()
         self._layout_ready = True
+        self._apply_window_scale(self._initial_window_scale_value, persist=False)
         self._apply_view_mode(self.view_mode, announce=False, persist=False)
+        self._place_and_raise()
 
     def _place_and_raise(self) -> None:
         """Make the first window placement visible on desktop launch."""
         with contextlib.suppress(tk.TclError):
             self.root.update_idletasks()
             screen_w = self.root.winfo_screenwidth()
+            screen_h = self.root.winfo_screenheight()
             win_w = self.root.winfo_width()
-            x = max(24, screen_w - win_w - 40)
-            y = 80
+            win_h = self.root.winfo_height()
+            restored = _window_position_from_prefs(
+                screen_w=screen_w,
+                screen_h=screen_h,
+                win_w=win_w,
+                win_h=win_h,
+            )
+            if restored is None:
+                x = max(24, screen_w - win_w - 40)
+                y = WINDOW_DEFAULT_POSITION_Y
+            else:
+                x, y = restored
             self.root.geometry(f"+{x}+{y}")
             self.root.lift()
             self.root.attributes("-topmost", True)
             self.root.focus_force()
-            self.root.after(250, self.root.lift)
+            self._after(250, self.root.lift)
+
+    def _save_window_layout(self, **extra: object) -> None:
+        data: dict[str, object] = {"window_scale": round(self._window_scale, 2)}
+        with contextlib.suppress(tk.TclError):
+            data["position"] = {"x": self.root.winfo_x(), "y": self.root.winfo_y()}
+        data.update(extra)
+        _save_window_prefs(data)
 
     # ── Rendering ────────────────────────────────────────────────────────────
 
@@ -1711,7 +1775,7 @@ class PetWindow:
         self._pack_toolbar_for_mode()
         self._fit_root_to_content()
         if persist:
-            _save_window_prefs({"view_mode": self.view_mode})
+            self._save_window_layout(view_mode=self.view_mode)
         if announce:
             labels = {"normal": "일반 모드", "debug": "상세 모드", "compact": "작게 보기"}
             self.show_bubble(labels[self.view_mode])
@@ -1742,7 +1806,7 @@ class PetWindow:
         with contextlib.suppress(tk.TclError):
             self.resize_grip.tk.call("raise", self.resize_grip._w)
 
-    def _apply_window_scale(self, scale: float) -> None:
+    def _apply_window_scale(self, scale: float, *, persist: bool = False) -> None:
         scale = _clamp_window_scale(scale)
         if abs(scale - self._window_scale) < 0.03:
             return
@@ -1756,6 +1820,8 @@ class PetWindow:
         if self.drawer_mode and self.drawer.winfo_ismapped():
             self._render_drawer()
         self._fit_root_to_content()
+        if persist:
+            self._save_window_layout()
 
     def _on_root_configure(self, event: tk.Event) -> None:
         if self._suspend_resize_events or not self._layout_ready or event.widget is not self.root:
@@ -1774,14 +1840,14 @@ class PetWindow:
 
     def _finish_resize(self, scale: float) -> None:
         self._resize_after = None
-        self._apply_window_scale(scale)
+        self._apply_window_scale(scale, persist=True)
 
     def _nudge_window_scale(self, delta: float) -> str:
-        self._apply_window_scale(self._window_scale + delta)
+        self._apply_window_scale(self._window_scale + delta, persist=True)
         return "break"
 
     def _reset_window_scale(self) -> str:
-        self._apply_window_scale(1.0)
+        self._apply_window_scale(1.0, persist=True)
         return "break"
 
     def _get_mood_image(self, mood: str) -> Image.Image:
@@ -2416,6 +2482,60 @@ class PetWindow:
 
         tick()
 
+    def _spawn_pull_reveal(self, last_pull: dict) -> None:
+        drawn = _as_dict(last_pull.get("drawn"))
+        rarity = int(_finite_number(drawn.get("rarity")) or 2)
+        rare = rarity >= 4
+        halo = self.canvas.create_oval(
+            self._canvas_center[0] - self._img_w // 2 - self._s(14),
+            self._canvas_center[1] - self._img_h // 2 - self._s(14),
+            self._canvas_center[0] + self._img_w // 2 + self._s(14),
+            self._canvas_center[1] + self._img_h // 2 + self._s(14),
+            fill="",
+            outline="#ff6b9d" if rare else "#f4c542",
+            width=max(2, self._s(3)),
+        )
+        self.canvas.addtag_withtag("pull_fx", halo)
+        sparkles: list[int] = [halo]
+        palette = ("#ff6b9d", "#f4c542", "#55bd83", "#78a8ff") if rare else ("#f4c542", "#ffb36b", "#55bd83")
+        for idx, color in enumerate(palette):
+            angle = (math.tau / len(palette)) * idx
+            x = self._canvas_center[0] + round(math.cos(angle) * (self._img_w * 0.52))
+            y = self._canvas_center[1] + round(math.sin(angle) * (self._img_h * 0.62))
+            item = self.canvas.create_text(
+                x,
+                y,
+                text="✦" if rare or idx % 2 == 0 else "·",
+                fill=color,
+                font=("Helvetica", max(9, self._s(13)), "bold"),
+            )
+            self.canvas.addtag_withtag("pull_fx", item)
+            sparkles.append(item)
+        self.canvas.tag_raise("pull_fx")
+
+        def tick(step: int = 0) -> None:
+            if step >= 16:
+                with contextlib.suppress(tk.TclError):
+                    for item in sparkles:
+                        self.canvas.delete(item)
+                return
+            grow = self._s(1 + step // 4)
+            with contextlib.suppress(tk.TclError):
+                self.canvas.coords(
+                    halo,
+                    self._canvas_center[0] - self._img_w // 2 - self._s(14) - grow,
+                    self._canvas_center[1] - self._img_h // 2 - self._s(14) - grow,
+                    self._canvas_center[0] + self._img_w // 2 + self._s(14) + grow,
+                    self._canvas_center[1] + self._img_h // 2 + self._s(14) + grow,
+                )
+                if step % 2 == 0:
+                    state = "hidden" if step % 4 == 0 else "normal"
+                    for item in sparkles[1:]:
+                        self.canvas.itemconfigure(item, state=state)
+            self._after(45, lambda: tick(step + 1))
+
+        tick()
+
     # ── Drag ─────────────────────────────────────────────────────────────────
 
     def _start_drag(self, event: tk.Event) -> None:
@@ -2443,6 +2563,8 @@ class PetWindow:
         self._drag_start = None
         self._drag_offset = None
         if start is None or self._drag_moved:
+            if start is not None and self._drag_moved:
+                self._save_window_layout()
             return None
         if start[2] is self.canvas:
             return self._poke_character()
@@ -2470,6 +2592,7 @@ class PetWindow:
 
     def _end_resize(self, _event: tk.Event) -> str:
         self._resize_start = None
+        self._save_window_layout()
         return "break"
 
     # ── Event pump ───────────────────────────────────────────────────────────
@@ -2488,6 +2611,12 @@ class PetWindow:
         kind = evt.get("type")
         if kind == "state":
             payload = _as_dict(evt.get("payload"))
+            had_state = bool(self._last_state_payload)
+            pull_signature = _pull_signature(payload)
+            is_new_pull = (
+                pull_signature is not None
+                and pull_signature != self._last_pull_signature
+            )
             visual_changed = self._sync_visual_state(payload)
             mood = payload.get("mood")
             if mood and (mood != self.current_mood or visual_changed):
@@ -2503,6 +2632,10 @@ class PetWindow:
             if isinstance(active_options, list):
                 self.active_option_ids = [str(option_id) for option_id in active_options]
             self._update_progress_label(payload)
+            if pull_signature is not None:
+                self._last_pull_signature = pull_signature
+            if had_state and is_new_pull:
+                self._spawn_pull_reveal(_as_dict(_as_dict(payload.get("gacha")).get("last_pull")))
             self._refresh_drawer_if_state_changed()
         elif kind == "slice":
             self._slice_flash()
@@ -2544,6 +2677,7 @@ class PetWindow:
 
     def shutdown(self) -> None:
         self.stop_event.set()
+        self._save_window_layout(view_mode=self.view_mode)
         # Cancel any scheduled callbacks before destroying the root so they
         # don't fire on a half-torn-down widget tree.
         for aid in list(self._after_ids):

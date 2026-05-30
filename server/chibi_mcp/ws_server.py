@@ -113,8 +113,13 @@ async def _handle_client(ws: ServerConnection) -> None:
             if msg.get("type") == "say" and isinstance(msg.get("text"), str):
                 text = msg["text"].replace("\n", " ").replace("\r", " ").strip()
                 if text:
+                    state = get_state()
+                    state.note_activity("say")
+                    await broadcaster.broadcast({"type": "state", "payload": state.snapshot()})
                     await broadcaster.broadcast({"type": "say", "text": text[:_INBOUND_SAY_MAX_LEN]})
             elif msg.get("type") == "action" and _ACTION_HANDLER is not None:
+                state = get_state()
+                state.note_activity("window_action")
                 try:
                     result = _ACTION_HANDLER(msg)
                 except Exception:
@@ -123,6 +128,7 @@ async def _handle_client(ws: ServerConnection) -> None:
                     continue
                 if isinstance(result, dict) and result.get("ok") is False:
                     reason = str(result.get("reason") or "실패")
+                    await broadcaster.broadcast({"type": "state", "payload": state.snapshot()})
                     await broadcaster.broadcast({"type": "say", "text": reason[:_INBOUND_SAY_MAX_LEN]})
                 else:
                     await broadcaster.broadcast({"type": "state", "payload": get_state().snapshot()})

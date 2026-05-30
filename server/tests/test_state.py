@@ -117,6 +117,17 @@ def test_recent_call_triggers_happy():
     assert state.compute_mood(_snap()) == Mood.HAPPY
 
 
+def test_note_activity_triggers_happy_without_counting_ticket_calls():
+    state = ChibiState()
+    state.note_activity("say")
+    assert state.compute_mood(_snap()) == Mood.HAPPY
+    assert state.call_count == 0
+    assert state.calls_since_slice == 0
+    with patch("chibi_mcp.state.read_snapshot", return_value=_snap()):
+        snap = state.snapshot()
+    assert snap["timing"]["last_activity_source"] == "say"
+
+
 def test_long_idle_after_calls_triggers_lonely():
     state = ChibiState()
     state.last_call_at = time.time() - (LONELY_IDLE_SECONDS + 60)
