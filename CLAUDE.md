@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `chibi-mcp` is an MCP server + cross-platform desktop character ("chibi") that surfaces system state (CPU, battery, session) through a character with personality. It is installed from GitHub for Claude Code, Codex, and VS Code, and runs a local server/window that talks over localhost where a desktop session is available.
 
-The project now has an executable Python MCP server, Claude/Codex plugin metadata, a VS Code `.vsix` packaging path, and a floating pet window implemented in pure Python (tk + Pillow + PyObjC for macOS transparency) spawned as a detached subprocess by the MCP server. A legacy Tauri attempt remains under `desktop/` for v0.1–v0.2 reference but is not part of the current install path. Some docs still describe future product phases; check the current files before assuming a phase boundary.
+The project now has an executable Python MCP server, Claude/Codex plugin metadata, a VS Code `.vsix` packaging path, and a floating pet window implemented in pure Python (tk + Pillow) spawned as a detached subprocess by the MCP server. PyObjC transparency experiments are opt-in only because Homebrew Python/Tk/PyObjC combinations can crash natively on macOS. A legacy Tauri attempt remains under `desktop/` for v0.1–v0.2 reference but is not part of the current install path. Some docs still describe future product phases; check the current files before assuming a phase boundary.
 
 Branding rule from the 2026-05-30 user decision: public-facing README copy,
 screenshots, share cards, marketplace/plugin metadata, installer text, and

@@ -81,6 +81,10 @@ chibi-mcp --check
 
 If Homebrew changes the available formula name, run `brew search python-tk` and install the matching `python-tk@X.Y` package.
 
+If macOS shows a Python crash report mentioning `_objc.cpython-314-darwin.so`,
+upgrade to the latest installer. chibi disables PyObjC transparency by default
+and uses a stable Tk light-panel window on macOS.
+
 The Claude/Codex bash installers attempt Tk repair automatically when `chibi-mcp --check` reports `tkinter: false`, then reinstall from the GitHub server subdirectory and check again. Supported automatic repair paths:
 
 - macOS Homebrew: `python-tk@X.Y`

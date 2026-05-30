@@ -85,6 +85,7 @@ State is pushed every 2 seconds. `say` and milestone events are pushed on demand
 | `CHIBI_WS_HOST` | `127.0.0.1` | WebSocket bind host |
 | `CHIBI_WS_PORT` | `9876` | WebSocket bind port |
 | `CHIBI_LOG_LEVEL` | `INFO` | Logging level |
+| `CHIBI_EXPERIMENTAL_MACOS_PYOBJC_TRANSPARENCY` | unset | Opt into the old PyObjC clear-window experiment. Leave unset for the stable macOS Tk panel. |
 
 ## Develop
 

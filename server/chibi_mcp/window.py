@@ -1,9 +1,10 @@
 """Tk window for the floating chibi.
 
 v1.1 visual upgrade:
-    - overrideredirect(True): no title bar — floats as a pure sprite.
-    - macOS transparency: -transparent attribute + systemTransparent bg
-      (with -alpha 0.92 fallback if the window manager doesn't honor it).
+    - overrideredirect(True): no title bar — floats as a compact pet window.
+    - macOS uses the same stable Tk panel path as other platforms by default.
+      PyObjC transparency is experimental opt-in only because some
+      Python/Tk/PyObjC combinations segfault before Python can catch errors.
     - Canvas-based image rendering: bob animation via canvas.move (no flicker).
     - Idle bob: 4px gentle vertical oscillation, ~0.6 Hz, like a slime breathing.
     - Sounds: short procedurally-generated wavs played via `afplay` (darwin),
@@ -22,6 +23,7 @@ import contextlib
 import json
 import logging
 import math
+import os
 import queue
 import struct
 import subprocess
@@ -139,14 +141,17 @@ def _load_image_for_mood(image_path: Path, mood: str) -> tuple[Image.Image, bool
 def _macos_make_transparent(root: tk.Tk) -> bool:
     """Use PyObjC to give the Tk window a truly clear NSWindow background.
 
-    Tk's `-transparent` attribute is unreliable on macOS — many versions
-    still render the window bg as solid. Reaching into the NSView/NSWindow
-    via objc fixes it for real on macOS 11+.
+    This is intentionally disabled by default. PyObjC can segfault in native
+    code on some Homebrew Python 3.14 + Tk 9 macOS builds before Python can
+    catch an exception. Users can opt in with:
 
-    Returns True when applied. Safe no-op when pyobjc isn't installed or
-    not on darwin.
+        CHIBI_EXPERIMENTAL_MACOS_PYOBJC_TRANSPARENCY=1
+
+    Returns True when applied. Stable no-op unless explicitly enabled.
     """
     if sys.platform != "darwin":
+        return False
+    if os.environ.get("CHIBI_EXPERIMENTAL_MACOS_PYOBJC_TRANSPARENCY") != "1":
         return False
     try:
         import objc  # noqa: F401  — sanity-check pyobjc-core is importable
@@ -496,10 +501,14 @@ class PetWindow:
         self.root.title(f"chibi — {name}")
         self.root.attributes("-topmost", True)
 
-        # Transparency on macOS is only used when we can prove it actually
-        # cleared the NSWindow. Otherwise use a light panel, never a black box.
+        # Use a light panel by default. macOS PyObjC clear-window hacks are
+        # opt-in only because incompatible Python/Tk/PyObjC builds can crash
+        # the whole interpreter in native code.
         self._transparent = False
-        if sys.platform == "darwin":
+        if (
+            sys.platform == "darwin"
+            and os.environ.get("CHIBI_EXPERIMENTAL_MACOS_PYOBJC_TRANSPARENCY") == "1"
+        ):
             with contextlib.suppress(tk.TclError):
                 self.root.wm_attributes("-transparent", True)
 
@@ -514,9 +523,7 @@ class PetWindow:
             self.root.update_idletasks()
             self.root.attributes("-topmost", True)
 
-        # PyObjC: try a real clear NSWindow background on macOS. The Tk
-        # -transparent attribute alone is unreliable; this nukes the bg
-        # for real on macOS 11+ when pyobjc-framework-Cocoa is available.
+        # PyObjC clear background path is experimental opt-in only.
         self._macos_clear = False
         if sys.platform == "darwin":
             self._macos_clear = _macos_make_transparent(self.root)
