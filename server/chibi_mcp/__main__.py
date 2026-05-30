@@ -31,6 +31,7 @@ from pathlib import Path
 
 from . import __version__
 from . import server as server_tools
+from .runtime import runtime_dir, runtime_file
 from .server import _resolve_asset_dir
 from .ws_server import DEFAULT_WS_HOST, DEFAULT_WS_PORT, run_ws_server
 
@@ -360,6 +361,8 @@ def _check() -> dict:
         "free_assets_missing": free_assets_missing,
         "free_options_missing": free_options_missing,
         "tkinter": tkinter_ok,
+        "runtime_dir": str(runtime_dir()),
+        "state_file": str(runtime_file("state.json")),
         "ws_default": f"ws://{DEFAULT_WS_HOST}:{DEFAULT_WS_PORT}",
     }
 
@@ -519,6 +522,7 @@ def _vscode_status() -> dict:
 
 def _doctor(mcp_name: str = "chibi") -> dict:
     local = _check()
+    server = _ws_status()
     claude_auth = _auth_status_from_output(
         "claude", _run_client_command(["claude", "auth", "status"], timeout=8.0)
     )
@@ -546,6 +550,10 @@ def _doctor(mcp_name: str = "chibi") -> dict:
     next_steps: list[str] = []
     if not local.get("tkinter"):
         next_steps.append("Install Python tkinter/Tcl-Tk support, then reinstall chibi-mcp.")
+    if server.get("status") != "running":
+        step = server.get("next_step")
+        if step:
+            next_steps.append(step)
     for client_name, client_status in clients.items():
         if client_name in {"claude", "codex"}:
             for section in ("auth", "mcp"):
@@ -561,6 +569,7 @@ def _doctor(mcp_name: str = "chibi") -> dict:
         "ready": bool(local.get("ok")) and all(client_ready.values()),
         "version": __version__,
         "local": local,
+        "server": server,
         "clients": clients,
         "client_ready": client_ready,
         "next_steps": next_steps,
@@ -578,23 +587,16 @@ def _ws_accepts(host: str, port: int, *, timeout: float = 0.6) -> bool:
         return False
 
 
-def _runtime_dir() -> Path:
-    override = os.environ.get("CHIBI_RUNTIME_DIR")
-    if override:
-        return Path(override).expanduser()
-    return Path.home() / ".chibi-mcp"
-
-
 def _ensure_ws_server_for_open() -> dict:
     host, port = _ws_endpoint()
     url = f"ws://{host}:{port}"
     if _ws_accepts(host, port):
         return {"ok": True, "started": False, "url": url}
 
-    runtime_dir = _runtime_dir()
-    runtime_dir.mkdir(parents=True, exist_ok=True)
-    log_path = runtime_dir / "ws.log"
-    pid_path = runtime_dir / "ws.pid"
+    run_dir = runtime_dir()
+    run_dir.mkdir(parents=True, exist_ok=True)
+    log_path = run_dir / "ws.log"
+    pid_path = run_dir / "ws.pid"
     log_fh = log_path.open("ab")
     popen_kwargs: dict = {
         "stdin": subprocess.DEVNULL,
@@ -642,6 +644,30 @@ def _ensure_ws_server_for_open() -> dict:
         "log_path": str(log_path),
         "next_step": "Run `chibi-mcp --ws-only` in another terminal, then `chibi-mcp --open`.",
     }
+
+
+def _ws_status() -> dict:
+    host, port = _ws_endpoint()
+    url = f"ws://{host}:{port}"
+    pid_file = runtime_file("ws.pid")
+    log_path = runtime_file("ws.log")
+    running = _ws_accepts(host, port)
+    status = "running" if running else "not_running"
+    result = {
+        "status": status,
+        "url": url,
+        "runtime_dir": str(runtime_dir()),
+        "pid_file": str(pid_file),
+        "log_path": str(log_path),
+    }
+    if pid_file.exists():
+        try:
+            result["pid"] = int(pid_file.read_text(encoding="utf-8").strip())
+        except (OSError, ValueError):
+            result["pid"] = None
+    if not running:
+        result["next_step"] = "`chibi-mcp --open` starts the local window and server."
+    return result
 
 
 def _open_window_once(character_id: str | None = None, view_mode: str | None = None) -> dict:

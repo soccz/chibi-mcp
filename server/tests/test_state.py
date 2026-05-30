@@ -158,3 +158,57 @@ def test_snapshot_contains_expected_keys():
     assert set(snap.keys()) >= {"mood", "system", "counters", "timing"}
     assert snap["counters"]["calls_total"] == 1
     assert snap["counters"]["slice_interval"] == DEFAULT_SLICE_INTERVAL
+
+
+def test_slice_interval_persists_with_user_state(tmp_path, monkeypatch):
+    from chibi_mcp import state as state_mod
+
+    monkeypatch.setattr(state_mod, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "state.json")
+    state = ChibiState()
+    result = state.set_slice_interval(25)
+    assert result == {"previous": DEFAULT_SLICE_INTERVAL, "current": 25}
+
+    restored = ChibiState()
+    restored.load()
+    assert restored.slice_interval == 25
+
+
+def test_runtime_dir_env_is_respected_after_import(tmp_path, monkeypatch):
+    from chibi_mcp import state as state_mod
+
+    monkeypatch.setattr(state_mod, "STATE_DIR", state_mod._DEFAULT_STATE_DIR)
+    monkeypatch.setattr(state_mod, "STATE_FILE", state_mod._DEFAULT_STATE_FILE)
+    monkeypatch.setenv("CHIBI_RUNTIME_DIR", str(tmp_path))
+    state = ChibiState()
+    state.grant_tickets(2)
+    assert (tmp_path / "state.json").exists()
+
+
+def test_corrupt_persisted_state_is_sanitized(tmp_path, monkeypatch):
+    from chibi_mcp import state as state_mod
+
+    monkeypatch.setattr(state_mod, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "state.json")
+    (tmp_path / "state.json").write_text(
+        """{
+          "slice_interval": 0,
+          "active_character_id": "mochi",
+          "active_option_ids": ["honey_glaze", "../bad", "honey_glaze"],
+          "tickets": -5,
+          "total_pulls": "bad",
+          "inventory": {
+            "white_tteok": {"count": -1, "nickname": " hi\\nthere "},
+            "../bad": {"count": 3, "nickname": "bad"}
+          }
+        }""",
+        encoding="utf-8",
+    )
+    state = ChibiState()
+    state.load()
+    assert state.slice_interval == DEFAULT_SLICE_INTERVAL
+    assert state.active_character_id is None
+    assert state.active_option_ids == ["honey_glaze"]
+    assert state.tickets == 0
+    assert state.total_pulls == 0
+    assert state.inventory == {"white_tteok": {"count": 1, "nickname": "hi there"}}

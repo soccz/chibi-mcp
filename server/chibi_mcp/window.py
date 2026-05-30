@@ -37,6 +37,8 @@ from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageTk
 
+from .runtime import runtime_file
+
 log = logging.getLogger(__name__)
 
 CANVAS_SIZE = 240
@@ -257,9 +259,11 @@ VIEW_MODES = ("normal", "debug", "compact")
 IDLE_BUBBLE_MIN_MS = 4 * 60_000
 IDLE_BUBBLE_MAX_MS = 7 * 60_000
 
-SOUND_DIR = Path.home() / ".chibi-mcp" / "sounds"
+SOUND_DIR = runtime_file("sounds")
+_DEFAULT_SOUND_DIR = SOUND_DIR
 SOUND_VERSION = "2"
-WINDOW_PREFS_FILE = Path.home() / ".chibi-mcp" / "window-prefs.json"
+WINDOW_PREFS_FILE = runtime_file("window-prefs.json")
+_DEFAULT_WINDOW_PREFS_FILE = WINDOW_PREFS_FILE
 WINDOW_DEFAULT_POSITION_Y = 80
 
 IDLE_PHRASES_BY_MOOD: dict[str, list[str]] = {
@@ -389,9 +393,21 @@ def _normalize_view_mode(value: object) -> str:
     return mode if mode in VIEW_MODES else "normal"
 
 
+def _sound_dir() -> Path:
+    if SOUND_DIR != _DEFAULT_SOUND_DIR:
+        return SOUND_DIR
+    return runtime_file("sounds")
+
+
+def _window_prefs_file() -> Path:
+    if WINDOW_PREFS_FILE != _DEFAULT_WINDOW_PREFS_FILE:
+        return WINDOW_PREFS_FILE
+    return runtime_file("window-prefs.json")
+
+
 def _load_window_prefs() -> dict:
     try:
-        data = json.loads(WINDOW_PREFS_FILE.read_text(encoding="utf-8"))
+        data = json.loads(_window_prefs_file().read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return {}
     return data if isinstance(data, dict) else {}
@@ -399,10 +415,11 @@ def _load_window_prefs() -> dict:
 
 def _save_window_prefs(data: dict) -> None:
     try:
-        WINDOW_PREFS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        prefs_file = _window_prefs_file()
+        prefs_file.parent.mkdir(parents=True, exist_ok=True)
         current = _load_window_prefs()
         current.update(data)
-        WINDOW_PREFS_FILE.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
+        prefs_file.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
     except OSError as exc:
         log.debug("window prefs save failed: %s", exc)
 
@@ -746,16 +763,17 @@ def _write_ready_file(path_value: str | None) -> None:
 
 def _ensure_sounds() -> dict[str, Path]:
     """Generate small wav files in ~/.chibi-mcp/sounds/ on first need."""
-    SOUND_DIR.mkdir(parents=True, exist_ok=True)
+    sound_dir = _sound_dir()
+    sound_dir.mkdir(parents=True, exist_ok=True)
     paths = {
-        "bubble": SOUND_DIR / "bubble.wav",
-        "slice": SOUND_DIR / "slice.wav",
-        "squish": SOUND_DIR / "squish.wav",
-        "gacha": SOUND_DIR / "gacha.wav",
-        "rare": SOUND_DIR / "rare.wav",
-        "option": SOUND_DIR / "option.wav",
+        "bubble": sound_dir / "bubble.wav",
+        "slice": sound_dir / "slice.wav",
+        "squish": sound_dir / "squish.wav",
+        "gacha": sound_dir / "gacha.wav",
+        "rare": sound_dir / "rare.wav",
+        "option": sound_dir / "option.wav",
     }
-    version_file = SOUND_DIR / ".version"
+    version_file = sound_dir / ".version"
     regenerate = version_file.read_text(encoding="utf-8").strip() != SOUND_VERSION if version_file.exists() else True
     writers = {
         "bubble": _write_bubble_wav,
@@ -1009,7 +1027,7 @@ def _load_json_file(path: Path) -> dict:
 
 
 def _load_persisted_state() -> dict:
-    return _load_json_file(Path.home() / ".chibi-mcp" / "state.json")
+    return _load_json_file(runtime_file("state.json"))
 
 
 def _load_catalog(asset_dir: Path | None) -> dict:

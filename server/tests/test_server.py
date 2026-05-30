@@ -11,6 +11,7 @@ from chibi_mcp.server import (
     _handle_window_action,
     _resolve_asset_dir,
     _sanitize_say,
+    _window_pid_file,
     _window_runtime_issue,
     _window_startup_failure,
     _window_ws_url,
@@ -72,10 +73,37 @@ def test_open_pet_window_rejects_invalid_view_mode():
     assert result["allowed_view_modes"] == ["compact", "debug", "normal"]
 
 
+def test_open_pet_window_rejects_invalid_character_id():
+    result = server_mod.open_pet_window(character_id="../bad")
+    assert result["opened"] is False
+    assert "invalid character id" in result["reason"]
+    assert result["message_ko"] == "잘못된 chibi ID야"
+
+
+def test_open_pet_window_rejects_explicit_unowned_character(tmp_path, monkeypatch):
+    monkeypatch.setattr(state_mod, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "state.json")
+    monkeypatch.setattr(server_mod, "_WINDOW_PID_FILE", tmp_path / "window.pid")
+    reset_state_for_tests()
+    try:
+        result = server_mod.open_pet_window(character_id="mochi")
+        assert result["opened"] is False
+        assert "don't own" in result["reason"]
+        assert "보유하지 않은" in result["message_ko"]
+    finally:
+        reset_state_for_tests()
+
+
 def test_window_ws_url_respects_env(monkeypatch):
     monkeypatch.setenv("CHIBI_WS_HOST", "127.0.0.2")
     monkeypatch.setenv("CHIBI_WS_PORT", "9988")
     assert _window_ws_url() == "ws://127.0.0.2:9988"
+
+
+def test_window_pid_file_respects_runtime_dir_after_import(tmp_path, monkeypatch):
+    monkeypatch.setattr(server_mod, "_WINDOW_PID_FILE", server_mod._DEFAULT_WINDOW_PID_FILE)
+    monkeypatch.setenv("CHIBI_RUNTIME_DIR", str(tmp_path))
+    assert _window_pid_file() == tmp_path / "window.pid"
 
 
 def test_options_catalog_exposes_free_layers():
@@ -204,6 +232,21 @@ def test_window_action_rejects_unknown_action():
     result = _handle_window_action({"type": "action", "action": "not_real"})
     assert result["ok"] is False
     assert "unknown window action" in result["reason"]
+
+
+def test_set_slice_interval_persists_and_broadcasts(tmp_path, monkeypatch):
+    monkeypatch.setattr(state_mod, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "state.json")
+    reset_state_for_tests()
+    try:
+        result = server_mod.set_slice_interval(25)
+        assert result["previous"] == 10
+        assert result["current"] == 25
+        assert result["broadcasted"] is False
+        reset_state_for_tests()
+        assert get_state().slice_interval == 25
+    finally:
+        reset_state_for_tests()
 
 
 def test_window_runtime_issue_reports_missing_tkinter(monkeypatch):

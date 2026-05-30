@@ -78,6 +78,18 @@ def test_window_view_mode_prefs_round_trip(tmp_path, monkeypatch):
     assert window._initial_topmost_enabled() is False
 
 
+def test_window_runtime_dir_env_is_respected_after_import(tmp_path, monkeypatch):
+    monkeypatch.setattr(window, "WINDOW_PREFS_FILE", window._DEFAULT_WINDOW_PREFS_FILE)
+    monkeypatch.setattr(window, "SOUND_DIR", window._DEFAULT_SOUND_DIR)
+    monkeypatch.setenv("CHIBI_RUNTIME_DIR", str(tmp_path))
+
+    window._save_window_prefs({"view_mode": "compact"})
+
+    assert (tmp_path / "window-prefs.json").exists()
+    assert window._initial_view_mode() == "compact"
+    assert window._sound_dir() == tmp_path / "sounds"
+
+
 def test_resize_drag_scale_uses_larger_axis():
     assert window._scale_from_resize_drag(1.0, 100, 10, 400, 300) == 1.25
     assert window._scale_from_resize_drag(1.0, 10, 90, 400, 300) == 1.3

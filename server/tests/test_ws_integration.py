@@ -248,6 +248,28 @@ async def test_window_action_pushes_fresh_state(ws_url):
         assert msg["type"] == "state"
 
 
+async def test_window_action_failure_prefers_korean_message(ws_url):
+    def handler(_message):
+        return {
+            "ok": False,
+            "reason": "no free pull today, no tickets",
+            "message_ko": "오늘 무료뽑기는 사용했고 티켓이 없어",
+        }
+
+    set_action_handler(handler)
+
+    async with connect(ws_url) as listener, connect(ws_url) as actor:
+        await asyncio.wait_for(listener.recv(), timeout=2.0)
+        await asyncio.wait_for(actor.recv(), timeout=2.0)
+        await actor.send(json.dumps({"type": "action", "action": "pull_gacha"}))
+
+        say_msg = await _recv_json_until(
+            listener,
+            lambda msg: msg.get("type") == "say",
+        )
+        assert say_msg["text"] == "오늘 무료뽑기는 사용했고 티켓이 없어"
+
+
 async def test_disconnect_unregisters_client(ws_url):
     broadcaster = get_broadcaster()
     async with connect(ws_url) as ws:

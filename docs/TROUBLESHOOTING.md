@@ -143,6 +143,10 @@ cat ~/.chibi-mcp/window.log
 cat ~/.chibi-mcp/ws.log
 ```
 
+If you set `CHIBI_RUNTIME_DIR`, use that directory instead of
+`~/.chibi-mcp`. `chibi-mcp --doctor` prints the exact `runtime_dir`,
+`pid_file`, and `log_path` values.
+
 Register it manually:
 
 ```bash
@@ -224,6 +228,8 @@ That command starts the local WebSocket helper automatically. If the status
 stays offline, inspect `~/.chibi-mcp/ws.log`; the usual causes are another
 process already using `127.0.0.1:9876`, a custom `CHIBI_WS_PORT`, or a failed
 Python environment.
+
+With `CHIBI_RUNTIME_DIR` set, inspect `$CHIBI_RUNTIME_DIR/ws.log` instead.
 
 ## Codex Does Not See Chibi
 

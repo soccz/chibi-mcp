@@ -6,6 +6,16 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Runtime state, logs, sounds, and window preferences now use one shared
+  runtime directory (`~/.chibi-mcp` by default, `CHIBI_RUNTIME_DIR` when set),
+  so standalone `--open`, WebSocket helpers, and Tk windows do not disagree
+  about where server files live.
+- User settings and state are now more durable: slice interval persists across
+  restarts, corrupted state is sanitized on load, and visible window-action
+  failures prefer Korean user-facing messages over internal English reasons.
+- `chibi-mcp --doctor` now reports local WebSocket server status, pid/log paths,
+  and the direct `chibi-mcp --open` recovery step when toolbar actions cannot
+  connect.
 - Claude Code hooks now record every `PostToolUse` through
   `chibi-say --tool-call`, so real coding activity advances rhythm, slice
   milestones, happy mood, and gacha ticket progress while speech bubbles remain

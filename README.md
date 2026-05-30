@@ -9,11 +9,11 @@
 It is local-first: no telemetry, localhost WebSocket by default, open-source code, and `chibi-mcp --check` for install diagnostics.
 
 <p align="center">
-  <img src="assets/social-preview.png?v=1.4.37-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
+  <img src="assets/social-preview.png?v=1.4.38-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif?v=1.4.37-chibi" alt="animated chibi-mcp demo showing install commands, local status, and the floating pet window" width="720">
+  <img src="docs/demo.gif?v=1.4.38-chibi" alt="animated chibi-mcp demo showing install commands, local status, and the floating pet window" width="720">
 </p>
 
 ## Public Beta Status
@@ -29,7 +29,7 @@ xvfb-run -a make public-beta-check
 Release-tag preflight after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.37
+make release-check TAG=v1.4.38
 ```
 
 See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist and [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging.
@@ -74,15 +74,15 @@ still throttled so the pet does not talk on every command.
 ## Client Previews
 
 <p align="center">
-  <img src="docs/screenshots/claude-code.png?v=1.4.37-chibi" alt="chibi-mcp Claude Code preview with local floating pet window" width="720">
+  <img src="docs/screenshots/claude-code.png?v=1.4.38-chibi" alt="chibi-mcp Claude Code preview with local floating pet window" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/codex-terminal.png?v=1.4.37-chibi" alt="chibi-mcp Codex terminal preview with local diagnostics and floating pet" width="720">
+  <img src="docs/screenshots/codex-terminal.png?v=1.4.38-chibi" alt="chibi-mcp Codex terminal preview with local diagnostics and floating pet" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/vscode-sidebar.png?v=1.4.37-chibi" alt="chibi-mcp VS Code sidebar preview with status meters and floating pet" width="720">
+  <img src="docs/screenshots/vscode-sidebar.png?v=1.4.38-chibi" alt="chibi-mcp VS Code sidebar preview with status meters and floating pet" width="720">
 </p>
 
 ## Who It Is For
@@ -289,11 +289,11 @@ bridge for save/task/debug reactions.
 ## Visual Assets
 
 <p align="center">
-  <img src="docs/screenshots/starter-lineup.png?v=1.4.37-chibi" alt="chibi-mcp starter character lineup" width="720">
+  <img src="docs/screenshots/starter-lineup.png?v=1.4.38-chibi" alt="chibi-mcp starter character lineup" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/option-showcase.png?v=1.4.37-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
+  <img src="docs/screenshots/option-showcase.png?v=1.4.38-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
 </p>
 
 ## Troubleshooting

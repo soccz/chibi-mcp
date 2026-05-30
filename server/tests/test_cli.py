@@ -13,7 +13,7 @@ from PIL import Image
 from chibi_mcp import __main__ as main_mod
 from chibi_mcp import __version__
 from chibi_mcp import cli as cli_mod
-from chibi_mcp.__main__ import _check, _doctor, _ws_endpoint
+from chibi_mcp.__main__ import _check, _doctor, _ws_endpoint, _ws_status
 from chibi_mcp.commercial import (
     _missing_project_files,
     build_trust_audit,
@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.37"
+    assert __version__ == "1.4.38"
 
 
 def test_chibi_say_message_builder_supports_tool_call_events():
@@ -104,7 +104,7 @@ def test_stdio_jsonrpc_handles_initialize_list_and_call():
     assert [response["id"] for response in responses] == [1, 2, 3]
     assert responses[0]["result"]["serverInfo"] == {
         "name": "chibi-mcp",
-        "version": "1.4.37",
+        "version": "1.4.38",
     }
     tools = {tool["name"] for tool in responses[1]["result"]["tools"]}
     assert {"get_catalog", "get_pet_state", "pull_gacha"}.issubset(tools)
@@ -157,6 +157,7 @@ def test_doctor_separates_client_auth_from_local_runtime(monkeypatch):
         raise AssertionError(command)
 
     monkeypatch.setattr(main_mod, "_run_client_command", fake_run_client_command)
+    monkeypatch.setattr(main_mod, "_ws_accepts", lambda _host, _port: False)
 
     result = _doctor()
 
@@ -167,6 +168,7 @@ def test_doctor_separates_client_auth_from_local_runtime(monkeypatch):
     assert result["clients"]["codex"]["auth"]["status"] == "login_required"
     assert result["clients"]["codex"]["mcp"]["status"] == "not_registered"
     assert result["clients"]["vscode"]["status"] == "ok"
+    assert result["server"]["status"] == "not_running"
     assert result["client_ready"] == {"claude": True, "codex": False, "vscode": True}
     assert result["ready"] is False
     assert any("codex login" in step for step in result["next_steps"])
@@ -252,6 +254,18 @@ def test_open_cli_reports_direct_window_result(monkeypatch, capsys):
 def test_invalid_ws_port_falls_back_to_default(monkeypatch):
     monkeypatch.setenv("CHIBI_WS_PORT", "bad")
     assert _ws_endpoint() == ("127.0.0.1", 9876)
+
+
+def test_ws_status_reports_runtime_paths(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHIBI_RUNTIME_DIR", str(tmp_path))
+    monkeypatch.setattr(main_mod, "_ws_accepts", lambda _host, _port: False)
+
+    result = _ws_status()
+
+    assert result["status"] == "not_running"
+    assert result["runtime_dir"] == str(tmp_path)
+    assert result["pid_file"] == str(tmp_path / "ws.pid")
+    assert "chibi-mcp --open" in result["next_step"]
 
 
 def test_standalone_open_reuses_existing_ws_server(monkeypatch):

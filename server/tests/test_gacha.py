@@ -44,6 +44,7 @@ def test_second_pull_same_day_costs_ticket():
     result = s.pull_gacha(CATALOG)
     assert result["drawn"] is None
     assert "no free pull today" in result["reason"]
+    assert result["message_ko"] == "오늘 무료뽑기는 사용했고 티켓이 없어"
 
 
 def test_pull_with_ticket_succeeds():
@@ -92,6 +93,7 @@ def test_persistence_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "rt.json")
     s = ChibiState()
     s.tickets = 7
+    s.slice_interval = 25
     s.active_character_id = "white_tteok"
     s.active_option_ids = ["jocheong_drip", "sugar_beads"]
     s.inventory = {"white_tteok": {"count": 2, "nickname": "흰떡"}}
@@ -101,6 +103,7 @@ def test_persistence_roundtrip(tmp_path, monkeypatch):
     s2 = ChibiState()
     s2.load()
     assert s2.tickets == 7
+    assert s2.slice_interval == 25
     assert s2.active_character_id == "white_tteok"
     assert s2.active_option_ids == ["jocheong_drip", "sugar_beads"]
     assert s2.inventory["white_tteok"]["nickname"] == "흰떡"
@@ -140,10 +143,23 @@ def test_rename_persists():
     assert s.inventory[cid]["nickname"] == "내chibi"
 
 
+def test_rename_sanitizes_empty_and_multiline_names():
+    s = ChibiState()
+    s.pull_gacha([CATALOG[0]])
+    cid = s.active_character_id
+    r = s.rename(cid, "  내\nchibi\x00  ")
+    assert r["ok"] is True
+    assert s.inventory[cid]["nickname"] == "내 chibi"
+    r = s.rename(cid, "   ")
+    assert r["ok"] is True
+    assert s.inventory[cid]["nickname"] == cid
+
+
 def test_set_active_requires_ownership():
     s = ChibiState()
     r = s.set_active("white_tteok")  # not owned
     assert r["ok"] is False
+    assert r["message_ko"] == "아직 보유하지 않은 chibi야"
 
 
 def test_set_active_after_owning():

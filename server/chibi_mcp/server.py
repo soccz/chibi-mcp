@@ -17,6 +17,7 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 
+from .runtime import runtime_file
 from .state import _seconds_until_midnight, get_state
 from .ws_server import get_broadcaster, set_action_handler
 
@@ -29,7 +30,8 @@ log = logging.getLogger(__name__)
 
 # Tracks the spawned tk window process across MCP calls. A PID file persists
 # across MCP server restarts (the window is a detached subprocess).
-_WINDOW_PID_FILE = Path.home() / ".chibi-mcp" / "window.pid"
+_WINDOW_PID_FILE = runtime_file("window.pid")
+_DEFAULT_WINDOW_PID_FILE = _WINDOW_PID_FILE
 _WINDOW_READY_TIMEOUT_SECONDS = 5.0
 _WINDOW_VIEW_MODES = {"normal", "debug", "compact"}
 
@@ -351,17 +353,28 @@ def _resolve_catalog_image(asset_dir: str, item: dict, subdir: str) -> Path | No
 
 
 def _kill_existing_window() -> None:
-    if not _WINDOW_PID_FILE.exists():
+    pid_file = _window_pid_file()
+    if not pid_file.exists():
         return
     try:
-        pid = int(_WINDOW_PID_FILE.read_text().strip())
+        pid = int(pid_file.read_text().strip())
     except (OSError, ValueError):
         pid = None
     if pid:
         with contextlib.suppress(OSError, ProcessLookupError):
             os.kill(pid, signal.SIGTERM)
     with contextlib.suppress(OSError):
-        _WINDOW_PID_FILE.unlink(missing_ok=True)
+        pid_file.unlink(missing_ok=True)
+
+
+def _window_pid_file() -> Path:
+    if _WINDOW_PID_FILE != _DEFAULT_WINDOW_PID_FILE:
+        return _WINDOW_PID_FILE
+    return runtime_file("window.pid")
+
+
+def _window_log_file() -> Path:
+    return runtime_file("window.log")
 
 
 def _window_ws_url() -> str:
@@ -459,7 +472,11 @@ def open_pet_window(character_id: str | None = None, view_mode: str | None = Non
             window uses the last saved user mode.
     """
     if character_id and not _CHAR_ID_RE.match(character_id):
-        return {"opened": False, "reason": f"invalid character id: {character_id!r}"}
+        return {
+            "opened": False,
+            "reason": f"invalid character id: {character_id!r}",
+            "message_ko": "잘못된 chibi ID야",
+        }
     if view_mode is not None:
         view_mode = str(view_mode).strip().lower()
         if view_mode not in _WINDOW_VIEW_MODES:
@@ -480,6 +497,14 @@ def open_pet_window(character_id: str | None = None, view_mode: str | None = Non
     active_id = snap["gacha"]["active_character_id"]
 
     target_id = character_id or active_id
+    with state._lock:
+        owns_requested = character_id in state.inventory if character_id else True
+    if character_id and not owns_requested:
+        return {
+            "opened": False,
+            "reason": f"you don't own {character_id!r}",
+            "message_ko": "아직 보유하지 않은 chibi야. 보관함이나 뽑기에서 먼저 얻어야 해.",
+        }
     if target_id:
         ch = next((c for c in chars if c["id"] == target_id), None)
         if ch is None:
@@ -536,7 +561,7 @@ def open_pet_window(character_id: str | None = None, view_mode: str | None = Non
     _kill_existing_window()
 
     # Capture stderr to a log file so import/tk errors are debuggable.
-    log_path = Path.home() / ".chibi-mcp" / "window.log"
+    log_path = _window_log_file()
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_fh = log_path.open("ab")
     ready_path = log_path.parent / f"window-ready-{uuid.uuid4().hex}.json"
@@ -593,8 +618,9 @@ def open_pet_window(character_id: str | None = None, view_mode: str | None = Non
     pid_file_written = True
     pid_file_warning = None
     try:
-        _WINDOW_PID_FILE.parent.mkdir(parents=True, exist_ok=True)
-        _WINDOW_PID_FILE.write_text(str(proc.pid))
+        pid_file = _window_pid_file()
+        pid_file.parent.mkdir(parents=True, exist_ok=True)
+        pid_file.write_text(str(proc.pid))
     except OSError as exc:
         pid_file_written = False
         pid_file_warning = str(exc)
@@ -611,7 +637,7 @@ def open_pet_window(character_id: str | None = None, view_mode: str | None = Non
         "view_mode": view_mode,
         "log_path": str(log_path),
         "ready": True,
-        "pid_file": str(_WINDOW_PID_FILE),
+        "pid_file": str(_window_pid_file()),
         "pid_file_written": pid_file_written,
     }
     if pid_file_warning:
@@ -622,7 +648,7 @@ def open_pet_window(character_id: str | None = None, view_mode: str | None = Non
 @mcp.tool()
 def close_pet_window() -> dict:
     """Close the floating chibi window if one is open."""
-    existed = _WINDOW_PID_FILE.exists()
+    existed = _window_pid_file().exists()
     _kill_existing_window()
     return {"closed": True, "had_window": existed}
 
@@ -637,10 +663,9 @@ def set_slice_interval(n: int) -> dict:
     if n < 1:
         raise ValueError("slice interval must be ≥ 1")
     state = get_state()
-    with state._lock:
-        old = state.slice_interval
-        state.slice_interval = n
-    return {"previous": old, "current": n}
+    result = state.set_slice_interval(n)
+    result["broadcasted"] = _broadcast_state()
+    return result
 
 
 # ── Gacha + inventory ───────────────────────────────────────────────────────
@@ -706,7 +731,11 @@ def get_inventory() -> dict:
 def set_active_character(character_id: str) -> dict:
     """Switch which chibi is shown in the window. Must own the character."""
     if not _CHAR_ID_RE.match(character_id):
-        return {"ok": False, "reason": f"invalid character id: {character_id!r}"}
+        return {
+            "ok": False,
+            "reason": f"invalid character id: {character_id!r}",
+            "message_ko": "잘못된 chibi ID야",
+        }
     state = get_state()
     result = state.set_active(character_id)
     if result.get("ok"):
@@ -718,7 +747,11 @@ def set_active_character(character_id: str) -> dict:
 def rename_character(character_id: str, nickname: str) -> dict:
     """Rename a chibi you own. Nickname is clipped to 40 chars."""
     if not _CHAR_ID_RE.match(character_id):
-        return {"ok": False, "reason": f"invalid character id: {character_id!r}"}
+        return {
+            "ok": False,
+            "reason": f"invalid character id: {character_id!r}",
+            "message_ko": "잘못된 chibi ID야",
+        }
     state = get_state()
     result = state.rename(character_id, nickname)
     if result.get("ok"):

@@ -102,6 +102,14 @@ def _sanitize_inbound_text(value: object) -> str:
     return value.replace("\n", " ").replace("\r", " ").strip()[:_INBOUND_SAY_MAX_LEN]
 
 
+def _action_failure_text(result: dict) -> str:
+    for key in ("message_ko", "message", "reason"):
+        value = result.get(key)
+        if isinstance(value, str) and value.strip():
+            return _sanitize_inbound_text(value) or "실패"
+    return "실패"
+
+
 async def _handle_client(ws: ServerConnection) -> None:
     broadcaster = get_broadcaster()
     await broadcaster.register(ws)
@@ -146,9 +154,8 @@ async def _handle_client(ws: ServerConnection) -> None:
                     await broadcaster.broadcast({"type": "say", "text": "액션 실패"})
                     continue
                 if isinstance(result, dict) and result.get("ok") is False:
-                    reason = str(result.get("reason") or "실패")
                     await broadcaster.broadcast({"type": "state", "payload": state.snapshot()})
-                    await broadcaster.broadcast({"type": "say", "text": reason[:_INBOUND_SAY_MAX_LEN]})
+                    await broadcaster.broadcast({"type": "say", "text": _action_failure_text(result)})
                 else:
                     await broadcaster.broadcast({"type": "state", "payload": get_state().snapshot()})
     except ConnectionClosed:

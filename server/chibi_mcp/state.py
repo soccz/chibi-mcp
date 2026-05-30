@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import random
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -16,6 +17,7 @@ from enum import StrEnum
 from pathlib import Path
 from threading import Lock
 
+from .runtime import runtime_dir
 from .system_info import SystemSnapshot, read_snapshot
 
 log = logging.getLogger(__name__)
@@ -43,9 +45,13 @@ TICKETS_PER_100_CALLS = 1
 TICKETS_PER_10_SLICES = 1
 
 # Persistence
-STATE_DIR = Path.home() / ".chibi-mcp"
+STATE_DIR = runtime_dir()
 STATE_FILE = STATE_DIR / "state.json"
-STATE_SCHEMA_VERSION = 3
+_DEFAULT_STATE_DIR = STATE_DIR
+_DEFAULT_STATE_FILE = STATE_FILE
+STATE_SCHEMA_VERSION = 4
+_ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,40}$")
+_NICKNAME_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 
 @dataclass
@@ -78,6 +84,7 @@ class ChibiState:
     def _persisted_dict(self) -> dict:
         return {
             "schema_version": STATE_SCHEMA_VERSION,
+            "slice_interval": self.slice_interval,
             "active_character_id": self.active_character_id,
             "active_option_ids": self.active_option_ids,
             "inventory": self.inventory,
@@ -108,29 +115,39 @@ class ChibiState:
         """
         with _SAVE_LOCK:
             try:
-                STATE_DIR.mkdir(parents=True, exist_ok=True)
-                tmp = STATE_FILE.with_suffix(".json.tmp")
+                state_dir = _state_dir()
+                state_file = _state_file()
+                state_dir.mkdir(parents=True, exist_ok=True)
+                tmp = state_file.with_suffix(".json.tmp")
                 tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
-                tmp.replace(STATE_FILE)
+                tmp.replace(state_file)
             except OSError as e:
                 log.warning("state save failed: %s", e)
 
     def load(self) -> None:
         """Hydrate from ~/.chibi-mcp/state.json. Tolerates missing file."""
-        if not STATE_FILE.exists():
+        state_file = _state_file()
+        if not state_file.exists():
             return
         try:
-            data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+            data = json.loads(state_file.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as e:
             log.warning("state load failed (%s) — starting fresh", e)
             return
         with self._lock:
-            self.active_character_id = data.get("active_character_id")
+            inventory = _clean_inventory(data.get("inventory"))
+            active_character_id = _clean_id(data.get("active_character_id"))
+            if active_character_id not in inventory:
+                active_character_id = None
+            self.slice_interval = _clean_positive_int(
+                data.get("slice_interval"), DEFAULT_SLICE_INTERVAL
+            )
+            self.active_character_id = active_character_id
             self.active_option_ids = _clean_option_ids(data.get("active_option_ids"))
-            self.inventory = data.get("inventory") or {}
-            self.tickets = int(data.get("tickets", 0))
-            self.last_free_pull_date = data.get("last_free_pull_date")
-            self.total_pulls = int(data.get("total_pulls", 0))
+            self.inventory = inventory
+            self.tickets = _clean_nonnegative_int(data.get("tickets"), 0)
+            self.last_free_pull_date = _clean_date(data.get("last_free_pull_date"))
+            self.total_pulls = _clean_nonnegative_int(data.get("total_pulls"), 0)
             last_pull = data.get("last_pull")
             self.last_pull = last_pull if isinstance(last_pull, dict) else None
 
@@ -212,6 +229,7 @@ class ChibiState:
                 return {
                     "drawn": None,
                     "reason": "no free pull today, no tickets",
+                    "message_ko": "오늘 무료뽑기는 사용했고 티켓이 없어",
                     "tickets": self.tickets,
                     "next_free_in_seconds": _seconds_until_midnight(),
                 }
@@ -286,10 +304,26 @@ class ChibiState:
     def set_active(self, character_id: str) -> dict:
         with self._lock:
             if character_id not in self.inventory:
-                return {"ok": False, "reason": f"you don't own {character_id!r}"}
+                return {
+                    "ok": False,
+                    "reason": f"you don't own {character_id!r}",
+                    "message_ko": "아직 보유하지 않은 chibi야",
+                }
             self.active_character_id = character_id
             save_data = self._persisted_dict()
             result = {"ok": True, "active_character_id": character_id}
+        self._save_data(save_data)
+        return result
+
+    def set_slice_interval(self, n: int) -> dict:
+        interval = _clean_positive_int(n, DEFAULT_SLICE_INTERVAL)
+        with self._lock:
+            old = self.slice_interval
+            self.slice_interval = interval
+            if self.calls_since_slice > interval:
+                self.calls_since_slice = interval
+            save_data = self._persisted_dict()
+            result = {"previous": old, "current": interval}
         self._save_data(save_data)
         return result
 
@@ -300,11 +334,19 @@ class ChibiState:
             if not option_id:
                 continue
             if option_id not in available_ids:
-                return {"ok": False, "reason": f"unknown option: {option_id!r}"}
+                return {
+                    "ok": False,
+                    "reason": f"unknown option: {option_id!r}",
+                    "message_ko": "없는 옵션이야",
+                }
             if option_id not in cleaned:
                 cleaned.append(option_id)
         if len(cleaned) > 3:
-            return {"ok": False, "reason": "choose at most 3 active options"}
+            return {
+                "ok": False,
+                "reason": "choose at most 3 active options",
+                "message_ko": "옵션은 3개까지",
+            }
         with self._lock:
             self.active_option_ids = cleaned
             save_data = self._persisted_dict()
@@ -313,10 +355,15 @@ class ChibiState:
         return result
 
     def rename(self, character_id: str, nickname: str) -> dict:
+        nickname = _clean_nickname(nickname) or character_id
         with self._lock:
             if character_id not in self.inventory:
-                return {"ok": False, "reason": f"you don't own {character_id!r}"}
-            self.inventory[character_id]["nickname"] = nickname[:40]
+                return {
+                    "ok": False,
+                    "reason": f"you don't own {character_id!r}",
+                    "message_ko": "아직 보유하지 않은 chibi야",
+                }
+            self.inventory[character_id]["nickname"] = nickname
             save_data = self._persisted_dict()
             result = {
                 "ok": True,
@@ -411,9 +458,81 @@ def _clean_option_ids(raw: object) -> list[str]:
     cleaned: list[str] = []
     for value in raw:
         option_id = str(value).strip()
-        if option_id and option_id not in cleaned:
+        if _ID_RE.match(option_id) and option_id not in cleaned:
             cleaned.append(option_id)
     return cleaned[:3]
+
+
+def _state_dir() -> Path:
+    if STATE_DIR != _DEFAULT_STATE_DIR:
+        return STATE_DIR
+    return runtime_dir()
+
+
+def _state_file() -> Path:
+    if STATE_FILE != _DEFAULT_STATE_FILE:
+        return STATE_FILE
+    return _state_dir() / "state.json"
+
+
+def _clean_id(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text if _ID_RE.match(text) else None
+
+
+def _clean_positive_int(value: object, default: int) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return default
+    return number if number >= 1 else default
+
+
+def _clean_nonnegative_int(value: object, default: int) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(0, number)
+
+
+def _clean_date(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return value
+
+
+def _clean_nickname(value: object) -> str:
+    text = str(value or "").replace("\r", " ").replace("\n", " ").strip()
+    text = _NICKNAME_CONTROL_RE.sub("", text)
+    return " ".join(text.split())[:40]
+
+
+def _clean_inventory(raw: object) -> dict[str, dict]:
+    if not isinstance(raw, dict):
+        return {}
+    cleaned: dict[str, dict] = {}
+    for character_id, value in raw.items():
+        cid = _clean_id(character_id)
+        if cid is None or not isinstance(value, dict):
+            continue
+        count = _clean_positive_int(value.get("count"), 1)
+        nickname = _clean_nickname(value.get("nickname") or cid)
+        item = {
+            "count": count,
+            "nickname": nickname,
+        }
+        first_rolled_at = value.get("first_rolled_at")
+        if isinstance(first_rolled_at, str) and first_rolled_at.strip():
+            item["first_rolled_at"] = first_rolled_at.strip()[:64]
+        cleaned[cid] = item
+    return cleaned
 
 
 # Module-level singleton + init lock (avoids TOCTOU when two threads
