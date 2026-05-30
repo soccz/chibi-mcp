@@ -170,8 +170,16 @@ def _jsonrpc_error(message_id, code: int, message: str) -> dict:
 
 
 def _write_jsonrpc(message: dict) -> None:
-    sys.stdout.write(json.dumps(message, ensure_ascii=False, separators=(",", ":")) + "\n")
-    sys.stdout.flush()
+    payload = (json.dumps(message, ensure_ascii=False, separators=(",", ":")) + "\n").encode(
+        "utf-8"
+    )
+    stdout_buffer = getattr(sys.stdout, "buffer", None)
+    if stdout_buffer is None:
+        sys.stdout.write(payload.decode("utf-8"))
+        sys.stdout.flush()
+    else:
+        stdout_buffer.write(payload)
+        stdout_buffer.flush()
 
 
 def _call_tool(name: str, arguments: dict | None) -> dict:
@@ -255,8 +263,14 @@ async def _run_mcp_stdio() -> None:
     loop = asyncio.get_running_loop()
 
     def _read_stdin_lines() -> None:
+        stdin_stream = getattr(sys.stdin, "buffer", sys.stdin)
         try:
-            for stdin_line in sys.stdin:
+            for raw_line in stdin_stream:
+                stdin_line = (
+                    raw_line.decode("utf-8", errors="replace")
+                    if isinstance(raw_line, bytes)
+                    else raw_line
+                )
                 loop.call_soon_threadsafe(queue.put_nowait, stdin_line)
         finally:
             loop.call_soon_threadsafe(queue.put_nowait, None)
