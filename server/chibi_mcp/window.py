@@ -39,6 +39,8 @@ from PIL import Image, ImageEnhance, ImageTk
 log = logging.getLogger(__name__)
 
 CANVAS_SIZE = 240
+WINDOW_MIN_SCALE = 0.65
+WINDOW_MAX_SCALE = 1.85
 PANEL_BG = "#fff8ef"
 PANEL_BG_2 = "#fff1df"
 PANEL_BORDER = "#e7c9a6"
@@ -148,6 +150,10 @@ def _scale_to_fit(img: Image.Image, max_side: int) -> Image.Image:
         return img
     ratio = max_side / max(w, h)
     return img.resize((int(w * ratio), int(h * ratio)), Image.LANCZOS)
+
+
+def _clamp_window_scale(scale: float) -> float:
+    return max(WINDOW_MIN_SCALE, min(WINDOW_MAX_SCALE, scale))
 
 
 def _load_image_for_mood(image_path: Path, mood: str) -> tuple[Image.Image, bool]:
@@ -501,8 +507,11 @@ class ChibiButton(tk.Canvas):
         self._command = command
         self._colors = colors
         self._icon = icon
+        self._base_min_width = min_width
+        self._base_button_height = 34
+        self._scale = 1.0
         self._min_width = min_width
-        self._button_height = 34
+        self._button_height = self._base_button_height
         self._anchor = anchor
         self._tone = "bg"
         self._enabled = True
@@ -527,6 +536,16 @@ class ChibiButton(tk.Canvas):
         self.bind("<FocusOut>", lambda _event: self._set_focus(False))
         self.bind("<Return>", lambda _event: self.invoke())
         self.bind("<space>", lambda _event: self.invoke())
+        self._draw()
+
+    def set_scale(self, scale: float) -> None:
+        scale = _clamp_window_scale(scale)
+        if abs(scale - self._scale) < 0.01:
+            return
+        self._scale = scale
+        self._min_width = max(44, round(self._base_min_width * scale))
+        self._button_height = max(24, round(self._base_button_height * scale))
+        self.configure(width=self._min_width, height=self._button_height)
         self._draw()
 
     def set_enabled(self, enabled: bool) -> None:
@@ -598,6 +617,9 @@ class ChibiButton(tk.Canvas):
         ]
         return self.create_polygon(points, smooth=True, splinesteps=12, **kwargs)
 
+    def _s(self, value: int) -> int:
+        return max(1, round(value * self._scale))
+
     def _draw(self) -> None:
         width = max(self._min_width, int(self.winfo_width() or self._min_width))
         height = self._button_height
@@ -616,33 +638,84 @@ class ChibiButton(tk.Canvas):
             border = "#d6c4b2"
             icon_bg = "#e8d9ca"
 
-        self._rounded_rect(3, 5, width - 2, height - 1, 13, fill=shadow, outline="")
-        self._rounded_rect(1, 1, width - 3, height - 5, 13, fill=fill, outline=border, width=1)
+        self._rounded_rect(
+            self._s(3),
+            self._s(5),
+            width - self._s(2),
+            height - self._s(1),
+            self._s(13),
+            fill=shadow,
+            outline="",
+        )
+        self._rounded_rect(
+            self._s(1),
+            self._s(1),
+            width - self._s(3),
+            height - self._s(5),
+            self._s(13),
+            fill=fill,
+            outline=border,
+            width=max(1, self._s(1)),
+        )
         if self._focused and self._enabled:
-            self._rounded_rect(3, 3, width - 5, height - 7, 11, fill="", outline=TEXT_FG, width=1)
+            self._rounded_rect(
+                self._s(3),
+                self._s(3),
+                width - self._s(5),
+                height - self._s(7),
+                self._s(11),
+                fill="",
+                outline=TEXT_FG,
+                width=max(1, self._s(1)),
+            )
 
         text_anchor = "center"
         text_x = width // 2
+        center_y = height // 2 - self._s(1)
         if self._anchor == "w":
             text_anchor = "w"
-            text_x = 16 if not self._colors.get("indicator") else 20
+            text_x = self._s(16 if not self._colors.get("indicator") else 20)
 
         if self._colors.get("indicator"):
-            self._rounded_rect(8, 10, 12, 24, 3, fill=self._colors["indicator"], outline="")
+            self._rounded_rect(
+                self._s(8),
+                self._s(10),
+                self._s(12),
+                height - self._s(10),
+                self._s(3),
+                fill=self._colors["indicator"],
+                outline="",
+            )
 
         if self._icon:
-            self.create_oval(8, 8, 25, 25, fill=icon_bg, outline="")
-            self.create_text(16, 16, text=self._icon, fill=fg, font=("Helvetica", 8, "bold"))
-            text_x = width // 2 + 9 if self._anchor != "w" else 32
+            icon_left = self._s(8)
+            icon_size = self._s(17)
+            icon_center = icon_left + icon_size // 2
+            self.create_oval(
+                icon_left,
+                center_y - icon_size // 2,
+                icon_left + icon_size,
+                center_y + icon_size // 2,
+                fill=icon_bg,
+                outline="",
+            )
+            self.create_text(
+                icon_center,
+                center_y,
+                text=self._icon,
+                fill=fg,
+                font=("Helvetica", max(6, self._s(8)), "bold"),
+            )
+            text_x = width // 2 + self._s(9) if self._anchor != "w" else self._s(32)
             text_anchor = "center" if self._anchor != "w" else "w"
 
         self.create_text(
             text_x,
-            16,
+            center_y,
             text=self._text,
             anchor=text_anchor,
             fill=fg,
-            font=("Helvetica", 9, "bold"),
+            font=("Helvetica", max(7, self._s(9)), "bold"),
         )
 
 
@@ -664,7 +737,9 @@ class ChibiStatusCard(tk.Canvas):
         self._mood = mood
         self._progress = "리듬 준비"
         self._card_width = width
-        self._card_height = 66
+        self._base_card_height = 66
+        self._scale = 1.0
+        self._card_height = self._base_card_height
         super().__init__(
             parent,
             width=width,
@@ -674,6 +749,15 @@ class ChibiStatusCard(tk.Canvas):
             highlightthickness=0,
         )
         self.bind("<Configure>", lambda _event: self._draw())
+        self._draw()
+
+    def set_scale(self, scale: float) -> None:
+        scale = _clamp_window_scale(scale)
+        if abs(scale - self._scale) < 0.01:
+            return
+        self._scale = scale
+        self._card_height = max(46, round(self._base_card_height * scale))
+        self.configure(height=self._card_height)
         self._draw()
 
     def set_mood(self, mood: str) -> None:
@@ -718,65 +802,76 @@ class ChibiStatusCard(tk.Canvas):
         ]
         return self.create_polygon(points, smooth=True, splinesteps=12, **kwargs)
 
+    def _s(self, value: int) -> int:
+        return max(1, round(value * self._scale))
+
     def _draw(self) -> None:
-        width = max(280, int(self.winfo_width() or self._card_width))
+        width = max(self._s(280), int(self.winfo_width() or self._card_width))
         height = self._card_height
         mood_label, mood_icon = MOOD_LABELS.get(self._mood, (self._mood, "•"))
         stars = "★" * self._rarity + "☆" * max(0, 5 - self._rarity)
 
         self.delete("all")
-        self._rounded_rect(6, 8, width - 5, height - 2, 18, fill=STATUS_SHADOW, outline="")
         self._rounded_rect(
-            3,
-            2,
-            width - 8,
-            height - 8,
-            18,
+            self._s(6),
+            self._s(8),
+            width - self._s(5),
+            height - self._s(2),
+            self._s(18),
+            fill=STATUS_SHADOW,
+            outline="",
+        )
+        self._rounded_rect(
+            self._s(3),
+            self._s(2),
+            width - self._s(8),
+            height - self._s(8),
+            self._s(18),
             fill=STATUS_BG,
             outline=STATUS_BORDER,
-            width=1,
+            width=max(1, self._s(1)),
         )
         self.create_text(
-            18,
-            19,
+            self._s(18),
+            self._s(19),
             text=self._display_name,
             anchor="w",
             fill=TEXT_FG,
-            font=("Helvetica", 13, "bold"),
+            font=("Helvetica", max(9, self._s(13)), "bold"),
         )
         self.create_text(
-            width - 24,
-            19,
+            width - self._s(24),
+            self._s(19),
             text=stars,
             anchor="e",
             fill="#5f4d3f",
-            font=("Helvetica", 10, "bold"),
+            font=("Helvetica", max(7, self._s(10)), "bold"),
         )
 
         self._rounded_rect(
-            16,
-            36,
-            92,
-            57,
-            10,
+            self._s(16),
+            self._s(36),
+            self._s(92),
+            height - self._s(9),
+            self._s(10),
             fill=STATUS_CHIP_BG,
             outline=STATUS_CHIP_BORDER,
-            width=1,
+            width=max(1, self._s(1)),
         )
         self.create_text(
-            54,
-            46,
+            self._s(54),
+            height - self._s(20),
             text=f"{mood_label} {mood_icon}",
             fill=TEXT_FG,
-            font=("Helvetica", 9, "bold"),
+            font=("Helvetica", max(7, self._s(9)), "bold"),
         )
         self.create_text(
-            104,
-            46,
+            self._s(104),
+            height - self._s(20),
             text=self._progress,
             anchor="w",
             fill=MUTED_FG,
-            font=("Helvetica", 9),
+            font=("Helvetica", max(7, self._s(9))),
         )
 
 
@@ -812,13 +907,19 @@ class PetWindow:
         self.frameless = frameless
         self.sounds_enabled = sounds
 
-        self.base_image: Image.Image = _scale_to_fit(
-            Image.open(image_path).convert("RGBA"), CANVAS_SIZE - 20
-        )
-        self._img_w, self._img_h = self.base_image.size
-        # Cache (mood → rendered RGBA at display size). Variants bypass filter.
-        self._mood_image_cache: dict[str, Image.Image] = {}
+        self._window_scale = 1.0
+        self._render_max_side = CANVAS_SIZE - 20
+        self._base_total_w = CANVAS_SIZE + 72
+        self._base_total_h = 1
+        self._layout_ready = False
+        self._suspend_resize_events = False
+        self._resize_after: str | None = None
+        # Cache ((mood, max_side) → rendered RGBA). Variants bypass filter.
+        self._mood_image_cache: dict[tuple[str, int], Image.Image] = {}
         self._option_cache: dict[tuple[int, int], list[Image.Image]] = {}
+        self.base_image = self._get_mood_image(mood)
+        self._img_w, self._img_h = self.base_image.size
+        self._base_total_w = max(CANVAS_SIZE + 72, self._img_w + 80)
 
         self.event_queue: queue.Queue = queue.Queue(maxsize=64)
         self.stop_event = threading.Event()
@@ -871,8 +972,7 @@ class PetWindow:
                     self.root.wm_attributes("-alpha", 1.0)
 
         # Total window: character stage + compact identity/status card.
-        total_w = max(CANVAS_SIZE + 72, self._img_w + 80)
-        canvas_h = self._img_h + 28
+        total_w, canvas_h = self._stage_dimensions()
 
         self.canvas = tk.Canvas(
             self.root,
@@ -885,13 +985,12 @@ class PetWindow:
         self.canvas.pack()
         self._canvas_center = (total_w // 2, canvas_h // 2)
 
-        shadow_w = min(total_w - 52, max(80, self._img_w - 16))
-        shadow_y = min(canvas_h - 14, self._canvas_center[1] + self._img_h // 2 - 8)
-        self.canvas.create_oval(
+        shadow_w, shadow_y = self._shadow_metrics(total_w, canvas_h)
+        self._shadow_id = self.canvas.create_oval(
             self._canvas_center[0] - shadow_w // 2,
-            shadow_y - 5,
+            shadow_y - self._s(5),
             self._canvas_center[0] + shadow_w // 2,
-            shadow_y + 5,
+            shadow_y + self._s(5),
             fill="#d8c1aa",
             outline="",
             stipple="gray50",
@@ -976,7 +1075,17 @@ class PetWindow:
         self.root.bind("<Escape>", lambda _e: self.shutdown())
         self.root.bind("<Command-w>", lambda _e: self.shutdown())
         self.root.bind("<Control-w>", lambda _e: self.shutdown())
+        self.root.bind("<Configure>", self._on_root_configure)
         self.root.protocol("WM_DELETE_WINDOW", self.shutdown)
+
+        with contextlib.suppress(tk.TclError):
+            self.root.update_idletasks()
+            self._base_total_w = max(self._base_total_w, self.root.winfo_width())
+            self._base_total_h = max(1, self.root.winfo_height())
+            self.root.minsize(
+                round(self._base_total_w * WINDOW_MIN_SCALE),
+                round(self._base_total_h * WINDOW_MIN_SCALE),
+            )
 
         self._place_and_raise()
 
@@ -985,6 +1094,7 @@ class PetWindow:
         # Track pending after() callbacks so shutdown can cancel them and
         # avoid "invalid command name" errors firing on the destroyed root.
         self._after_ids: set[str] = set()
+        self._layout_ready = True
 
     def _place_and_raise(self) -> None:
         """Make the first window placement visible on desktop launch."""
@@ -1002,16 +1112,120 @@ class PetWindow:
 
     # ── Rendering ────────────────────────────────────────────────────────────
 
+    def _s(self, value: int) -> int:
+        return max(1, round(value * self._window_scale))
+
+    def _stage_dimensions(self) -> tuple[int, int]:
+        total_w = max(self._s(CANVAS_SIZE + 72), self._img_w + self._s(80))
+        canvas_h = self._img_h + self._s(28)
+        return total_w, canvas_h
+
+    def _shadow_metrics(self, total_w: int, canvas_h: int) -> tuple[int, int]:
+        shadow_w = min(total_w - self._s(52), max(self._s(80), self._img_w - self._s(16)))
+        shadow_y = min(
+            canvas_h - self._s(14),
+            self._canvas_center[1] + self._img_h // 2 - self._s(8),
+        )
+        return shadow_w, shadow_y
+
+    def _update_stage_layout(self) -> None:
+        total_w, canvas_h = self._stage_dimensions()
+        self.canvas.configure(width=total_w, height=canvas_h)
+        self._canvas_center = (total_w // 2, canvas_h // 2)
+        self.canvas.coords(self._image_id, self._canvas_center[0], self._canvas_center[1])
+        shadow_w, shadow_y = self._shadow_metrics(total_w, canvas_h)
+        self.canvas.coords(
+            self._shadow_id,
+            self._canvas_center[0] - shadow_w // 2,
+            shadow_y - self._s(5),
+            self._canvas_center[0] + shadow_w // 2,
+            shadow_y + self._s(5),
+        )
+        self.status_card.configure(width=max(self._s(260), total_w - self._s(20)))
+        self.bubble.configure(
+            wraplength=max(self._s(160), total_w - self._s(30)),
+            font=("Helvetica", max(8, self._s(10))),
+            padx=self._s(10),
+            pady=self._s(6),
+        )
+
+    def _set_control_scale(self) -> None:
+        for button in (
+            self.inventory_button,
+            self.options_button,
+            self.pull_button,
+            self.close_button,
+        ):
+            button.set_scale(self._window_scale)
+            button.pack_configure(padx=self._s(3))
+        self.status_card.set_scale(self._window_scale)
+        self.status_card.pack_configure(
+            pady=(self._s(2), self._s(8)),
+            padx=self._s(10),
+            fill="x",
+        )
+        self.drawer.configure(padx=self._s(8), pady=self._s(8))
+        self.toolbar.pack_configure(pady=(0, self._s(10)), padx=self._s(8))
+
+    def _fit_root_to_content(self) -> None:
+        self._suspend_resize_events = True
+        try:
+            with contextlib.suppress(tk.TclError):
+                self.root.update_idletasks()
+                width = max(self.root.winfo_reqwidth(), self._stage_dimensions()[0])
+                height = self.root.winfo_reqheight()
+                self.root.geometry(
+                    f"{width}x{height}+{self.root.winfo_x()}+{self.root.winfo_y()}"
+                )
+                self.root.update_idletasks()
+        finally:
+            self._suspend_resize_events = False
+
+    def _apply_window_scale(self, scale: float) -> None:
+        scale = _clamp_window_scale(scale)
+        if abs(scale - self._window_scale) < 0.03:
+            return
+        self._window_scale = scale
+        self._render_max_side = max(72, round((CANVAS_SIZE - 20) * scale))
+        self._mood_image_cache.clear()
+        self._option_cache.clear()
+        self._render_image(self.current_mood)
+        self._set_control_scale()
+        self._update_stage_layout()
+        if self.drawer_mode and self.drawer.winfo_ismapped():
+            self._render_drawer()
+        self._fit_root_to_content()
+
+    def _on_root_configure(self, event: tk.Event) -> None:
+        if self._suspend_resize_events or not self._layout_ready or event.widget is not self.root:
+            return
+        width = int(getattr(event, "width", 0) or 0)
+        if width <= 0:
+            return
+        next_scale = _clamp_window_scale(width / self._base_total_w)
+        if abs(next_scale - self._window_scale) < 0.05:
+            return
+        if self._resize_after is not None:
+            with contextlib.suppress(tk.TclError):
+                self.root.after_cancel(self._resize_after)
+            self._after_ids.discard(self._resize_after)
+        self._resize_after = self._after(80, lambda scale=next_scale: self._finish_resize(scale))
+
+    def _finish_resize(self, scale: float) -> None:
+        self._resize_after = None
+        self._apply_window_scale(scale)
+
     def _get_mood_image(self, mood: str) -> Image.Image:
-        cached = self._mood_image_cache.get(mood)
+        cache_key = (mood, self._render_max_side)
+        cached = self._mood_image_cache.get(cache_key)
         if cached is not None:
             return cached
         raw, is_variant = _load_image_for_mood(self.image_path, mood)
-        scaled = _scale_to_fit(raw, CANVAS_SIZE - 20)
+        scaled = _scale_to_fit(raw, self._render_max_side)
         # Variant PNGs (artist-drawn mood expressions) bypass the filter.
         out = scaled if is_variant else _apply_mood_filter(scaled, mood)
         out = self._apply_option_layers(out)
-        self._mood_image_cache[mood] = out
+        self._mood_image_cache[cache_key] = out
         return out
 
     def _apply_option_layers(self, img: Image.Image) -> Image.Image:
@@ -1037,7 +1251,10 @@ class PetWindow:
         return out
 
     def _render_image(self, mood: str, scale: tuple[float, float] | None = None) -> None:
-        img = self._get_mood_image(mood)
+        base_img = self._get_mood_image(mood)
+        if scale is None:
+            self._img_w, self._img_h = base_img.size
+        img = base_img
         if scale is not None:
             sx, sy = scale
             img = img.resize(
@@ -1112,9 +1329,8 @@ class PetWindow:
             image_path = self._catalog_image_path(character)
             if character is not None and image_path is not None:
                 try:
-                    self.base_image = _scale_to_fit(
-                        Image.open(image_path).convert("RGBA"), CANVAS_SIZE - 20
-                    )
+                    with Image.open(image_path) as image:
+                        image.verify()
                 except OSError as exc:
                     log.warning("active character image skipped: %s", exc)
                 else:
@@ -1122,9 +1338,10 @@ class PetWindow:
                     self.character_id = active_id
                     self.name = self._display_name_for_character(character)
                     self.rarity = int(character.get("rarity", self.rarity) or self.rarity)
-                    self._img_w, self._img_h = self.base_image.size
                     self._mood_image_cache.clear()
                     self._option_cache.clear()
+                    self.base_image = self._get_mood_image(self.current_mood)
+                    self._img_w, self._img_h = self.base_image.size
                     self.status_card.set_identity(name=self.name, rarity=self.rarity)
                     self.root.title(f"chibi — {self.name}")
                     changed = True
@@ -1220,7 +1437,7 @@ class PetWindow:
         panel_bg = PANEL_BG
         with contextlib.suppress(tk.TclError):
             panel_bg = str(parent.cget("bg"))
-        return ChibiButton(
+        button = ChibiButton(
             parent,
             text,
             command,
@@ -1230,6 +1447,8 @@ class PetWindow:
             min_width=min_width,
             anchor=anchor,
         )
+        button.set_scale(self._window_scale)
+        return button
 
     def _toggle_drawer(self, mode: str) -> None:
         if self.drawer_mode == mode and self.drawer.winfo_ismapped():
@@ -1240,7 +1459,7 @@ class PetWindow:
         self.drawer_mode = mode
         self._render_drawer()
         if not self.drawer.winfo_ismapped():
-            self.drawer.pack(pady=(0, 8), padx=10, fill="x")
+            self.drawer.pack(pady=(0, self._s(8)), padx=self._s(10), fill="x")
 
     def _render_drawer(self) -> None:
         for child in self.drawer.winfo_children():
@@ -1291,8 +1510,8 @@ class PetWindow:
             text=text,
             bg=PANEL_BG_2,
             fg=TEXT_FG,
-            font=("Helvetica", 10, "bold"),
-        ).pack(anchor="w", pady=(0, 6))
+            font=("Helvetica", max(8, self._s(10)), "bold"),
+        ).pack(anchor="w", pady=(0, self._s(6)))
 
     def _render_inventory_drawer(self) -> None:
         state = _load_persisted_state()
@@ -1312,8 +1531,8 @@ class PetWindow:
                 text="아직 보유 캐릭터가 없어",
                 bg=PANEL_BG_2,
                 fg=MUTED_FG,
-                font=("Helvetica", 9),
-            ).pack(anchor="w", pady=(0, 6))
+                font=("Helvetica", max(7, self._s(9))),
+            ).pack(anchor="w", pady=(0, self._s(6)))
             self._make_button(
                 self.drawer,
                 "오늘 무료 뽑기",
@@ -1344,7 +1563,7 @@ class PetWindow:
             )
             if count <= 0:
                 btn.set_enabled(False)
-            btn.pack(anchor="w", fill="x", pady=2)
+            btn.pack(anchor="w", fill="x", pady=self._s(2))
 
     def _render_options_drawer(self) -> None:
         state = _load_persisted_state()
@@ -1374,11 +1593,17 @@ class PetWindow:
                 min_width=126,
                 anchor="w",
             )
-            btn.grid(row=idx // 2, column=idx % 2, sticky="ew", padx=(0, 6), pady=2)
+            btn.grid(
+                row=idx // 2,
+                column=idx % 2,
+                sticky="ew",
+                padx=(0, self._s(6)),
+                pady=self._s(2),
+            )
             self._option_vars[f"{option_id}__button"] = btn
 
         actions = tk.Frame(self.drawer, bg=PANEL_BG_2)
-        actions.pack(anchor="w", pady=(8, 0))
+        actions.pack(anchor="w", pady=(self._s(8), 0))
         self._make_button(
             actions,
             "적용",
@@ -1386,7 +1611,7 @@ class PetWindow:
             kind="primary",
             icon="✓",
             min_width=74,
-        ).pack(side="left", padx=(0, 6))
+        ).pack(side="left", padx=(0, self._s(6)))
         self._make_button(
             actions,
             "해제",
@@ -1446,7 +1671,7 @@ class PetWindow:
         if self.stop_event.is_set():
             return
         self._bob_phase += BOB_TICK_MS / 1000.0
-        offset = int(BOB_AMPLITUDE_PX * math.sin(2 * math.pi * BOB_HZ * self._bob_phase))
+        offset = int(self._s(BOB_AMPLITUDE_PX) * math.sin(2 * math.pi * BOB_HZ * self._bob_phase))
         self.canvas.coords(
             self._image_id, self._canvas_center[0], self._canvas_center[1] + offset
         )
@@ -1469,23 +1694,23 @@ class PetWindow:
 
     def _drop_slice_piece(self) -> None:
         cx = self._canvas_center[0]
-        base_y = self._canvas_center[1] + self._img_h // 2 - 12
+        base_y = self._canvas_center[1] + self._img_h // 2 - self._s(12)
         piece = self.canvas.create_oval(
-            cx - 18,
-            base_y - 8,
-            cx + 18,
-            base_y + 8,
+            cx - self._s(18),
+            base_y - self._s(8),
+            cx + self._s(18),
+            base_y + self._s(8),
             fill="#F6F1E8",
             outline="#CBA16A",
-            width=2,
+            width=self._s(2),
         )
         seam = self.canvas.create_line(
-            cx - 8,
-            base_y - 2,
-            cx + 9,
-            base_y + 2,
+            cx - self._s(8),
+            base_y - self._s(2),
+            cx + self._s(9),
+            base_y + self._s(2),
             fill="#E2C184",
-            width=2,
+            width=self._s(2),
         )
 
         def tick(step: int = 0) -> None:
@@ -1495,8 +1720,8 @@ class PetWindow:
                     self.canvas.delete(seam)
                 return
             with contextlib.suppress(tk.TclError):
-                self.canvas.move(piece, 0, 2)
-                self.canvas.move(seam, 0, 2)
+                self.canvas.move(piece, 0, self._s(2))
+                self.canvas.move(seam, 0, self._s(2))
             self._after(45, lambda: tick(step + 1))
 
         tick()
@@ -1508,9 +1733,13 @@ class PetWindow:
         self.bubble.configure(text=clipped)
         self._play_safe("bubble")
         try:
-            self.bubble.pack(pady=(2, 10), padx=10, before=self.status_card)
+            self.bubble.pack(
+                pady=(self._s(2), self._s(10)),
+                padx=self._s(10),
+                before=self.status_card,
+            )
         except (AttributeError, tk.TclError):
-            self.bubble.pack(pady=(2, 10), padx=10)
+            self.bubble.pack(pady=(self._s(2), self._s(10)), padx=self._s(10))
         if self._bubble_hide_after is not None:
             with contextlib.suppress(tk.TclError):
                 self.root.after_cancel(self._bubble_hide_after)
@@ -1588,6 +1817,8 @@ class PetWindow:
                 self._update_mood_label(mood)
             elif visual_changed:
                 self._render_image(self.current_mood)
+            if visual_changed:
+                self._update_stage_layout()
             gacha = payload.get("gacha") or {}
             active_options = gacha.get("active_option_ids")
             if isinstance(active_options, list):

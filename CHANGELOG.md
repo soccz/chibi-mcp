@@ -10,6 +10,10 @@ Commercial-readiness polish without enabling paid gates.
   only when persisted state changes, option/character changes apply live
   through WebSocket state events, and action buttons no longer reopen the
   whole pet window.
+- Made floating-window resize behave like one scaled product surface: the
+  character render, stage, shadow, status card, bubbles, drawer, and buttons
+  now resize together instead of leaving the pet image fixed inside a larger
+  frame.
 - Replaced the floating window's black fallback surface with a light panel and
   fixed the macOS transparency helper so chibi does not appear inside a black box.
 - Added floating-window controls for inventory, option customization, gacha

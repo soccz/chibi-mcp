@@ -22,3 +22,9 @@ def test_write_ready_file(tmp_path):
     window._write_ready_file(str(ready))
 
     assert '"ready": true' in ready.read_text(encoding="utf-8")
+
+
+def test_window_scale_is_clamped():
+    assert window._clamp_window_scale(0.1) == window.WINDOW_MIN_SCALE
+    assert window._clamp_window_scale(1.2) == 1.2
+    assert window._clamp_window_scale(10.0) == window.WINDOW_MAX_SCALE
