@@ -182,6 +182,28 @@ def _write_jsonrpc(message: dict) -> None:
         stdout_buffer.flush()
 
 
+def _decode_stdin_line(raw_line: str | bytes) -> str:
+    return (
+        raw_line.decode("utf-8", errors="replace")
+        if isinstance(raw_line, bytes)
+        else raw_line
+    )
+
+
+def _handle_mcp_line(line: str) -> None:
+    if not line.strip():
+        return
+    try:
+        message = json.loads(line)
+        if not isinstance(message, dict):
+            raise ValueError("message must be an object")
+        response = _handle_mcp_message(message)
+    except Exception as exc:
+        response = _jsonrpc_error(None, -32700, f"parse error: {exc}")
+    if response is not None:
+        _write_jsonrpc(response)
+
+
 def _call_tool(name: str, arguments: dict | None) -> dict:
     fn = _TOOL_FUNCTIONS.get(name)
     if fn is None:
@@ -266,12 +288,7 @@ async def _run_mcp_stdio() -> None:
         stdin_stream = getattr(sys.stdin, "buffer", sys.stdin)
         try:
             for raw_line in stdin_stream:
-                stdin_line = (
-                    raw_line.decode("utf-8", errors="replace")
-                    if isinstance(raw_line, bytes)
-                    else raw_line
-                )
-                loop.call_soon_threadsafe(queue.put_nowait, stdin_line)
+                loop.call_soon_threadsafe(queue.put_nowait, _decode_stdin_line(raw_line))
         finally:
             loop.call_soon_threadsafe(queue.put_nowait, None)
 
@@ -281,17 +298,13 @@ async def _run_mcp_stdio() -> None:
         line = await queue.get()
         if line is None:
             return
-        if not line.strip():
-            continue
-        try:
-            message = json.loads(line)
-            if not isinstance(message, dict):
-                raise ValueError("message must be an object")
-            response = _handle_mcp_message(message)
-        except Exception as exc:
-            response = _jsonrpc_error(None, -32700, f"parse error: {exc}")
-        if response is not None:
-            _write_jsonrpc(response)
+        _handle_mcp_line(line)
+
+
+def _run_mcp_stdio_sync() -> None:
+    stdin_stream = getattr(sys.stdin, "buffer", sys.stdin)
+    for raw_line in stdin_stream:
+        _handle_mcp_line(_decode_stdin_line(raw_line))
 
 
 async def _run_ws_only() -> None:
@@ -403,11 +416,14 @@ def main(argv: list[str] | None = None) -> int:
         log.info("chibi-mcp starting (ws://%s:%d only)", host, port)
         with suppress(KeyboardInterrupt):
             asyncio.run(_run_ws_only())
-    else:
-        mode = "stdio MCP only" if args.no_ws else f"stdio MCP + ws://{host}:{port}"
-        log.info("chibi-mcp starting (%s)", mode)
+    elif args.no_ws:
+        log.info("chibi-mcp starting (stdio MCP only)")
         with suppress(KeyboardInterrupt):
-            asyncio.run(_run_concurrent(ws_enabled=not args.no_ws))
+            _run_mcp_stdio_sync()
+    else:
+        log.info("chibi-mcp starting (stdio MCP + ws://%s:%d)", host, port)
+        with suppress(KeyboardInterrupt):
+            asyncio.run(_run_concurrent(ws_enabled=True))
     log.info("chibi-mcp stopped")
     return 0
 

@@ -6,6 +6,16 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Reworked the floating status card layout so mood/progress, status, rhythm,
+  and CPU/RAM/BAT meters occupy separate rows with bounded text instead of
+  visually colliding at smaller window sizes.
+- Added RAM overload to the same warning path as CPU and low battery, and made
+  meter values explicit percentages.
+- Added a small landing jiggle after dragging the floating window so movement
+  feels like a physical chibi surface rather than a static panel.
+- Made `--no-ws` stdio run on a direct EOF-aware loop, so installer/test
+  probes can finish after receiving MCP responses instead of waiting on an
+  async reader thread.
 - Upgraded the floating status card from text-only metrics to product-style
   rhythm and CPU/RAM/BAT meters, with warning colors that match the active
   mood logic.

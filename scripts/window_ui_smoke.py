@@ -110,8 +110,21 @@ def main() -> int:
             assert abs(pet.status_card._rhythm_fraction - 0.1) < 0.01
             assert pet.status_card.find_withtag("metric_meter")
             assert pet.status_card.find_withtag("rhythm_meter")
+            assert pet.status_card.find_withtag("status_pill")
+            metric_box = pet.status_card.bbox("metric_meter")
+            status_box = pet.status_card.bbox("status_pill")
+            rhythm_box = pet.status_card.bbox("rhythm_meter")
+            assert metric_box and status_box and rhythm_box
+            assert status_box[3] < metric_box[1]
+            assert rhythm_box[3] < metric_box[1]
             assert pet.canvas.find_withtag("stage_glow")
             assert pet.canvas.find_withtag("mood_fx")
+
+            pet._start_drag(SimpleNamespace(x_root=10, y_root=10, widget=pet.canvas))
+            pet._do_drag(SimpleNamespace(x_root=24, y_root=28))
+            pet._end_drag(SimpleNamespace())
+            pet.root.update_idletasks()
+            assert window_mod._load_window_prefs().get("position")
 
             pet._start_drag(SimpleNamespace(x_root=10, y_root=10, widget=pet.canvas))
             pet._end_drag(SimpleNamespace())

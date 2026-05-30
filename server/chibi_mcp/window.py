@@ -30,6 +30,7 @@ import subprocess
 import sys
 import threading
 import tkinter as tk
+import tkinter.font as tkfont
 import wave
 from pathlib import Path
 
@@ -347,13 +348,16 @@ def _format_system_hud(system: dict) -> str:
 def _metric_is_warn(system: dict) -> bool:
     system = _as_dict(system)
     cpu = system.get("cpu_percent")
+    ram = system.get("ram_percent")
     battery = system.get("battery_percent")
     plugged = system.get("battery_plugged")
     cpu_value = _finite_number(cpu)
+    ram_value = _finite_number(ram)
     battery_value = _finite_number(battery)
     cpu_warn = cpu_value is not None and cpu_value >= 80
+    ram_warn = ram_value is not None and ram_value >= 90
     battery_warn = battery_value is not None and battery_value < 20 and plugged is False
-    return cpu_warn or battery_warn
+    return cpu_warn or ram_warn or battery_warn
 
 
 def _metric_percent_value(value: object) -> int | None:
@@ -907,6 +911,7 @@ class ChibiButton(tk.Canvas):
         width = max(self._min_width, int(self.winfo_width() or self._min_width))
         height = self._button_height
         self.delete("all")
+        press_offset = self._s(2) if self._enabled and self._tone == "active" else 0
 
         if self._enabled:
             fill = self._colors[self._tone]
@@ -932,20 +937,30 @@ class ChibiButton(tk.Canvas):
         )
         self._rounded_rect(
             self._s(1),
-            self._s(1),
+            self._s(1) + press_offset,
             width - self._s(3),
-            height - self._s(5),
+            height - self._s(5) + press_offset,
             self._s(13),
             fill=fill,
             outline=border,
             width=max(1, self._s(1)),
         )
+        if self._enabled:
+            self.create_line(
+                self._s(12),
+                self._s(6) + press_offset,
+                width - self._s(14),
+                self._s(6) + press_offset,
+                fill="#ffffff",
+                width=max(1, self._s(1)),
+                capstyle="round",
+            )
         if self._focused and self._enabled:
             self._rounded_rect(
                 self._s(3),
-                self._s(3),
+                self._s(3) + press_offset,
                 width - self._s(5),
-                height - self._s(7),
+                height - self._s(7) + press_offset,
                 self._s(11),
                 fill="",
                 outline=TEXT_FG,
@@ -954,7 +969,7 @@ class ChibiButton(tk.Canvas):
 
         text_anchor = "center"
         text_x = width // 2
-        center_y = height // 2 - self._s(1)
+        center_y = height // 2 - self._s(1) + press_offset // 2
         if self._anchor == "w":
             text_anchor = "w"
             text_x = self._s(16 if not self._colors.get("indicator") else 20)
@@ -962,9 +977,9 @@ class ChibiButton(tk.Canvas):
         if self._colors.get("indicator"):
             self._rounded_rect(
                 self._s(8),
-                self._s(10),
+                self._s(10) + press_offset,
                 self._s(12),
-                height - self._s(10),
+                height - self._s(10) + press_offset,
                 self._s(3),
                 fill=self._colors["indicator"],
                 outline="",
@@ -1027,8 +1042,8 @@ class ChibiStatusCard(tk.Canvas):
         self._debug_hud = "상세 준비"
         self._view_mode = "normal"
         self._card_width = width
-        self._normal_card_height = 98
-        self._debug_card_height = 132
+        self._normal_card_height = 122
+        self._debug_card_height = 158
         self._scale = 1.0
         self._card_height = self._scaled_card_height()
         super().__init__(
@@ -1136,6 +1151,25 @@ class ChibiStatusCard(tk.Canvas):
     def _s(self, value: int) -> int:
         return max(1, round(value * self._scale))
 
+    def _fit_text(self, text: str, font: tuple, max_width: int) -> str:
+        if max_width <= self._s(12):
+            return "…"
+        try:
+            font_obj = tkfont.Font(font=font)
+        except tk.TclError:
+            return text
+        if font_obj.measure(text) <= max_width:
+            return text
+        clipped = text
+        while clipped and font_obj.measure(f"{clipped}…") > max_width:
+            clipped = clipped[:-1]
+        return f"{clipped}…" if clipped else "…"
+
+    def _status_chip(self) -> tuple[str, str, str, str]:
+        if self._system_warn:
+            return ("주의", STATUS_WARN_BG, STATUS_WARN_BORDER, "#77521b")
+        return ("정상", STATUS_METRIC_BG, STATUS_METRIC_BORDER, "#4b725d")
+
     def _meter_color(self, label: str, value: int | None) -> str:
         if label in self._metric_alerts:
             return METER_DANGER
@@ -1182,7 +1216,7 @@ class ChibiStatusCard(tk.Canvas):
             font=("Helvetica", max(5, self._s(7)), "bold"),
             tags=("metric_meter",),
         )
-        value_text = "--" if value is None else f"{value}"
+        value_text = "--" if value is None else f"{value}%"
         self.create_text(
             x2 - self._s(8),
             y1 + self._s(10),
@@ -1225,6 +1259,7 @@ class ChibiStatusCard(tk.Canvas):
         mood_label, mood_icon = MOOD_LABELS.get(self._mood, (self._mood, "•"))
         stars = "★" * self._rarity + "☆" * max(0, 5 - self._rarity)
         mood_glow, _shadow = MOOD_STAGE_COLORS.get(self._mood, MOOD_STAGE_COLORS["calm"])
+        status_text, status_fill, status_outline, status_fg = self._status_chip()
 
         self.delete("all")
         self._rounded_rect(
@@ -1289,18 +1324,68 @@ class ChibiStatusCard(tk.Canvas):
             fill=TEXT_FG,
             font=("Helvetica", max(7, self._s(9)), "bold"),
         )
+        status_x1 = max(self._s(210), width - self._s(78))
+        status_x2 = width - self._s(22)
+        self._rounded_rect(
+            status_x1,
+            self._s(38),
+            status_x2,
+            self._s(60),
+            self._s(10),
+            fill=status_fill,
+            outline=status_outline,
+            width=max(1, self._s(1)),
+            tags=("status_pill",),
+        )
+        status_chip_w = status_x2 - status_x1
+        dot_x1 = status_x1 + self._s(8)
+        if status_chip_w < self._s(46):
+            dot_x1 = status_x1 + status_chip_w // 2 - self._s(3)
+        self.create_oval(
+            dot_x1,
+            self._s(46),
+            dot_x1 + self._s(6),
+            self._s(52),
+            fill=METER_DANGER if self._system_warn else METER_GOOD,
+            outline="",
+            tags=("status_pill",),
+        )
+        if status_chip_w >= self._s(46):
+            self.create_text(
+                status_x1 + self._s(18),
+                self._s(49),
+                text=status_text,
+                anchor="w",
+                fill=status_fg,
+                font=("Helvetica", max(6, self._s(8)), "bold"),
+                tags=("status_pill",),
+            )
+
+        progress_font = ("Helvetica", max(7, self._s(9)))
+        progress_max = max(self._s(72), status_x1 - self._s(112))
         self.create_text(
             self._s(104),
             self._s(49),
-            text=self._progress,
+            text=self._fit_text(self._progress, progress_font, progress_max),
             anchor="w",
             fill=MUTED_FG,
-            font=("Helvetica", max(7, self._s(9))),
+            font=progress_font,
+            tags=("progress_text",),
         )
-        bar_x1 = self._s(104)
+
+        self.create_text(
+            self._s(18),
+            self._s(73),
+            text="리듬",
+            anchor="w",
+            fill="#6f5d50",
+            font=("Helvetica", max(6, self._s(8)), "bold"),
+            tags=("rhythm_meter",),
+        )
+        bar_x1 = self._s(56)
         bar_x2 = width - self._s(24)
-        bar_y1 = self._s(58)
-        bar_y2 = self._s(63)
+        bar_y1 = self._s(70)
+        bar_y2 = self._s(77)
         self._rounded_rect(
             bar_x1,
             bar_y1,
@@ -1323,8 +1408,8 @@ class ChibiStatusCard(tk.Canvas):
             tags=("rhythm_meter",),
         )
 
-        meter_y1 = self._s(68)
-        meter_y2 = self._s(91)
+        meter_y1 = self._s(88)
+        meter_y2 = self._s(113)
         gap = self._s(6)
         meter_x1 = self._s(16)
         available = width - self._s(36) - gap * 2
@@ -1343,7 +1428,7 @@ class ChibiStatusCard(tk.Canvas):
         if self._view_mode == "debug":
             self._rounded_rect(
                 self._s(16),
-                self._s(96),
+                self._s(120),
                 width - self._s(20),
                 height - self._s(10),
                 self._s(8),
@@ -1358,24 +1443,6 @@ class ChibiStatusCard(tk.Canvas):
                 anchor="w",
                 fill="#41506b",
                 font=("Helvetica", max(6, self._s(8)), "bold"),
-            )
-        elif self._system_warn:
-            self.create_text(
-                width - self._s(24),
-                height - self._s(17),
-                text="상태 체크",
-                anchor="e",
-                fill="#77521b",
-                font=("Helvetica", max(5, self._s(7)), "bold"),
-            )
-        else:
-            self.create_text(
-                width - self._s(24),
-                height - self._s(17),
-                text="stable",
-                anchor="e",
-                fill="#6d8777",
-                font=("Helvetica", max(5, self._s(7)), "bold"),
             )
 
 
@@ -2765,6 +2832,19 @@ class PetWindow:
 
         tick()
 
+    def _landing_jiggle(self) -> None:
+        steps = ((1.08, 0.88), (0.96, 1.06), (1.03, 0.98), (1.0, 1.0))
+
+        def tick(idx: int = 0) -> None:
+            if idx >= len(steps):
+                self._render_image(self.current_mood)
+                return
+            self._render_image(self.current_mood, scale=steps[idx])
+            self._after(55, lambda: tick(idx + 1))
+
+        self._play_safe("squish")
+        tick()
+
     def _spawn_pull_reveal(self, last_pull: dict) -> None:
         drawn = _as_dict(last_pull.get("drawn"))
         rarity = int(_finite_number(drawn.get("rarity")) or 2)
@@ -2848,6 +2928,7 @@ class PetWindow:
         if start is None or self._drag_moved:
             if start is not None and self._drag_moved:
                 self._save_window_layout()
+                self._landing_jiggle()
             return None
         if start[2] is self.canvas:
             return self._poke_character()

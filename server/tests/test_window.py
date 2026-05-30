@@ -111,6 +111,7 @@ def test_system_hud_ignores_invalid_numbers():
 
 def test_status_warning_matches_mood_thresholds():
     assert window._metric_is_warn({"cpu_percent": 80, "battery_percent": 80, "battery_plugged": False})
+    assert window._metric_is_warn({"ram_percent": 90, "battery_percent": 80, "battery_plugged": False})
     assert window._metric_is_warn({"cpu_percent": 10, "battery_percent": 19, "battery_plugged": False})
     assert not window._metric_is_warn({"cpu_percent": 10, "battery_percent": 19, "battery_plugged": True})
     assert not window._metric_is_warn({"cpu_percent": math.inf, "battery_percent": math.nan})
