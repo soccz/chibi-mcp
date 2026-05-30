@@ -45,7 +45,7 @@ TICKETS_PER_10_SLICES = 1
 # Persistence
 STATE_DIR = Path.home() / ".chibi-mcp"
 STATE_FILE = STATE_DIR / "state.json"
-STATE_SCHEMA_VERSION = 2
+STATE_SCHEMA_VERSION = 3
 
 
 @dataclass
@@ -70,6 +70,7 @@ class ChibiState:
     tickets: int = 0
     last_free_pull_date: str | None = None  # ISO date
     total_pulls: int = 0
+    last_pull: dict | None = None
 
     # ── Persistence ──────────────────────────────────────────────────────────
 
@@ -82,6 +83,7 @@ class ChibiState:
             "tickets": self.tickets,
             "last_free_pull_date": self.last_free_pull_date,
             "total_pulls": self.total_pulls,
+            "last_pull": self.last_pull,
         }
 
     def save(self) -> None:
@@ -128,6 +130,8 @@ class ChibiState:
             self.tickets = int(data.get("tickets", 0))
             self.last_free_pull_date = data.get("last_free_pull_date")
             self.total_pulls = int(data.get("total_pulls", 0))
+            last_pull = data.get("last_pull")
+            self.last_pull = last_pull if isinstance(last_pull, dict) else None
 
     # ── Call tracking + ticket grants ────────────────────────────────────────
 
@@ -225,23 +229,36 @@ class ChibiState:
             )
             inv["count"] = int(inv.get("count", 0)) + 1
 
-            # If user has no active character, this becomes it
-            if not self.active_character_id:
-                self.active_character_id = pick["id"]
+            previous_active = self.active_character_id
+            self.active_character_id = pick["id"]
 
-            save_data = self._persisted_dict()
-            result = {
-                "drawn": {
-                    "id": pick["id"],
-                    "name_ko": pick.get("name_ko"),
-                    "rarity": pick.get("rarity"),
-                    "category": pick.get("category"),
-                },
+            drawn = {
+                "id": pick["id"],
+                "name_ko": pick.get("name_ko"),
+                "rarity": pick.get("rarity"),
+                "category": pick.get("category"),
+            }
+            self.last_pull = {
+                "drawn": drawn,
                 "was_free": was_free,
                 "tickets": self.tickets,
                 "owned_count": inv["count"],
                 "active_character_id": self.active_character_id,
+                "previous_active_character_id": previous_active,
                 "total_pulls": self.total_pulls,
+                "pulled_at": datetime.now().isoformat(),
+            }
+
+            save_data = self._persisted_dict()
+            result = {
+                "drawn": drawn,
+                "was_free": was_free,
+                "tickets": self.tickets,
+                "owned_count": inv["count"],
+                "active_character_id": self.active_character_id,
+                "previous_active_character_id": previous_active,
+                "total_pulls": self.total_pulls,
+                "last_pull": self.last_pull,
             }
 
         self._save_data(save_data)
@@ -356,6 +373,7 @@ class ChibiState:
                     "total_pulls": self.total_pulls,
                     "owned_count": len(self.inventory),
                     "last_free_pull_date": self.last_free_pull_date,
+                    "last_pull": self.last_pull,
                 },
             }
 

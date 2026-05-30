@@ -18,7 +18,7 @@ characters or no character is available.
 
 If the user passed arguments, route directly:
 
-- `뽑기`, `pull`, `gacha` → `pull_gacha`
+- `뽑기`, `pull`, `gacha` → `pull_gacha`; if `drawn` is not null, treat `active_character_id` as the newly selected visible chibi and mention that it was saved to the collection.
 - `보관함`, `collection`, `inventory` → `get_inventory` + `get_catalog`
 - `마일스톤`, `반응해`, `milestone` → `slice_now`
 - `닫기`, `close` → `close_pet_window`

@@ -100,6 +100,13 @@ def _broadcast_say(text: str) -> bool:
     return _fire_and_forget(broadcaster.broadcast({"type": "say", "text": _sanitize_say(text)}))
 
 
+def _broadcast_state() -> bool:
+    broadcaster = get_broadcaster()
+    return _fire_and_forget(
+        broadcaster.broadcast({"type": "state", "payload": get_state().snapshot()})
+    )
+
+
 @mcp.tool()
 def get_pet_state() -> dict:
     """Return chibi's current state: mood, system metrics, counters, timing.
@@ -310,6 +317,7 @@ def set_active_options(option_ids: list[str]) -> dict:
     result = state.set_active_options(cleaned, available)
     if result.get("ok"):
         _broadcast_sound("option")
+        result["broadcasted"] = _broadcast_state()
     return result
 
 
@@ -635,10 +643,12 @@ def pull_gacha() -> dict:
     if result.get("drawn") is None:
         return result
 
-    # Broadcast a slice-like event so any open window celebrates
+    # Broadcast the fresh state immediately so the window shows the pulled
+    # character/inventory without waiting for the periodic state tick.
     broadcaster = get_broadcaster()
     sound_name = "rare" if int(result["drawn"].get("rarity", 0)) >= 4 else "gacha"
     _broadcast_sound(sound_name)
+    result["broadcasted"] = _broadcast_state()
     _fire_and_forget(
         broadcaster.broadcast(
             {
@@ -662,6 +672,7 @@ def get_inventory() -> dict:
         "owned_count": len(state.inventory),
         "inventory": state.inventory,
         "last_free_pull_date": state.last_free_pull_date,
+        "last_pull": state.last_pull,
         "next_free_in_seconds": _seconds_until_midnight(),
         "summary": snap,
     }
@@ -674,6 +685,8 @@ def set_active_character(character_id: str) -> dict:
         return {"ok": False, "reason": f"invalid character id: {character_id!r}"}
     state = get_state()
     result = state.set_active(character_id)
+    if result.get("ok"):
+        result["broadcasted"] = _broadcast_state()
     return result
 
 
@@ -683,7 +696,10 @@ def rename_character(character_id: str, nickname: str) -> dict:
     if not _CHAR_ID_RE.match(character_id):
         return {"ok": False, "reason": f"invalid character id: {character_id!r}"}
     state = get_state()
-    return state.rename(character_id, nickname)
+    result = state.rename(character_id, nickname)
+    if result.get("ok"):
+        result["broadcasted"] = _broadcast_state()
+    return result
 
 
 @mcp.tool()
@@ -692,7 +708,9 @@ def add_ticket(n: int = 1) -> dict:
     if not 1 <= n <= 100:
         raise ValueError("n must be between 1 and 100")
     state = get_state()
-    return state.grant_tickets(n)
+    result = state.grant_tickets(n)
+    result["broadcasted"] = _broadcast_state()
+    return result
 
 
 def _handle_window_action(message: dict) -> dict:

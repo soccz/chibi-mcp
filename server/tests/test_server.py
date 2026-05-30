@@ -15,6 +15,7 @@ from chibi_mcp.server import (
     _window_startup_failure,
     clear_active_options,
     get_options,
+    pull_gacha,
     set_active_character,
     set_active_options,
 )
@@ -160,6 +161,27 @@ def test_window_action_routes_option_changes(tmp_path, monkeypatch):
         result = _handle_window_action({"type": "action", "action": "clear_active_options"})
         assert result["ok"] is True
         assert get_state().active_option_ids == []
+    finally:
+        reset_state_for_tests()
+
+
+def test_pull_gacha_persists_latest_pull_summary(tmp_path, monkeypatch):
+    monkeypatch.setattr(state_mod, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(state_mod, "STATE_FILE", tmp_path / "state.json")
+    monkeypatch.setattr(server_mod, "_WINDOW_PID_FILE", tmp_path / "window.pid")
+    reset_state_for_tests()
+    try:
+        result = pull_gacha()
+        assert result["drawn"] is not None
+        assert result["active_character_id"] == result["drawn"]["id"]
+        assert get_state().last_pull is not None
+        assert get_state().last_pull["drawn"]["id"] == result["drawn"]["id"]
+
+        reset_state_for_tests()
+        restored = get_state()
+        assert restored.last_pull is not None
+        assert restored.last_pull["drawn"]["id"] == result["drawn"]["id"]
+        assert restored.active_character_id == result["drawn"]["id"]
     finally:
         reset_state_for_tests()
 

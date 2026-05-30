@@ -62,6 +62,22 @@ def test_first_pulled_becomes_active():
     assert s.active_character_id == result["drawn"]["id"]
 
 
+def test_latest_pull_becomes_active_and_is_remembered():
+    s = ChibiState()
+    first = s.pull_gacha([CATALOG[0]])
+    assert first["drawn"]["id"] == "white_tteok"
+    assert s.active_character_id == "white_tteok"
+
+    s.tickets = 1
+    second = s.pull_gacha([CATALOG[1]])
+    assert second["drawn"]["id"] == "garaetteok_short"
+    assert second["previous_active_character_id"] == "white_tteok"
+    assert second["active_character_id"] == "garaetteok_short"
+    assert s.active_character_id == "garaetteok_short"
+    assert s.last_pull is not None
+    assert s.last_pull["drawn"]["id"] == "garaetteok_short"
+
+
 def test_inventory_count_increments():
     s = ChibiState()
     s.tickets = 5
@@ -79,6 +95,7 @@ def test_persistence_roundtrip(tmp_path, monkeypatch):
     s.active_character_id = "white_tteok"
     s.active_option_ids = ["jocheong_drip", "sugar_beads"]
     s.inventory = {"white_tteok": {"count": 2, "nickname": "흰떡"}}
+    s.last_pull = {"drawn": {"id": "white_tteok"}, "total_pulls": 2}
     s.save()
 
     s2 = ChibiState()
@@ -87,6 +104,7 @@ def test_persistence_roundtrip(tmp_path, monkeypatch):
     assert s2.active_character_id == "white_tteok"
     assert s2.active_option_ids == ["jocheong_drip", "sugar_beads"]
     assert s2.inventory["white_tteok"]["nickname"] == "흰떡"
+    assert s2.last_pull == {"drawn": {"id": "white_tteok"}, "total_pulls": 2}
 
 
 def test_ticket_grant_every_100_calls():

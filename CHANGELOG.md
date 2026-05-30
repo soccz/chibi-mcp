@@ -20,6 +20,9 @@ Commercial-readiness polish without enabling paid gates.
 - Removed the macOS PyObjC transparency path entirely, even when the legacy
   opt-in env var is set, to prevent native `_objc` crashes on Homebrew
   Python/Tk combinations.
+- Gacha pulls now persist a `last_pull` summary, immediately make the drawn
+  chibi the active visible character, and broadcast fresh state to open windows
+  so pulls do not look lost after a command or restart.
 - Claude/Codex installers now reinstall the pipx app from a fresh venv and
   verify the expected chibi-mcp version before refreshing MCP/plugin entries,
   so `already at latest` cannot leave an old runtime behind.
