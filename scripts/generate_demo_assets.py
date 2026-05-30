@@ -165,7 +165,7 @@ def draw_codex_terminal() -> None:
         [
             ("$", "bash <(curl -fsSL .../scripts/install-codex.sh)"),
             ("$", "chibi-mcp --check"),
-            ("", '{"ok": true, "version": "1.4.36", "telemetry": "none"}'),
+            ("", '{"ok": true, "version": "1.4.37", "telemetry": "none"}'),
             (">", "/chibi-mcp:chibi inventory"),
             ("", "tickets 1 | owned 4/8 | localhost-first"),
         ],

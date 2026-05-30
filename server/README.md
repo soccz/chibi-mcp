@@ -35,7 +35,7 @@ Then call `open_pet_window` from the client — it launches the floating chibi w
 ```bash
 chibi-mcp --check      # verify packaged assets + local runtime support
 chibi-mcp --doctor     # verify local runtime + Claude/Codex/VS Code client state
-chibi-mcp --open       # open the floating window directly and print JSON result
+chibi-mcp --open       # open the window and auto-start ws-only if needed
 chibi-mcp --version
 chibi-mcp --ws-only    # development: run only ws://127.0.0.1:9876
 chibi-audit            # local trust report for team/security review

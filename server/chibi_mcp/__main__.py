@@ -25,6 +25,7 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 from contextlib import suppress
 from pathlib import Path
 
@@ -566,6 +567,76 @@ def _doctor(mcp_name: str = "chibi") -> dict:
     }
 
 
+def _ws_accepts(host: str, port: int, *, timeout: float = 0.6) -> bool:
+    url = f"ws://{host}:{port}"
+    try:
+        from websockets.sync.client import connect as ws_connect
+
+        with ws_connect(url, open_timeout=timeout, close_timeout=0.2):
+            return True
+    except Exception:
+        return False
+
+
+def _ensure_ws_server_for_open() -> dict:
+    host, port = _ws_endpoint()
+    url = f"ws://{host}:{port}"
+    if _ws_accepts(host, port):
+        return {"ok": True, "started": False, "url": url}
+
+    runtime_dir = Path.home() / ".chibi-mcp"
+    runtime_dir.mkdir(parents=True, exist_ok=True)
+    log_path = runtime_dir / "ws.log"
+    pid_path = runtime_dir / "ws.pid"
+    log_fh = log_path.open("ab")
+    popen_kwargs: dict = {
+        "stdin": subprocess.DEVNULL,
+        "stdout": log_fh,
+        "stderr": log_fh,
+        "env": os.environ.copy(),
+    }
+    if sys.platform == "win32":
+        flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+        flags |= getattr(subprocess, "DETACHED_PROCESS", 0)
+        popen_kwargs["creationflags"] = flags
+    else:
+        popen_kwargs["start_new_session"] = True
+
+    try:
+        proc = subprocess.Popen([sys.executable, "-m", "chibi_mcp", "--ws-only"], **popen_kwargs)
+    finally:
+        with suppress(OSError):
+            log_fh.close()
+    with suppress(OSError):
+        pid_path.write_text(str(proc.pid), encoding="utf-8")
+
+    deadline = time.monotonic() + 3.0
+    while time.monotonic() < deadline:
+        if _ws_accepts(host, port):
+            return {
+                "ok": True,
+                "started": True,
+                "pid": proc.pid,
+                "url": url,
+                "log_path": str(log_path),
+            }
+        if proc.poll() is not None:
+            break
+        time.sleep(0.1)
+
+    with suppress(OSError):
+        pid_path.unlink(missing_ok=True)
+    return {
+        "ok": False,
+        "started": True,
+        "pid": proc.pid,
+        "returncode": proc.poll(),
+        "url": url,
+        "log_path": str(log_path),
+        "next_step": "Run `chibi-mcp --ws-only` in another terminal, then `chibi-mcp --open`.",
+    }
+
+
 def _open_window_once(character_id: str | None = None, view_mode: str | None = None) -> dict:
     """Open the floating window from the CLI and return the MCP tool payload."""
     return server_tools.open_pet_window(character_id=character_id, view_mode=view_mode)
@@ -624,7 +695,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["ok"] else 1
     if args.open:
         _setup_logging()
+        ws_server = _ensure_ws_server_for_open()
         result = _open_window_once(character_id=args.character_id, view_mode=args.view_mode)
+        result["ws_server"] = ws_server
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result.get("opened") else 1
 

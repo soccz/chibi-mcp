@@ -13,6 +13,7 @@ from chibi_mcp.server import (
     _sanitize_say,
     _window_runtime_issue,
     _window_startup_failure,
+    _window_ws_url,
     clear_active_options,
     get_options,
     pull_gacha,
@@ -69,6 +70,12 @@ def test_open_pet_window_rejects_invalid_view_mode():
     assert result["opened"] is False
     assert "invalid view_mode" in result["reason"]
     assert result["allowed_view_modes"] == ["compact", "debug", "normal"]
+
+
+def test_window_ws_url_respects_env(monkeypatch):
+    monkeypatch.setenv("CHIBI_WS_HOST", "127.0.0.2")
+    monkeypatch.setenv("CHIBI_WS_PORT", "9988")
+    assert _window_ws_url() == "ws://127.0.0.2:9988"
 
 
 def test_options_catalog_exposes_free_layers():

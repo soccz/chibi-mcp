@@ -82,6 +82,169 @@ BUTTON_DANGER_ICON_BG = "#ffddd6"
 BUTTON_DANGER_FG = "#7d302a"
 BUTTON_DISABLED_BG = "#eee0d2"
 BUTTON_DISABLED_FG = "#9b8b7d"
+BUTTON_PALETTES: dict[str, dict[str, str]] = {
+    "secondary": {
+        "bg": BUTTON_SECONDARY_BG,
+        "hover": BUTTON_SECONDARY_HOVER,
+        "active": BUTTON_SECONDARY_ACTIVE,
+        "border": BUTTON_SECONDARY_BORDER,
+        "shadow": BUTTON_SECONDARY_SHADOW,
+        "icon_bg": BUTTON_SECONDARY_ICON_BG,
+        "fg": TEXT_FG,
+        "accent": "#7fcf9e",
+        "badge_bg": "#fff6dd",
+        "badge_border": "#e6c36b",
+        "badge_fg": "#725422",
+    },
+    "selected": {
+        "bg": BUTTON_SECONDARY_ACTIVE,
+        "hover": BUTTON_SECONDARY_HOVER,
+        "active": BUTTON_SECONDARY_ACTIVE,
+        "border": BUTTON_SECONDARY_BORDER,
+        "shadow": BUTTON_SECONDARY_SHADOW,
+        "icon_bg": BUTTON_SECONDARY_ICON_BG,
+        "indicator": "#55bd83",
+        "fg": TEXT_FG,
+        "accent": "#55bd83",
+        "badge_bg": "#ffffff",
+        "badge_border": "#55bd83",
+        "badge_fg": "#345b46",
+    },
+    "inventory": {
+        "bg": "#f8fff9",
+        "hover": "#ecfff1",
+        "active": "#d8f6e3",
+        "border": "#8fd4aa",
+        "shadow": "#c7b598",
+        "icon_bg": "#dff6e9",
+        "fg": TEXT_FG,
+        "accent": "#42b878",
+        "badge_bg": "#e8fff1",
+        "badge_border": "#69c990",
+        "badge_fg": "#2f6b48",
+    },
+    "inventory_selected": {
+        "bg": "#dff8e9",
+        "hover": "#eafff2",
+        "active": "#c9efd9",
+        "border": "#42b878",
+        "shadow": "#a99b82",
+        "icon_bg": "#c5efd8",
+        "indicator": "#42b878",
+        "fg": TEXT_FG,
+        "accent": "#2fa464",
+        "badge_bg": "#ffffff",
+        "badge_border": "#42b878",
+        "badge_fg": "#25583b",
+    },
+    "options": {
+        "bg": "#f4fbff",
+        "hover": "#e6f7ff",
+        "active": "#d6effb",
+        "border": "#8fcce8",
+        "shadow": "#c6b79c",
+        "icon_bg": "#dff2fb",
+        "fg": TEXT_FG,
+        "accent": "#44a4d2",
+        "badge_bg": "#edf6ff",
+        "badge_border": "#82bee0",
+        "badge_fg": "#2d5f76",
+    },
+    "options_selected": {
+        "bg": "#dff3ff",
+        "hover": "#ebf9ff",
+        "active": "#cceafd",
+        "border": "#42a4d0",
+        "shadow": "#a9a089",
+        "icon_bg": "#c9ebfa",
+        "indicator": "#44a4d2",
+        "fg": TEXT_FG,
+        "accent": "#218bc0",
+        "badge_bg": "#ffffff",
+        "badge_border": "#44a4d2",
+        "badge_fg": "#24586e",
+    },
+    "settings": {
+        "bg": "#fffaf0",
+        "hover": "#fff3d6",
+        "active": "#ffe8b7",
+        "border": "#dda84c",
+        "shadow": "#d2b188",
+        "icon_bg": "#ffedc2",
+        "fg": TEXT_FG,
+        "accent": "#d7942b",
+        "badge_bg": "#fff6dd",
+        "badge_border": "#d9a246",
+        "badge_fg": "#704f1b",
+    },
+    "settings_selected": {
+        "bg": "#ffedc2",
+        "hover": "#fff6de",
+        "active": "#ffe4a8",
+        "border": "#c88623",
+        "shadow": "#b79b75",
+        "icon_bg": "#ffe0a0",
+        "indicator": "#d7942b",
+        "fg": TEXT_FG,
+        "accent": "#c47d16",
+        "badge_bg": "#ffffff",
+        "badge_border": "#d7942b",
+        "badge_fg": "#694711",
+    },
+    "mode": {
+        "bg": "#f5f2ff",
+        "hover": "#ede8ff",
+        "active": "#dfd7ff",
+        "border": "#b9a8eb",
+        "shadow": "#c3b4a5",
+        "icon_bg": "#e6ddff",
+        "fg": TEXT_FG,
+        "accent": "#8e70d8",
+        "badge_bg": "#f3edff",
+        "badge_border": "#b9a8eb",
+        "badge_fg": "#5e4b87",
+    },
+    "mode_selected": {
+        "bg": "#e6ddff",
+        "hover": "#f0ebff",
+        "active": "#d8ccff",
+        "border": "#8e70d8",
+        "shadow": "#aa9b8a",
+        "icon_bg": "#d4c8ff",
+        "indicator": "#8e70d8",
+        "fg": TEXT_FG,
+        "accent": "#7656c7",
+        "badge_bg": "#ffffff",
+        "badge_border": "#8e70d8",
+        "badge_fg": "#4e3b7a",
+    },
+    "primary": {
+        "bg": BUTTON_PRIMARY_BG,
+        "hover": BUTTON_PRIMARY_HOVER,
+        "active": BUTTON_PRIMARY_ACTIVE,
+        "border": BUTTON_PRIMARY_BORDER,
+        "shadow": BUTTON_PRIMARY_SHADOW,
+        "icon_bg": BUTTON_PRIMARY_ICON_BG,
+        "fg": TEXT_FG,
+        "accent": "#ffe071",
+        "badge_bg": "#fff7d1",
+        "badge_border": "#f0c94f",
+        "badge_fg": "#73531a",
+    },
+    "danger": {
+        "bg": BUTTON_DANGER_BG,
+        "hover": BUTTON_DANGER_HOVER,
+        "active": BUTTON_DANGER_ACTIVE,
+        "border": BUTTON_DANGER_BORDER,
+        "shadow": BUTTON_DANGER_SHADOW,
+        "icon_bg": BUTTON_DANGER_ICON_BG,
+        "fg": BUTTON_DANGER_FG,
+        "accent": "#ef7f70",
+        "badge_bg": "#fff0ec",
+        "badge_border": "#e9a092",
+        "badge_fg": BUTTON_DANGER_FG,
+    },
+}
 RECONNECT_BACKOFF_MIN_S = 1.0
 RECONNECT_BACKOFF_MAX_S = 30.0
 POLL_INTERVAL_MS = 80
@@ -779,16 +942,17 @@ def _ws_listener(url: str, event_queue: queue.Queue, stop_event: threading.Event
         from websockets.sync.client import connect as ws_connect
     except ImportError:
         log.warning("websockets sync client unavailable — window won't get live updates")
-        event_queue.put({"type": "connection", "connected": False})
+        event_queue.put({"type": "connection", "connected": False, "status": "missing"})
         return
 
     backoff = RECONNECT_BACKOFF_MIN_S
     connected = False
+    event_queue.put({"type": "connection", "connected": False, "status": "connecting"})
     while not stop_event.is_set():
         try:
             with ws_connect(url, open_timeout=3) as conn:
                 if not connected:
-                    event_queue.put({"type": "connection", "connected": True})
+                    event_queue.put({"type": "connection", "connected": True, "status": "online"})
                     connected = True
                 backoff = RECONNECT_BACKOFF_MIN_S  # reset on successful connect
                 for raw in conn:
@@ -801,13 +965,15 @@ def _ws_listener(url: str, event_queue: queue.Queue, stop_event: threading.Event
                     except queue.Full:
                         log.debug("ws drop (queue full: %d)", event_queue.qsize())
                 if connected:
-                    event_queue.put({"type": "connection", "connected": False})
+                    event_queue.put({"type": "connection", "connected": False, "status": "connecting"})
                     connected = False
         except Exception as e:
             log.debug("ws reconnect in %.1fs after error: %s", backoff, e)
             if connected:
-                event_queue.put({"type": "connection", "connected": False})
+                event_queue.put({"type": "connection", "connected": False, "status": "connecting"})
                 connected = False
+            else:
+                event_queue.put({"type": "connection", "connected": False, "status": "connecting"})
         if stop_event.wait(backoff):
             return
         backoff = min(RECONNECT_BACKOFF_MAX_S, backoff * 1.7)
@@ -816,13 +982,13 @@ def _ws_listener(url: str, event_queue: queue.Queue, stop_event: threading.Event
 def _send_ws_action(url: str | None, message: dict, event_queue: queue.Queue) -> None:
     """Send one small desktop action to the MCP WebSocket server."""
     if not url:
-        event_queue.put({"type": "connection", "connected": False})
-        event_queue.put({"type": "say", "text": "서버 연결이 필요해"})
+        event_queue.put({"type": "connection", "connected": False, "status": "offline"})
+        event_queue.put({"type": "say", "text": "chibi-mcp --open"})
         return
     try:
         from websockets.sync.client import connect as ws_connect
     except ImportError:
-        event_queue.put({"type": "connection", "connected": False})
+        event_queue.put({"type": "connection", "connected": False, "status": "missing"})
         event_queue.put({"type": "say", "text": "websockets 설치가 필요해"})
         return
 
@@ -831,8 +997,8 @@ def _send_ws_action(url: str | None, message: dict, event_queue: queue.Queue) ->
             conn.send(json.dumps(message, ensure_ascii=False))
     except Exception as exc:
         log.debug("window action send failed: %s", exc)
-        event_queue.put({"type": "connection", "connected": False})
-        event_queue.put({"type": "say", "text": "서버에 연결하지 못했어"})
+        event_queue.put({"type": "connection", "connected": False, "status": "connecting"})
+        event_queue.put({"type": "say", "text": "서버 다시 연결중"})
 
 
 def _load_json_file(path: Path) -> dict:
@@ -994,11 +1160,13 @@ class ChibiButton(tk.Canvas):
         icon: str | None = None,
         min_width: int = 70,
         anchor: str = "center",
+        badge: str | None = None,
     ):
         self._text = text
         self._command = command
         self._colors = colors
         self._icon = icon
+        self._badge = badge
         self._base_min_width = min_width
         self._base_button_height = 38
         self._scale = 1.0
@@ -1051,8 +1219,9 @@ class ChibiButton(tk.Canvas):
         except tk.TclError:
             text_width = len(self._text) * self._s(10)
         icon_width = self._s(28) if self._icon else 0
-        padding = self._s(22 if self._anchor == "center" else 18)
-        return text_width + icon_width + padding
+        badge_width = self._s(22) if self._badge else 0
+        padding = self._s(26 if self._anchor == "center" else 20)
+        return text_width + icon_width + badge_width + padding
 
     def set_enabled(self, enabled: bool) -> None:
         self._enabled = enabled
@@ -1066,12 +1235,25 @@ class ChibiButton(tk.Canvas):
         *,
         icon: str | None = None,
         text: str | None = None,
+        badge: str | None = None,
     ) -> None:
+        next_text = self._text if text is None else text
+        next_badge = str(badge) if badge not in (None, "") else None
+        if self._colors == colors and self._icon == icon and self._text == next_text and self._badge == next_badge:
+            return
         self._colors = colors
         self._icon = icon
-        if text is not None:
-            self._text = text
+        self._text = next_text
+        self._badge = next_badge
         self._tone = "bg"
+        self._sync_dimensions()
+        self._draw()
+
+    def set_badge(self, badge: str | None) -> None:
+        badge = str(badge) if badge not in (None, "") else None
+        if badge == self._badge:
+            return
+        self._badge = badge
         self._sync_dimensions()
         self._draw()
 
@@ -1148,6 +1330,10 @@ class ChibiButton(tk.Canvas):
             shadow = "#d7c8b9"
             border = "#d6c4b2"
             icon_bg = "#e8d9ca"
+        accent = self._colors.get("accent", border)
+        badge_bg = self._colors.get("badge_bg", icon_bg)
+        badge_border = self._colors.get("badge_border", border)
+        badge_fg = self._colors.get("badge_fg", fg)
 
         self._rounded_rect(
             self._s(3),
@@ -1180,6 +1366,16 @@ class ChibiButton(tk.Canvas):
                 width=max(1, self._s(1)),
                 capstyle="round",
                 tags=("button_highlight",),
+            )
+            self.create_line(
+                self._s(13),
+                height - self._s(9) + press_offset,
+                width - self._s(15),
+                height - self._s(9) + press_offset,
+                fill=accent,
+                width=max(1, self._s(2)),
+                capstyle="round",
+                tags=("button_accent",),
             )
         if self._focused and self._enabled:
             self._rounded_rect(
@@ -1246,6 +1442,37 @@ class ChibiButton(tk.Canvas):
             font=self._text_font(),
             tags=("button_text",),
         )
+        if self._badge:
+            try:
+                badge_font = tkfont.Font(font=("Helvetica", max(6, self._s(8)), "bold"))
+                badge_text_w = badge_font.measure(self._badge)
+            except tk.TclError:
+                badge_text_w = len(self._badge) * self._s(7)
+            badge_w = max(self._s(18), badge_text_w + self._s(9))
+            badge_h = self._s(16)
+            x2 = width - self._s(5)
+            x1 = x2 - badge_w
+            y1 = self._s(2) + press_offset
+            y2 = y1 + badge_h
+            self._rounded_rect(
+                x1,
+                y1,
+                x2,
+                y2,
+                self._s(8),
+                fill=badge_bg,
+                outline=badge_border,
+                width=max(1, self._s(1)),
+                tags=("button_badge",),
+            )
+            self.create_text(
+                (x1 + x2) // 2,
+                (y1 + y2) // 2,
+                text=self._badge,
+                fill=badge_fg,
+                font=("Helvetica", max(6, self._s(8)), "bold"),
+                tags=("button_badge_text",),
+            )
 
 
 class ChibiStatusCard(tk.Canvas):
@@ -1271,6 +1498,7 @@ class ChibiStatusCard(tk.Canvas):
         self._metric_values: dict[str, int | None] = {"CPU": None, "RAM": None, "BAT": None}
         self._metric_alerts: set[str] = set()
         self._connection_ok = False
+        self._connection_state = "connecting"
         self._debug_hud = "상세 준비"
         self._view_mode = "normal"
         self._card_width = width
@@ -1325,10 +1553,14 @@ class ChibiStatusCard(tk.Canvas):
         self._rarity = rarity
         self._draw()
 
-    def set_connection(self, connected: bool) -> None:
-        if self._connection_ok == connected:
+    def set_connection(self, connected: bool, state: str | None = None) -> None:
+        state = state or ("online" if connected else "offline")
+        if state not in {"connecting", "online", "offline", "missing"}:
+            state = "online" if connected else "offline"
+        if self._connection_ok == connected and self._connection_state == state:
             return
         self._connection_ok = connected
+        self._connection_state = state
         self._draw()
 
     def set_progress(
@@ -1404,6 +1636,10 @@ class ChibiStatusCard(tk.Canvas):
         return f"{clipped}…" if clipped else "…"
 
     def _status_chip(self) -> tuple[str, str, str, str]:
+        if self._connection_state == "connecting":
+            return ("연결중", STATUS_WARN_BG, STATUS_WARN_BORDER, "#77521b")
+        if self._connection_state == "missing":
+            return ("설치", "#fff0ec", "#e9a092", BUTTON_DANGER_FG)
         if not self._connection_ok:
             return ("오프", "#f6eee6", "#cdbdaa", "#806f62")
         if self._system_warn:
@@ -1718,6 +1954,7 @@ class PetWindow:
         self.drawer_mode: str | None = None
         self.view_mode = _initial_view_mode(view_mode)
         self.connection_ok = False
+        self.connection_state = "connecting"
         self._drawer_render_signature: tuple | None = None
         self.frameless = frameless
         self.sounds_enabled = _initial_sounds_enabled(sounds)
@@ -1844,24 +2081,27 @@ class PetWindow:
             self.toolbar,
             "보관함",
             lambda: self._toggle_drawer("inventory"),
+            kind="inventory",
             icon="▣",
-            min_width=74,
+            min_width=80,
         )
         self.inventory_button.pack(side="left", padx=3)
         self.options_button = self._make_button(
             self.toolbar,
             "옵션",
             lambda: self._toggle_drawer("options"),
+            kind="options",
             icon="✦",
-            min_width=68,
+            min_width=74,
         )
         self.options_button.pack(side="left", padx=3)
         self.settings_button = self._make_button(
             self.toolbar,
             "설정",
             lambda: self._toggle_drawer("settings"),
+            kind="settings",
             icon="⚙",
-            min_width=68,
+            min_width=74,
         )
         self.settings_button.pack(side="left", padx=3)
         mode_text, mode_icon = VIEW_MODE_BUTTONS[self.view_mode]
@@ -1869,17 +2109,17 @@ class PetWindow:
             self.toolbar,
             mode_text,
             self._cycle_view_mode,
-            kind="selected" if self.view_mode != "normal" else "secondary",
+            kind="mode_selected" if self.view_mode != "normal" else "mode",
             icon=mode_icon,
-            min_width=68,
+            min_width=74,
         )
         self.mode_button.pack(side="left", padx=3)
         self.pull_button = self._make_button(
-            self.toolbar, "뽑기", self._pull_from_window, kind="primary", icon="★", min_width=68
+            self.toolbar, "뽑기", self._pull_from_window, kind="primary", icon="★", min_width=76
         )
         self.pull_button.pack(side="left", padx=3)
         self.close_button = self._make_button(
-            self.toolbar, "닫기", self.shutdown, kind="danger", icon="x", min_width=68
+            self.toolbar, "닫기", self.shutdown, kind="danger", icon="x", min_width=74
         )
         self.close_button.pack(side="left", padx=3)
 
@@ -2326,7 +2566,7 @@ class PetWindow:
 
         text, icon = VIEW_MODE_BUTTONS[self.view_mode]
         self.mode_button.set_style(
-            self._button_colors("selected" if self.view_mode != "normal" else "secondary"),
+            self._button_colors("mode_selected" if self.view_mode != "normal" else "mode"),
             icon=icon,
             text=text,
         )
@@ -2341,6 +2581,7 @@ class PetWindow:
             self._pack_status_card()
 
         self._pack_toolbar_for_mode()
+        self._refresh_toolbar_styles()
         self._fit_root_to_content()
         if persist:
             self._save_window_layout(view_mode=self.view_mode)
@@ -2393,6 +2634,8 @@ class PetWindow:
 
     def _on_root_configure(self, event: tk.Event) -> None:
         if self._suspend_resize_events or not self._layout_ready or event.widget is not self.root:
+            return
+        if self._resize_start is None:
             return
         width = int(getattr(event, "width", 0) or 0)
         if width <= 0:
@@ -2597,50 +2840,12 @@ class PetWindow:
             metric_values=_metric_meter_values(system),
             metric_alerts=_metric_alerts(system),
         )
+        self._refresh_toolbar_styles()
 
     # ── Built-in controls ───────────────────────────────────────────────────
 
     def _button_colors(self, kind: str) -> dict[str, str]:
-        if kind == "primary":
-            return {
-                "bg": BUTTON_PRIMARY_BG,
-                "hover": BUTTON_PRIMARY_HOVER,
-                "active": BUTTON_PRIMARY_ACTIVE,
-                "border": BUTTON_PRIMARY_BORDER,
-                "shadow": BUTTON_PRIMARY_SHADOW,
-                "icon_bg": BUTTON_PRIMARY_ICON_BG,
-                "fg": TEXT_FG,
-            }
-        if kind == "danger":
-            return {
-                "bg": BUTTON_DANGER_BG,
-                "hover": BUTTON_DANGER_HOVER,
-                "active": BUTTON_DANGER_ACTIVE,
-                "border": BUTTON_DANGER_BORDER,
-                "shadow": BUTTON_DANGER_SHADOW,
-                "icon_bg": BUTTON_DANGER_ICON_BG,
-                "fg": BUTTON_DANGER_FG,
-            }
-        if kind == "selected":
-            return {
-                "bg": BUTTON_SECONDARY_ACTIVE,
-                "hover": BUTTON_SECONDARY_HOVER,
-                "active": BUTTON_SECONDARY_ACTIVE,
-                "border": BUTTON_SECONDARY_BORDER,
-                "shadow": BUTTON_SECONDARY_SHADOW,
-                "icon_bg": BUTTON_SECONDARY_ICON_BG,
-                "indicator": "#55bd83",
-                "fg": TEXT_FG,
-            }
-        return {
-            "bg": BUTTON_SECONDARY_BG,
-            "hover": BUTTON_SECONDARY_HOVER,
-            "active": BUTTON_SECONDARY_ACTIVE,
-            "border": BUTTON_SECONDARY_BORDER,
-            "shadow": BUTTON_SECONDARY_SHADOW,
-            "icon_bg": BUTTON_SECONDARY_ICON_BG,
-            "fg": TEXT_FG,
-        }
+        return dict(BUTTON_PALETTES.get(kind, BUTTON_PALETTES["secondary"]))
 
     def _make_button(
         self,
@@ -2652,6 +2857,7 @@ class PetWindow:
         icon: str | None = None,
         min_width: int = 70,
         anchor: str = "center",
+        badge: str | None = None,
     ) -> ChibiButton:
         colors = self._button_colors(kind)
         panel_bg = PANEL_BG
@@ -2666,21 +2872,89 @@ class PetWindow:
             icon=icon,
             min_width=min_width,
             anchor=anchor,
+            badge=badge,
         )
         button.set_scale(self._window_scale)
         return button
+
+    def _toolbar_badges(self) -> tuple[str | None, str | None, str | None, str | None]:
+        state = _load_persisted_state()
+        inventory = state.get("inventory") if isinstance(state.get("inventory"), dict) else {}
+        inventory_count = len(inventory)
+        if inventory_count <= 0 and self.character_id:
+            inventory_count = 1
+        option_count = len(self.active_option_ids)
+        gacha = _as_dict(self._last_state_payload.get("gacha"))
+        tickets_raw = gacha.get("tickets")
+        if tickets_raw is None:
+            tickets_raw = state.get("tickets")
+        try:
+            ticket_count = max(0, int(tickets_raw or 0))
+        except (TypeError, ValueError):
+            ticket_count = 0
+        connection_badge = "!" if self.connection_state in {"offline", "missing"} else None
+        return (
+            str(inventory_count) if inventory_count else None,
+            str(option_count) if option_count else None,
+            str(ticket_count) if ticket_count else None,
+            connection_badge,
+        )
+
+    def _refresh_toolbar_styles(self) -> None:
+        if not hasattr(self, "inventory_button"):
+            return
+        inventory_badge, option_badge, ticket_badge, settings_badge = self._toolbar_badges()
+        self.inventory_button.set_style(
+            self._button_colors("inventory_selected" if self.drawer_mode == "inventory" else "inventory"),
+            icon="▣",
+            text="보관함",
+            badge=inventory_badge,
+        )
+        self.options_button.set_style(
+            self._button_colors("options_selected" if self.drawer_mode == "options" else "options"),
+            icon="✦",
+            text="옵션",
+            badge=option_badge,
+        )
+        self.settings_button.set_style(
+            self._button_colors(
+                "settings_selected" if self.drawer_mode in {"settings", "guide"} else "settings"
+            ),
+            icon="⚙" if self.connection_state != "offline" else "!",
+            text="설정",
+            badge=settings_badge,
+        )
+        mode_text, mode_icon = VIEW_MODE_BUTTONS[self.view_mode]
+        self.mode_button.set_style(
+            self._button_colors("mode_selected" if self.view_mode != "normal" else "mode"),
+            icon=mode_icon,
+            text=mode_text,
+        )
+        self.pull_button.set_style(
+            self._button_colors("primary"),
+            icon="★",
+            text="뽑기",
+            badge=ticket_badge,
+        )
+        self.close_button.set_style(
+            self._button_colors("danger"),
+            icon="x",
+            text="닫기",
+        )
 
     def _toggle_drawer(self, mode: str) -> None:
         if self.drawer_mode == mode and self.drawer.winfo_ismapped():
             self.drawer.pack_forget()
             self.drawer_mode = None
             self._drawer_render_signature = None
+            self._refresh_toolbar_styles()
             self._fit_root_to_content()
             return
         self.drawer_mode = mode
         self._render_drawer()
         if not self.drawer.winfo_ismapped():
             self.drawer.pack(pady=(0, self._s(8)), padx=self._s(10), fill="x")
+        self._refresh_toolbar_styles()
         self._fit_root_to_content()
 
     def _render_drawer(self) -> None:
@@ -2705,7 +2979,7 @@ class PetWindow:
                 bool(self.topmost_enabled),
                 self.view_mode,
                 round(self._window_scale, 2),
-                bool(self.connection_ok),
+                self.connection_state,
             )
         if self.drawer_mode == "guide":
             return ("guide",)
@@ -2899,19 +3173,28 @@ class PetWindow:
                 "서버",
                 bool(self.connection_ok),
                 lambda: self.show_bubble(
-                    "서버 연결됨" if self.connection_ok else "Claude에서 /chibi-mcp:chibi 실행"
+                    "서버 연결됨"
+                    if self.connection_ok
+                    else "터미널에서 chibi-mcp --open"
                 ),
                 "●",
             ),
         ]
         for idx, (_key, label, enabled, command, icon) in enumerate(controls):
-            state_text = "켜짐" if enabled else ("대기" if label == "서버" else "꺼짐")
+            if label == "서버":
+                state_text = {
+                    "online": "정상",
+                    "connecting": "연결중",
+                    "missing": "설치필요",
+                }.get(self.connection_state, "오프")
+            else:
+                state_text = "켜짐" if enabled else "꺼짐"
             self._make_button(
                 grid,
                 f"{label} {state_text}",
                 command,
-                kind="selected" if enabled else "secondary",
-                icon=icon if enabled else "·",
+                kind="selected" if enabled else ("settings" if label == "서버" else "secondary"),
+                icon=icon if enabled else ("!" if label == "서버" and self.connection_state == "offline" else "·"),
                 min_width=106,
                 anchor="w",
             ).grid(
@@ -3036,6 +3319,7 @@ class PetWindow:
             self._button_colors("selected" if now_selected else "secondary"),
             icon="✓" if now_selected else "·",
         )
+        self._refresh_toolbar_styles()
 
     def _apply_options_from_drawer(self) -> None:
         selected = [
@@ -3439,7 +3723,11 @@ class PetWindow:
             self._refresh_drawer_if_state_changed()
         elif kind == "connection":
             self.connection_ok = bool(evt.get("connected"))
-            self.status_card.set_connection(self.connection_ok)
+            self.connection_state = str(
+                evt.get("status") or ("online" if self.connection_ok else "offline")
+            )
+            self.status_card.set_connection(self.connection_ok, self.connection_state)
+            self._refresh_toolbar_styles()
             self._refresh_drawer_if_state_changed()
         elif kind == "slice":
             self._slice_flash()
@@ -3461,6 +3749,8 @@ class PetWindow:
                 daemon=True,
             )
             t.start()
+        else:
+            self._handle_event({"type": "connection", "connected": False, "status": "offline"})
         self._after(POLL_INTERVAL_MS, self._poll_events)
         self._after(BOB_TICK_MS, self._idle_bob_tick)
         self._after(320, self._mood_fx_tick)

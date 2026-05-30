@@ -134,10 +134,13 @@ chibi-mcp --open
 ```
 
 If this returns `opened: false`, use the printed `reason`, `next_step`, and
-`log_path` values. The detailed window process log is usually:
+`log_path` values. `chibi-mcp --open` also starts a local `--ws-only` helper
+when needed, so a direct standalone test should still allow toolbar actions.
+The detailed logs are usually:
 
 ```bash
 cat ~/.chibi-mcp/window.log
+cat ~/.chibi-mcp/ws.log
 ```
 
 Register it manually:
@@ -211,9 +214,16 @@ Tickets refill as follows:
 - +1 ticket per 100 captured tool calls;
 - +1 ticket per 10 rhythm slices.
 
-If the floating window shows `서버 대기` or `오프`, the window is open without a
-live chibi MCP/WebSocket server. Start it from Claude/Codex with the normal
-chibi command instead of opening only the standalone window.
+If the floating window shows `연결중` or `오프`, first run:
+
+```bash
+chibi-mcp --open
+```
+
+That command starts the local WebSocket helper automatically. If the status
+stays offline, inspect `~/.chibi-mcp/ws.log`; the usual causes are another
+process already using `127.0.0.1:9876`, a custom `CHIBI_WS_PORT`, or a failed
+Python environment.
 
 ## Codex Does Not See Chibi
 

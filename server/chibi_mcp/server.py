@@ -364,6 +364,12 @@ def _kill_existing_window() -> None:
         _WINDOW_PID_FILE.unlink(missing_ok=True)
 
 
+def _window_ws_url() -> str:
+    host = os.environ.get("CHIBI_WS_HOST", "127.0.0.1")
+    port = os.environ.get("CHIBI_WS_PORT", "9876")
+    return f"ws://{host}:{port}"
+
+
 def _window_runtime_issue() -> dict | None:
     try:
         import tkinter  # noqa: F401
@@ -558,7 +564,7 @@ def open_pet_window(character_id: str | None = None, view_mode: str | None = Non
         "--mood",
         mood,
         "--ws",
-        f"ws://127.0.0.1:{os.environ.get('CHIBI_WS_PORT', '9876')}",
+        _window_ws_url(),
         "--initial-state",
         json.dumps(snap, ensure_ascii=False, separators=(",", ":")),
         "--asset-dir",

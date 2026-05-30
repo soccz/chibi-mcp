@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.36"
+    assert __version__ == "1.4.37"
 
 
 def test_chibi_say_message_builder_supports_tool_call_events():
@@ -104,7 +104,7 @@ def test_stdio_jsonrpc_handles_initialize_list_and_call():
     assert [response["id"] for response in responses] == [1, 2, 3]
     assert responses[0]["result"]["serverInfo"] == {
         "name": "chibi-mcp",
-        "version": "1.4.36",
+        "version": "1.4.37",
     }
     tools = {tool["name"] for tool in responses[1]["result"]["tools"]}
     assert {"get_catalog", "get_pet_state", "pull_gacha"}.issubset(tools)
@@ -234,6 +234,11 @@ def test_open_cli_reports_direct_window_result(monkeypatch, capsys):
         }
 
     monkeypatch.setattr(main_mod.server_tools, "open_pet_window", fake_open_pet_window)
+    monkeypatch.setattr(
+        main_mod,
+        "_ensure_ws_server_for_open",
+        lambda: {"ok": True, "started": False, "url": "ws://127.0.0.1:9876"},
+    )
 
     assert main_mod.main(["--open", "--character-id", "mochi", "--view-mode", "debug"]) == 0
     payload = json.loads(capsys.readouterr().out)
@@ -241,11 +246,54 @@ def test_open_cli_reports_direct_window_result(monkeypatch, capsys):
     assert payload["character"] == "mochi"
     assert payload["view_mode"] == "debug"
     assert payload["log_path"] == "/tmp/window.log"
+    assert payload["ws_server"]["ok"] is True
 
 
 def test_invalid_ws_port_falls_back_to_default(monkeypatch):
     monkeypatch.setenv("CHIBI_WS_PORT", "bad")
     assert _ws_endpoint() == ("127.0.0.1", 9876)
+
+
+def test_standalone_open_reuses_existing_ws_server(monkeypatch):
+    monkeypatch.setattr(main_mod, "_ws_accepts", lambda host, port: True)
+
+    def fail_popen(*_args, **_kwargs):
+        raise AssertionError("should not spawn ws-only when the port is already open")
+
+    monkeypatch.setattr(main_mod.subprocess, "Popen", fail_popen)
+    result = main_mod._ensure_ws_server_for_open()
+    assert result == {"ok": True, "started": False, "url": "ws://127.0.0.1:9876"}
+
+
+def test_standalone_open_starts_ws_server_when_missing(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    attempts = iter([False, True])
+    popen_calls = []
+
+    def fake_ws_accepts(_host, _port):
+        return next(attempts)
+
+    class FakeProc:
+        pid = 4321
+
+        def poll(self):
+            return None
+
+    def fake_popen(args, **kwargs):
+        popen_calls.append((args, kwargs))
+        return FakeProc()
+
+    monkeypatch.setattr(main_mod, "_ws_accepts", fake_ws_accepts)
+    monkeypatch.setattr(main_mod.subprocess, "Popen", fake_popen)
+
+    result = main_mod._ensure_ws_server_for_open()
+
+    assert result["ok"] is True
+    assert result["started"] is True
+    assert result["pid"] == 4321
+    assert result["url"] == "ws://127.0.0.1:9876"
+    assert popen_calls[0][0] == [sys.executable, "-m", "chibi_mcp", "--ws-only"]
+    assert (tmp_path / ".chibi-mcp" / "ws.pid").read_text(encoding="utf-8") == "4321"
 
 
 def test_trust_audit_reports_local_first_defaults():

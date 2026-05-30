@@ -128,6 +128,10 @@ chibi-mcp --open
 chibi-mcp --open --view-mode debug
 ```
 
+`--open` starts a background `chibi-mcp --ws-only` helper if no local WebSocket
+server is already listening, so the window buttons can still pull, switch
+characters, and apply options outside Claude/Codex.
+
 On macOS, if `python3 -m tkinter` fails with `ModuleNotFoundError: No module named '_tkinter'`, install the matching Homebrew Tk package, then reinstall:
 
 ```bash
@@ -286,7 +290,7 @@ images, and hidden legacy brand-name leaks.
 For maintainer release-tag readiness after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.36
+make release-check TAG=v1.4.37
 ```
 
 See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
@@ -311,14 +315,14 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push `main`, then run:
 
 ```bash
-make release-check TAG=v1.4.36
+make release-check TAG=v1.4.37
 ```
 
 3. Push a tag:
 
 ```bash
-git tag v1.4.36
-git push origin v1.4.36
+git tag v1.4.37
+git push origin v1.4.37
 ```
 
 4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.

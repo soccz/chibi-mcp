@@ -70,10 +70,12 @@ def main() -> int:
             ):
                 assert button.find_withtag("button_surface")
                 assert button.find_withtag("button_text")
+                assert button.find_withtag("button_accent")
                 button_box = button.bbox("button_surface")
                 text_box = button.bbox("button_text")
                 assert button_box and text_box
                 assert button_box[1] <= text_box[1] < text_box[3] <= button_box[3] + 2
+            assert pet.inventory_button.find_withtag("button_badge")
             base_photo = pet._photo.width(), pet._photo.height()
             base_canvas = int(pet.canvas.cget("width")), int(pet.canvas.cget("height"))
             base_root_h = pet.root.winfo_height()
@@ -112,6 +114,7 @@ def main() -> int:
             pet.root.update_idletasks()
             assert pet.connection_ok is True
             assert pet.status_card._connection_ok is True
+            assert pet.status_card._connection_state == "online"
             pet._toggle_topmost()
             pet.root.update_idletasks()
             assert window_mod._load_window_prefs()["topmost_enabled"] is False
@@ -176,6 +179,8 @@ def main() -> int:
             assert pet.status_card.find_withtag("metric_meter")
             assert pet.status_card.find_withtag("rhythm_meter")
             assert pet.status_card.find_withtag("status_pill")
+            assert pet.options_button.find_withtag("button_badge")
+            assert pet.pull_button.find_withtag("button_badge")
             metric_box = pet.status_card.bbox("metric_meter")
             status_box = pet.status_card.bbox("status_pill")
             rhythm_box = pet.status_card.bbox("rhythm_meter")

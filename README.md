@@ -9,11 +9,11 @@
 It is local-first: no telemetry, localhost WebSocket by default, open-source code, and `chibi-mcp --check` for install diagnostics.
 
 <p align="center">
-  <img src="assets/social-preview.png?v=1.4.36-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
+  <img src="assets/social-preview.png?v=1.4.37-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif?v=1.4.36-chibi" alt="animated chibi-mcp demo showing install commands, local status, and the floating pet window" width="720">
+  <img src="docs/demo.gif?v=1.4.37-chibi" alt="animated chibi-mcp demo showing install commands, local status, and the floating pet window" width="720">
 </p>
 
 ## Public Beta Status
@@ -29,7 +29,7 @@ xvfb-run -a make public-beta-check
 Release-tag preflight after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.36
+make release-check TAG=v1.4.37
 ```
 
 See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist and [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging.
@@ -74,15 +74,15 @@ still throttled so the pet does not talk on every command.
 ## Client Previews
 
 <p align="center">
-  <img src="docs/screenshots/claude-code.png?v=1.4.36-chibi" alt="chibi-mcp Claude Code preview with local floating pet window" width="720">
+  <img src="docs/screenshots/claude-code.png?v=1.4.37-chibi" alt="chibi-mcp Claude Code preview with local floating pet window" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/codex-terminal.png?v=1.4.36-chibi" alt="chibi-mcp Codex terminal preview with local diagnostics and floating pet" width="720">
+  <img src="docs/screenshots/codex-terminal.png?v=1.4.37-chibi" alt="chibi-mcp Codex terminal preview with local diagnostics and floating pet" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/vscode-sidebar.png?v=1.4.36-chibi" alt="chibi-mcp VS Code sidebar preview with status meters and floating pet" width="720">
+  <img src="docs/screenshots/vscode-sidebar.png?v=1.4.37-chibi" alt="chibi-mcp VS Code sidebar preview with status meters and floating pet" width="720">
 </p>
 
 ## Who It Is For
@@ -139,7 +139,9 @@ If Claude replies `Please run /login` or `API Error: 401 Invalid authentication
 credentials`, Claude Code failed authentication before the chibi command could
 run. Run `/login` in Claude Code, then retry `/chibi-mcp:chibi`. To verify the
 local pet without Claude authentication, run `chibi-mcp --check` and
-`chibi-mcp --open` in a terminal. To check Claude, Codex, VS Code, MCP
+`chibi-mcp --open` in a terminal. `--open` starts the local WebSocket helper
+when needed, so toolbar actions like pull/options can work outside Claude too.
+To check Claude, Codex, VS Code, MCP
 registration, and the local runtime together, run `chibi-mcp --doctor`.
 
 ### Codex
@@ -287,11 +289,11 @@ bridge for save/task/debug reactions.
 ## Visual Assets
 
 <p align="center">
-  <img src="docs/screenshots/starter-lineup.png?v=1.4.36-chibi" alt="chibi-mcp starter character lineup" width="720">
+  <img src="docs/screenshots/starter-lineup.png?v=1.4.37-chibi" alt="chibi-mcp starter character lineup" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/option-showcase.png?v=1.4.36-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
+  <img src="docs/screenshots/option-showcase.png?v=1.4.37-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
 </p>
 
 ## Troubleshooting
@@ -371,8 +373,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts
 ```
 
 If the command replies but no window appears, run `chibi-mcp --open` in a
-terminal. It prints the direct window result and `~/.chibi-mcp/window.log` path
-when Tk or the desktop session fails.
+terminal. It starts a local `chibi-mcp --ws-only` helper if no WebSocket server
+is already listening, then prints the direct window result and log paths for
+`~/.chibi-mcp/window.log` and `~/.chibi-mcp/ws.log`.
 
 ## Creator Packs
 

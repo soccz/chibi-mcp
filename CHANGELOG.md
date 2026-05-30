@@ -24,6 +24,11 @@ Commercial-readiness polish without enabling paid gates.
 - Polished the floating window toolbar buttons and speech bubble styling, and
   passed an initial state snapshot into standalone window launches so CPU/RAM/BAT
   meters are populated before live WebSocket updates arrive.
+- Strengthened each toolbar button with role-specific palettes, active drawer
+  states, and compact badges for inventory, active options, and pull tickets.
+- `chibi-mcp --open` now starts a local `--ws-only` server when none is already
+  listening, so standalone windows can use pull/options actions without first
+  launching Claude or Codex.
 - Added committed launch demo assets: `docs/demo.gif`, Claude Code preview,
   Codex terminal preview, and VS Code sidebar preview, all regenerated from
   local project assets.
