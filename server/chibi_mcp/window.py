@@ -186,34 +186,58 @@ def _scale_from_resize_drag(
     )
 
 
+def _as_dict(value: object) -> dict:
+    return value if isinstance(value, dict) else {}
+
+
+def _finite_number(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    number = float(value)
+    return number if math.isfinite(number) else None
+
+
 def _format_percent(value: object) -> str:
-    if isinstance(value, (int, float)):
-        return f"{round(float(value)):d}%"
+    number = _finite_number(value)
+    if number is not None:
+        return f"{round(number):d}%"
     return "--"
 
 
 def _format_short_duration(seconds: object) -> str:
-    if not isinstance(seconds, (int, float)) or seconds < 0:
+    number = _finite_number(seconds)
+    if number is None or number < 0:
         return "대기"
-    seconds_i = int(seconds)
+    seconds_i = int(number)
     if seconds_i < 60:
         return f"{seconds_i}초"
     minutes = seconds_i // 60
     if minutes < 60:
         return f"{minutes}분"
-    return f"{minutes // 60}시간"
+    hours = minutes // 60
+    return "99시간+" if hours > 99 else f"{hours}시간"
+
+
+def _format_counter(value: object) -> str | None:
+    number = _finite_number(value)
+    if number is None:
+        return None
+    count = max(0, int(number))
+    return "999+" if count > 999 else str(count)
 
 
 def _format_battery(system: dict) -> str:
+    system = _as_dict(system)
     plugged = system.get("battery_plugged")
-    percent = system.get("battery_percent")
-    if isinstance(percent, (int, float)):
+    percent = _finite_number(system.get("battery_percent"))
+    if percent is not None:
         suffix = "+" if plugged is True else ""
-        return f"{round(float(percent)):d}%{suffix}"
+        return f"{round(percent):d}%{suffix}"
     return "AC" if plugged is True else "--"
 
 
 def _format_system_hud(system: dict) -> str:
+    system = _as_dict(system)
     return (
         f"CPU {_format_percent(system.get('cpu_percent'))} · "
         f"RAM {_format_percent(system.get('ram_percent'))} · "
@@ -222,15 +246,19 @@ def _format_system_hud(system: dict) -> str:
 
 
 def _metric_is_warn(system: dict) -> bool:
+    system = _as_dict(system)
     cpu = system.get("cpu_percent")
     battery = system.get("battery_percent")
     plugged = system.get("battery_plugged")
-    cpu_warn = isinstance(cpu, (int, float)) and float(cpu) >= 80
-    battery_warn = isinstance(battery, (int, float)) and float(battery) < 20 and plugged is False
+    cpu_value = _finite_number(cpu)
+    battery_value = _finite_number(battery)
+    cpu_warn = cpu_value is not None and cpu_value >= 80
+    battery_warn = battery_value is not None and battery_value < 20 and plugged is False
     return cpu_warn or battery_warn
 
 
 def _format_tool_idle(timing: dict) -> str:
+    timing = _as_dict(timing)
     idle = timing.get("idle_seconds")
     if idle is None:
         return "툴 대기"
@@ -238,8 +266,8 @@ def _format_tool_idle(timing: dict) -> str:
 
 
 def _mood_reason_for_payload(mood: str, payload: dict) -> str:
-    timing = payload.get("timing") if isinstance(payload, dict) else {}
-    timing = timing if isinstance(timing, dict) else {}
+    payload = _as_dict(payload)
+    timing = _as_dict(payload.get("timing"))
     idle = timing.get("idle_seconds")
     if mood == "panting":
         return "CPU 높음"
@@ -255,14 +283,14 @@ def _mood_reason_for_payload(mood: str, payload: dict) -> str:
 
 
 def _click_reaction_for_payload(mood: str, payload: dict) -> str:
-    system = payload.get("system") if isinstance(payload, dict) else {}
-    system = system if isinstance(system, dict) else {}
-    cpu = system.get("cpu_percent")
-    battery = system.get("battery_percent")
+    payload = _as_dict(payload)
+    system = _as_dict(payload.get("system"))
+    cpu = _finite_number(system.get("cpu_percent"))
+    battery = _finite_number(system.get("battery_percent"))
     plugged = system.get("battery_plugged")
-    if isinstance(cpu, (int, float)) and float(cpu) >= 80:
+    if cpu is not None and cpu >= 80:
         return f"CPU {_format_percent(cpu)} · 잠깐 숨 고르는 중"
-    if isinstance(battery, (int, float)) and float(battery) < 20 and plugged is False:
+    if battery is not None and battery < 20 and plugged is False:
         return f"BAT {_format_percent(battery)} · 충전 필요"
     if mood in {"happy", "lonely", "surprised"}:
         return _mood_reason_for_payload(mood, payload)
@@ -1533,18 +1561,19 @@ class PetWindow:
         self.status_card.set_mood(mood)
 
     def _update_progress_label(self, payload: dict) -> None:
+        payload = _as_dict(payload)
         self._last_state_payload = payload
-        counters = payload.get("counters") or {}
-        calls = counters.get("calls_since_slice")
-        interval = counters.get("slice_interval")
-        slices = counters.get("slices_today")
-        gacha = payload.get("gacha") or {}
-        tickets = gacha.get("tickets")
-        system = payload.get("system") if isinstance(payload.get("system"), dict) else {}
-        timing = payload.get("timing") if isinstance(payload.get("timing"), dict) else {}
+        counters = _as_dict(payload.get("counters"))
+        calls = _format_counter(counters.get("calls_since_slice"))
+        interval = _format_counter(counters.get("slice_interval"))
+        slices = _format_counter(counters.get("slices_today"))
+        gacha = _as_dict(payload.get("gacha"))
+        tickets = _format_counter(gacha.get("tickets"))
+        system = _as_dict(payload.get("system"))
+        timing = _as_dict(payload.get("timing"))
 
         parts: list[str] = []
-        if calls is not None and interval:
+        if calls is not None and interval is not None:
             parts.append(f"{calls}/{interval}")
         parts.append(_format_tool_idle(timing))
         if slices is not None:
@@ -1972,14 +2001,12 @@ class PetWindow:
         return "break"
 
     def _show_status_detail(self) -> str:
-        system = self._last_state_payload.get("system")
-        system = system if isinstance(system, dict) else {}
-        counters = self._last_state_payload.get("counters")
-        counters = counters if isinstance(counters, dict) else {}
-        timing = self._last_state_payload.get("timing")
-        timing = timing if isinstance(timing, dict) else {}
-        calls = counters.get("calls_since_slice", "?")
-        interval = counters.get("slice_interval", "?")
+        payload = _as_dict(self._last_state_payload)
+        system = _as_dict(payload.get("system"))
+        counters = _as_dict(payload.get("counters"))
+        timing = _as_dict(payload.get("timing"))
+        calls = _format_counter(counters.get("calls_since_slice")) or "?"
+        interval = _format_counter(counters.get("slice_interval")) or "?"
         reason = _mood_reason_for_payload(self.current_mood, self._last_state_payload)
         self.show_bubble(
             f"{_format_system_hud(system)} · {_format_tool_idle(timing)} · {reason} · 리듬 {calls}/{interval}"
