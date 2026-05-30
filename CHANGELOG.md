@@ -17,8 +17,16 @@ Commercial-readiness polish without enabling paid gates.
 - Added a real floating-window resize grip and stricter Tk UI smoke coverage
   so resize, drawer, option selection, bubbles, and active-character updates
   are verified together instead of one symptom at a time.
-- Replaced the floating window's black fallback surface with a light panel and
-  fixed the macOS transparency helper so chibi does not appear inside a black box.
+- Removed the macOS PyObjC transparency path entirely, even when the legacy
+  opt-in env var is set, to prevent native `_objc` crashes on Homebrew
+  Python/Tk combinations.
+- Claude/Codex installers now reinstall the pipx app from a fresh venv and
+  verify the expected chibi-mcp version before refreshing MCP/plugin entries,
+  so `already at latest` cannot leave an old runtime behind.
+- Added server-level floating-window smoke coverage for the real
+  `open_pet_window` subprocess path, not only direct widget construction.
+- Replaced the floating window's black fallback surface with a stable light
+  panel so chibi does not appear inside a black box.
 - Added floating-window controls for inventory, option customization, gacha
   pulls, and close actions, routed through localhost WebSocket actions back to
   the MCP server instead of writing state directly.
@@ -33,12 +41,12 @@ Commercial-readiness polish without enabling paid gates.
   as `Failed to connect`.
 - MCP stdio now reads and writes UTF-8 bytes directly so Korean catalog/tool
   responses work on Windows consoles as well as Linux/macOS.
-- Claude/Codex installers now force `pipx` to reinstall from the GitHub server
+- Claude/Codex installers now rebuild the `pipx` app from the GitHub server
   subdirectory, avoiding stale installs that report old versions such as 1.1.0
   as already latest.
-- Tk repair paths and troubleshooting docs now use the same GitHub force
-  reinstall command instead of plain pipx reinstall/upgrade, so recovery
-  cannot return to an old package source.
+- Tk repair paths and troubleshooting docs now use a fresh uninstall/install
+  from GitHub instead of plain pipx reinstall/upgrade, so recovery cannot
+  return to an old package source.
 - Added `chibi-mcp --open` for direct floating-window testing outside
   Claude/Codex, and made slash-command failure guidance surface the exact
   runtime reason/log path instead of falling through to gacha.

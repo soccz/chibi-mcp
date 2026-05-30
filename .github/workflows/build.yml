@@ -28,6 +28,13 @@ jobs:
           pip install -e ".[dev]"
           ruff check .
           pytest -v
+      - name: Linux Tk window smoke
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb python3-tk
+          xvfb-run -a python scripts/window_ui_smoke.py
+          xvfb-run -a python scripts/server_window_smoke.py
 
   js-lint:
     name: frontend (eslint)

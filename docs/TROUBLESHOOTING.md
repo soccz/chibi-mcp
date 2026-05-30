@@ -75,15 +75,16 @@ If this fails with `ModuleNotFoundError: No module named '_tkinter'`, install th
 
 ```bash
 brew install python-tk@3.14
-pipx install --force "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
+pipx uninstall chibi-mcp || true
+pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 chibi-mcp --check
 ```
 
 If Homebrew changes the available formula name, run `brew search python-tk` and install the matching `python-tk@X.Y` package.
 
 If macOS shows a Python crash report mentioning `_objc.cpython-314-darwin.so`,
-upgrade to the latest installer. chibi disables PyObjC transparency by default
-and uses a stable Tk light-panel window on macOS.
+upgrade to the latest installer. chibi no longer enters the PyObjC
+transparency path and uses a stable Tk light-panel window on macOS.
 
 The Claude/Codex bash installers attempt Tk repair automatically when `chibi-mcp --check` reports `tkinter: false`, then reinstall from the GitHub server subdirectory and check again. Supported automatic repair paths:
 
@@ -103,7 +104,8 @@ CHIBI_SKIP_TK_REPAIR=1 bash <(curl -fsSL https://raw.githubusercontent.com/soccz
 On Windows, the PowerShell installers try to install `pipx` automatically. If Python itself is missing and `winget` is available, they try to install Python first. If `tkinter` is still false after install, install or repair Python with Tcl/Tk support, then run:
 
 ```powershell
-pipx install --force "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
+pipx uninstall chibi-mcp
+pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 chibi-mcp --check
 ```
 

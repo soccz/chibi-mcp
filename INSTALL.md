@@ -94,7 +94,8 @@ pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 For upgrades from GitHub:
 
 ```bash
-pipx install --force "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
+pipx uninstall chibi-mcp || true
+pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 ```
 
 If an older install was created from a stale package source, uninstall once and
@@ -116,7 +117,8 @@ On macOS, if `python3 -m tkinter` fails with `ModuleNotFoundError: No module nam
 
 ```bash
 brew install python-tk@3.14
-pipx install --force "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
+pipx uninstall chibi-mcp || true
+pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 chibi-mcp --check
 ```
 
@@ -245,7 +247,7 @@ images, and hidden legacy brand-name leaks.
 For maintainer release-tag readiness after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.22
+make release-check TAG=v1.4.23
 ```
 
 See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
@@ -270,14 +272,14 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push `main`, then run:
 
 ```bash
-make release-check TAG=v1.4.22
+make release-check TAG=v1.4.23
 ```
 
 3. Push a tag:
 
 ```bash
-git tag v1.4.22
-git push origin v1.4.22
+git tag v1.4.23
+git push origin v1.4.23
 ```
 
 4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.

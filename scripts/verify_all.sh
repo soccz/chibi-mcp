@@ -340,7 +340,9 @@ from pathlib import Path
 root = Path(os.environ["ROOT"])
 shared_required = [
     "setup_pipx",
-    "pipx_run install --force \"$REPO_URL\"",
+    "EXPECTED_VERSION=",
+    "verify_installed_version",
+    "pipx_run uninstall chibi-mcp",
     "install_server_from_github",
     "repair_linux_tkinter",
     "python3-tkinter",
@@ -375,7 +377,9 @@ windows_required = [
     "Install-PythonWithWinget",
     "winget install --exact --id Python.Python.3.13",
     "Ensure-Pipx",
-    "Invoke-Pipx install --force $RepoUrl",
+    "ExpectedVersion",
+    "Verify-ChibiVersion",
+    "Invoke-Pipx uninstall chibi-mcp",
     "ConvertFrom-Json",
 ]
 for rel in ["scripts/install-claude.ps1", "scripts/install-codex.ps1"]:
@@ -497,6 +501,7 @@ then
       exit 1
     fi
     python "$ROOT/scripts/window_ui_smoke.py"
+    python "$ROOT/scripts/server_window_smoke.py"
   fi
 elif [[ "${CHIBI_STRICT_RUNTIME:-0}" == "1" ]]; then
   python - <<'PY'

@@ -36,6 +36,7 @@ print("desktop runtime ok")
 PY
 
 python "$ROOT/scripts/window_ui_smoke.py"
+python "$ROOT/scripts/server_window_smoke.py"
 
 (
   cd "$ROOT/desktop/src-tauri"

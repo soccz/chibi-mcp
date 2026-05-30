@@ -4,6 +4,7 @@ set -euo pipefail
 REPO_URL="${CHIBI_REPO_URL:-git+https://github.com/soccz/chibi-mcp.git#subdirectory=server}"
 MARKETPLACE="${CHIBI_MARKETPLACE:-soccz/chibi-mcp}"
 MCP_NAME="${CHIBI_MCP_NAME:-chibi}"
+EXPECTED_VERSION="${CHIBI_EXPECT_VERSION:-1.4.23}"
 PYTHON_BIN=""
 PIPX_CMD=()
 
@@ -134,7 +135,7 @@ print_tkinter_help() {
   echo "Fedora/RHEL: sudo dnf install -y python3-tkinter" >&2
   echo "Arch: sudo pacman -S --noconfirm tk" >&2
   echo "openSUSE: sudo zypper --non-interactive install python3-tk" >&2
-  echo "After installing Tk, rerun this installer or run: pipx install --force \"$REPO_URL\"" >&2
+  echo "After installing Tk, rerun this installer or run: pipx uninstall chibi-mcp || true; pipx install \"$REPO_URL\"" >&2
 }
 
 repair_linux_tkinter() {
@@ -160,10 +161,26 @@ repair_linux_tkinter() {
 }
 
 install_server_from_github() {
-  pipx_run install --force "$REPO_URL" || {
-    pipx_run uninstall chibi-mcp || true
-    pipx_run install "$REPO_URL"
-  }
+  pipx_run uninstall chibi-mcp >/dev/null 2>&1 || true
+  pipx_run install "$REPO_URL"
+}
+
+verify_installed_version() {
+  local installed_version
+
+  installed_version="$("$CHIBI_CMD" --version 2>/dev/null || true)"
+  if [ "$installed_version" = "$EXPECTED_VERSION" ]; then
+    return 0
+  fi
+
+  echo "warning: expected chibi-mcp $EXPECTED_VERSION but found ${installed_version:-unknown}; reinstalling fresh." >&2
+  install_server_from_github
+  CHIBI_CMD="$(find_chibi_cmd)"
+  installed_version="$("$CHIBI_CMD" --version 2>/dev/null || true)"
+  if [ "$installed_version" != "$EXPECTED_VERSION" ]; then
+    echo "chibi-mcp version check failed: expected $EXPECTED_VERSION, got ${installed_version:-unknown}" >&2
+    exit 1
+  fi
 }
 
 repair_tkinter_if_possible() {
@@ -204,12 +221,8 @@ repair_tkinter_if_possible() {
 }
 
 install_or_upgrade_server() {
-  echo "Installing/upgrading chibi-mcp from GitHub..."
-  if pipx_run list --short 2>/dev/null | awk '{print $1}' | grep -qx "chibi-mcp"; then
-    install_server_from_github
-  else
-    pipx_run install "$REPO_URL"
-  fi
+  echo "Installing chibi-mcp $EXPECTED_VERSION from GitHub..."
+  install_server_from_github
   pipx_run ensurepath >/dev/null 2>&1 || true
 }
 
@@ -217,6 +230,7 @@ run_check_and_repair() {
   local check_output
 
   CHIBI_CMD="$(find_chibi_cmd)"
+  verify_installed_version
   if ! check_output="$("$CHIBI_CMD" --check 2>&1)"; then
     printf '%s\n' "$check_output" >&2
     echo "chibi-mcp installed, but the health check failed." >&2
@@ -226,6 +240,7 @@ run_check_and_repair() {
 
   if ! check_reports_tkinter "$check_output" && repair_tkinter_if_possible "$check_output"; then
     CHIBI_CMD="$(find_chibi_cmd)"
+    verify_installed_version
     check_output="$("$CHIBI_CMD" --check)"
     printf '%s\n' "$check_output"
   fi

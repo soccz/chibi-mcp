@@ -7,6 +7,7 @@ param(
 $ErrorActionPreference = "Stop"
 $script:PipxCommand = $null
 $script:PipxPrefix = @()
+$ExpectedVersion = $env:CHIBI_EXPECT_VERSION
 
 if (-not $RepoUrl) {
     $RepoUrl = "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
@@ -16,6 +17,9 @@ if (-not $Marketplace) {
 }
 if (-not $McpName) {
     $McpName = "chibi"
+}
+if (-not $ExpectedVersion) {
+    $ExpectedVersion = "1.4.23"
 }
 
 function Require-Command($Name) {
@@ -182,26 +186,41 @@ function Find-ChibiCommand {
     throw "chibi-mcp was installed, but the executable was not found on PATH. Run: pipx ensurepath"
 }
 
+function Install-ServerFromGitHub {
+    Invoke-Pipx uninstall chibi-mcp *> $null
+    Invoke-Pipx install $RepoUrl
+    if ($LASTEXITCODE -ne 0) {
+        throw "pipx install failed"
+    }
+}
+
+function Verify-ChibiVersion {
+    param([string]$ChibiCmd)
+
+    $installedVersion = (& $ChibiCmd --version 2>$null)
+    if ($LASTEXITCODE -eq 0 -and $installedVersion -eq $ExpectedVersion) {
+        return $ChibiCmd
+    }
+
+    Write-Warning "Expected chibi-mcp $ExpectedVersion but found $installedVersion; reinstalling fresh."
+    Install-ServerFromGitHub
+    $ChibiCmd = Find-ChibiCommand
+    $installedVersion = (& $ChibiCmd --version 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $installedVersion -ne $ExpectedVersion) {
+        throw "chibi-mcp version check failed: expected $ExpectedVersion, got $installedVersion"
+    }
+    return $ChibiCmd
+}
+
 Ensure-Pipx
 Require-Command claude
 
-$installed = (Invoke-Pipx list --short 2>$null) -match '^chibi-mcp(\s|$)'
-Write-Host "Installing/upgrading chibi-mcp from GitHub..."
-if ($installed) {
-    Invoke-Pipx install --force $RepoUrl
-    if ($LASTEXITCODE -ne 0) {
-        Invoke-Pipx uninstall chibi-mcp
-        Invoke-Pipx install $RepoUrl
-    }
-} else {
-    Invoke-Pipx install $RepoUrl
-}
-if ($LASTEXITCODE -ne 0) {
-    throw "pipx install/upgrade failed"
-}
+Write-Host "Installing chibi-mcp $ExpectedVersion from GitHub..."
+Install-ServerFromGitHub
 Invoke-Pipx ensurepath *> $null
 
 $chibiCmd = Find-ChibiCommand
+$chibiCmd = Verify-ChibiVersion $chibiCmd
 $checkOutput = (& $chibiCmd --check)
 $checkJson = ($checkOutput -join "`n")
 Write-Host $checkJson
@@ -211,7 +230,7 @@ if ($LASTEXITCODE -ne 0) {
 try {
     $check = ($checkJson | ConvertFrom-Json)
     if (-not $check.tkinter) {
-        Write-Warning "Python tkinter is unavailable. MCP tools work, but the floating pet window cannot open. Install Python with Tcl/Tk support, then run: pipx install --force `"$RepoUrl`""
+        Write-Warning "Python tkinter is unavailable. MCP tools work, but the floating pet window cannot open. Install Python with Tcl/Tk support, then run: pipx uninstall chibi-mcp; pipx install `"$RepoUrl`""
     }
 } catch {
     Write-Warning "Could not parse chibi-mcp --check output."

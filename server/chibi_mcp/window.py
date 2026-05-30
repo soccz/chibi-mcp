@@ -2,9 +2,9 @@
 
 v1.1 visual upgrade:
     - overrideredirect(True): no title bar — floats as a compact pet window.
-    - macOS uses the same stable Tk panel path as other platforms by default.
-      PyObjC transparency is experimental opt-in only because some
-      Python/Tk/PyObjC combinations segfault before Python can catch errors.
+    - macOS uses the same stable Tk panel path as other platforms. The old
+      PyObjC transparency experiment is disabled because some Python/Tk/PyObjC
+      combinations segfault before Python can catch errors.
     - Canvas-based image rendering: bob animation via canvas.move (no flicker).
     - Idle bob: 4px gentle vertical oscillation, ~0.6 Hz, like a slime breathing.
     - Sounds: short procedurally-generated wavs played via `afplay` (darwin),
@@ -31,7 +31,6 @@ import sys
 import threading
 import tkinter as tk
 import wave
-from ctypes import c_void_p
 from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageTk
@@ -185,42 +184,14 @@ def _load_image_for_mood(image_path: Path, mood: str) -> tuple[Image.Image, bool
     return Image.open(image_path).convert("RGBA"), False
 
 
-def _macos_make_transparent(root: tk.Tk) -> bool:
-    """Use PyObjC to give the Tk window a truly clear NSWindow background.
+def _macos_make_transparent(_root: tk.Tk) -> bool:
+    """Return False: macOS uses the stable Tk panel only.
 
-    This is intentionally disabled by default. PyObjC can segfault in native
-    code on some Homebrew Python 3.14 + Tk 9 macOS builds before Python can
-    catch an exception. Users can opt in with:
-
-        CHIBI_EXPERIMENTAL_MACOS_PYOBJC_TRANSPARENCY=1
-
-    Returns True when applied. Stable no-op unless explicitly enabled.
+    Older builds exposed an opt-in PyObjC transparency experiment. That path
+    can segfault inside native ObjC/Tk code on Homebrew Python/Tk combinations,
+    so it is intentionally dead even if the old environment variable is set.
     """
-    if sys.platform != "darwin":
-        return False
-    if os.environ.get("CHIBI_EXPERIMENTAL_MACOS_PYOBJC_TRANSPARENCY") != "1":
-        return False
-    try:
-        import objc  # noqa: F401  — sanity-check pyobjc-core is importable
-        from AppKit import NSColor
-    except ImportError:
-        return False
-    try:
-        import objc as _objc
-
-        root.update_idletasks()
-        nsview_id = root.winfo_id()
-        nsview = _objc.objc_object(c_void_p=c_void_p(nsview_id))
-        nswindow = nsview.window()
-        if nswindow is None:
-            return False
-        nswindow.setOpaque_(False)
-        nswindow.setBackgroundColor_(NSColor.clearColor())
-        nswindow.setHasShadow_(False)
-        return True
-    except Exception as e:
-        log.debug("PyObjC transparency failed: %s", e)
-        return False
+    return False
 
 
 def _write_ready_file(path_value: str | None) -> None:
@@ -955,15 +926,9 @@ class PetWindow:
         self.root.attributes("-topmost", True)
 
         # Use a light panel by default. macOS PyObjC clear-window hacks are
-        # opt-in only because incompatible Python/Tk/PyObjC builds can crash
-        # the whole interpreter in native code.
+        # disabled completely because incompatible Python/Tk/PyObjC builds can
+        # crash the whole interpreter in native code.
         self._transparent = False
-        if (
-            sys.platform == "darwin"
-            and os.environ.get("CHIBI_EXPERIMENTAL_MACOS_PYOBJC_TRANSPARENCY") == "1"
-        ):
-            with contextlib.suppress(tk.TclError):
-                self.root.wm_attributes("-transparent", True)
 
         bg = PANEL_BG
         self.root.configure(bg=bg)
@@ -976,18 +941,11 @@ class PetWindow:
             self.root.update_idletasks()
             self.root.attributes("-topmost", True)
 
-        # PyObjC clear background path is experimental opt-in only.
+        # Keep the attribute for diagnostics/backward compatibility, but never
+        # enter PyObjC from the shipped runtime.
         self._macos_clear = False
         if sys.platform == "darwin":
             self._macos_clear = _macos_make_transparent(self.root)
-            if self._macos_clear:
-                self._transparent = True
-                bg = "systemTransparent"
-                with contextlib.suppress(tk.TclError):
-                    self.root.configure(bg=bg)
-                # Drop the -alpha translucent fallback when we have true clear
-                with contextlib.suppress(tk.TclError):
-                    self.root.wm_attributes("-alpha", 1.0)
 
         # Total window: character stage + compact identity/status card.
         total_w, canvas_h = self._stage_dimensions()
