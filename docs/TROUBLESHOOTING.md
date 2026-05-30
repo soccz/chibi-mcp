@@ -127,6 +127,19 @@ claude mcp add chibi -- chibi-mcp
 
 If using the Claude plugin path, the plugin gives `/chibi-mcp:chibi` commands, but the Python server still has to be installed so the `chibi-mcp` command is available.
 
+If `/chibi-mcp:chibi` prints `Unknown command: /chibi`, Claude is still using
+an old plugin command. Rerun the installer, then restart Claude Code:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.sh)
+```
+
+On Windows:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.ps1 | iex"
+```
+
 ## Codex Does Not See Chibi
 
 Verify the server command exists:

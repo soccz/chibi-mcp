@@ -147,10 +147,16 @@ Plugin registration inside Claude Code:
 
 ```text
 /plugin marketplace add soccz/chibi-mcp
+/plugin marketplace update chibi-mcp
+/plugin update chibi
 /plugin install chibi@chibi-mcp
 ```
 
 The plugin gives Claude the `/chibi-mcp:chibi` command and the `chibi` skill prompt. The MCP server must still be installed with `pipx` so the `chibi-mcp` command is available.
+
+If `/chibi-mcp:chibi` still reports `Unknown command: /chibi`, the installed
+Claude plugin is stale. Rerun the one-command installer; it updates the
+marketplace and installed plugin, then restart Claude Code.
 
 Try:
 

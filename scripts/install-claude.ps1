@@ -104,6 +104,28 @@ function Invoke-Pipx {
     & $script:PipxCommand @allArgs
 }
 
+function Sync-ClaudePlugin {
+    & claude plugin marketplace add $Marketplace *> $null
+
+    & claude plugin marketplace update chibi-mcp *> $null
+    if ($LASTEXITCODE -ne 0) {
+        & claude plugin marketplace update *> $null
+    }
+
+    & claude plugin update chibi *> $null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Claude plugin 'chibi' updated."
+        return
+    }
+
+    & claude plugin install "chibi@chibi-mcp" *> $null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Claude plugin 'chibi' installed."
+    } else {
+        Write-Warning "Claude plugin install/update failed; MCP registration is still complete."
+    }
+}
+
 function Get-UserBase {
     $python = Get-Command py -ErrorAction SilentlyContinue
     if ($python) {
@@ -201,14 +223,6 @@ if ($LASTEXITCODE -eq 0) {
     }
 }
 
-& claude plugin marketplace add $Marketplace
-if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Claude plugin marketplace add failed; MCP registration is still complete."
-}
+Sync-ClaudePlugin
 
-& claude plugin install "chibi@chibi-mcp"
-if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Claude plugin install failed; MCP registration is still complete."
-}
-
-Write-Host "Claude install complete. Try: /chibi-mcp:chibi"
+Write-Host "Claude install complete. Restart Claude Code, then try: /chibi-mcp:chibi"

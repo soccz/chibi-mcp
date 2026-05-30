@@ -49,6 +49,16 @@ pipx_run() {
   "${PIPX_CMD[@]}" "$@"
 }
 
+claude_run() {
+  if command -v timeout >/dev/null 2>&1; then
+    timeout 45s claude "$@"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    gtimeout 45s claude "$@"
+  else
+    claude "$@"
+  fi
+}
+
 run_privileged() {
   if [ "$(id -u 2>/dev/null || echo 1)" = "0" ]; then
     "$@"
@@ -213,16 +223,31 @@ run_check_and_repair() {
   fi
 }
 
+sync_claude_plugin() {
+  claude_run plugin marketplace add "$MARKETPLACE" >/dev/null 2>&1 || true
+
+  if ! claude_run plugin marketplace update chibi-mcp >/dev/null 2>&1; then
+    claude_run plugin marketplace update >/dev/null 2>&1 || true
+  fi
+
+  if claude_run plugin update chibi >/dev/null 2>&1; then
+    echo "Claude plugin 'chibi' updated."
+  elif claude_run plugin install "chibi@chibi-mcp" >/dev/null 2>&1; then
+    echo "Claude plugin 'chibi' installed."
+  else
+    echo "warning: Claude plugin install/update failed; MCP registration is still complete." >&2
+  fi
+}
+
 install_or_upgrade_server
 run_check_and_repair
 
-if claude mcp get "$MCP_NAME" >/dev/null 2>&1; then
+if claude_run mcp get "$MCP_NAME" >/dev/null 2>&1; then
   echo "Claude MCP '$MCP_NAME' already exists."
 else
-  claude mcp add "$MCP_NAME" -- "$CHIBI_CMD"
+  claude_run mcp add "$MCP_NAME" -- "$CHIBI_CMD"
 fi
 
-claude plugin marketplace add "$MARKETPLACE" || true
-claude plugin install "chibi@chibi-mcp" || true
+sync_claude_plugin
 
-echo "Claude install complete. Try: /chibi-mcp:chibi"
+echo "Claude install complete. Restart Claude Code, then try: /chibi-mcp:chibi"

@@ -193,6 +193,7 @@ skip_dirs = {
     ".pytest_cache",
     "build",
     "dist",
+    "promo",
     "venv",
 }
 skip_suffixes = {
@@ -351,6 +352,16 @@ for rel in ["scripts/install-claude.sh", "scripts/install-codex.sh"]:
     missing = [item for item in shared_required if item not in text]
     assert not missing, f"{rel} missing {missing}"
 
+claude_shell_required = [
+    "claude_run",
+    "plugin marketplace update chibi-mcp",
+    "plugin update chibi",
+    "Restart Claude Code",
+]
+text = (root / "scripts/install-claude.sh").read_text(encoding="utf-8")
+missing = [item for item in claude_shell_required if item not in text]
+assert not missing, f"scripts/install-claude.sh missing {missing}"
+
 windows_required = [
     "Install-PythonWithWinget",
     "winget install --exact --id Python.Python.3.13",
@@ -361,6 +372,16 @@ for rel in ["scripts/install-claude.ps1", "scripts/install-codex.ps1"]:
     text = (root / rel).read_text(encoding="utf-8")
     missing = [item for item in windows_required if item not in text]
     assert not missing, f"{rel} missing {missing}"
+
+claude_windows_required = [
+    "Sync-ClaudePlugin",
+    "plugin marketplace update",
+    "plugin update chibi",
+    "Restart Claude Code",
+]
+text = (root / "scripts/install-claude.ps1").read_text(encoding="utf-8")
+missing = [item for item in claude_windows_required if item not in text]
+assert not missing, f"scripts/install-claude.ps1 missing {missing}"
 
 print("installer self-healing ok")
 PY

@@ -9,7 +9,7 @@
 It is local-first: no telemetry, localhost WebSocket by default, open-source code, and `chibi-mcp --check` for install diagnostics.
 
 <p align="center">
-  <img src="assets/social-preview.png" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
+  <img src="assets/social-preview.png?v=1.4.10-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
 </p>
 
 ## Public Beta Status
@@ -227,11 +227,11 @@ Claude Code hooks and the VS Code extension already use this bridge for small re
 ## Visual Assets
 
 <p align="center">
-  <img src="docs/screenshots/starter-lineup.png" alt="chibi-mcp starter character lineup" width="720">
+  <img src="docs/screenshots/starter-lineup.png?v=1.4.10-chibi" alt="chibi-mcp starter character lineup" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/option-showcase.png" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
+  <img src="docs/screenshots/option-showcase.png?v=1.4.10-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
 </p>
 
 ## Troubleshooting
@@ -293,6 +293,13 @@ Register manually:
 ```bash
 claude mcp add chibi -- chibi-mcp
 codex mcp add chibi -- chibi-mcp
+```
+
+If Claude still prints `Unknown command: /chibi` or routes `/chibi-mcp:chibi`
+to an old command, rerun the Claude installer and restart Claude Code:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.sh)
 ```
 
 ## Creator Packs
