@@ -83,6 +83,15 @@ def main() -> int:
                             "slice_interval": 10,
                             "slices_today": 0,
                         },
+                        "timing": {
+                            "idle_seconds": 3,
+                        },
+                        "system": {
+                            "cpu_percent": 82.0,
+                            "ram_percent": 48.0,
+                            "battery_percent": 17.0,
+                            "battery_plugged": False,
+                        },
                     },
                 }
             )
@@ -90,6 +99,18 @@ def main() -> int:
             assert before_character != pet.character_id
             assert pet.character_id == "garaetteok_short"
             assert pet.active_option_ids == ["honey_glaze"]
+            assert pet.status_card._system_warn is True
+            assert "CPU 82%" in pet.status_card._system_hud
+
+            pet._start_drag(SimpleNamespace(x_root=10, y_root=10, widget=pet.canvas))
+            pet._end_drag(SimpleNamespace())
+            pet.root.update_idletasks()
+            assert "CPU 82%" in str(pet.bubble.cget("text"))
+
+            pet._start_drag(SimpleNamespace(x_root=10, y_root=10, widget=pet.status_card))
+            pet._end_drag(SimpleNamespace())
+            pet.root.update_idletasks()
+            assert "리듬 1/10" in str(pet.bubble.cget("text"))
 
             pet._toggle_drawer("options")
             pet.root.update_idletasks()

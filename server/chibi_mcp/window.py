@@ -51,6 +51,10 @@ STATUS_BORDER = "#efd8bf"
 STATUS_SHADOW = "#ead8c1"
 STATUS_CHIP_BG = "#ffe5ec"
 STATUS_CHIP_BORDER = "#ffc4d5"
+STATUS_METRIC_BG = "#edfdf4"
+STATUS_METRIC_BORDER = "#b7e4c7"
+STATUS_WARN_BG = "#fff2d7"
+STATUS_WARN_BORDER = "#e2b35b"
 BUTTON_SECONDARY_BG = "#fffdf7"
 BUTTON_SECONDARY_HOVER = "#edfdf4"
 BUTTON_SECONDARY_ACTIVE = "#d7f4e2"
@@ -94,6 +98,16 @@ IDLE_PHRASES_BY_MOOD: dict[str, list[str]] = {
     "drowsy":    ["졸려", "충전해줘", "..."],
     "lonely":    ["보고싶었어", "심심해", "어디갔어"],
     "surprised": ["오?!", "헐", "잠시만"],
+}
+
+CLICK_PHRASES_BY_MOOD: dict[str, list[str]] = {
+    "calm":      ["말랑 체크 완료", "대기 중", "좋아, 계속 가자"],
+    "happy":     ["방금 작업 감지", "리듬 좋아", "흐름 탔어"],
+    "joyful":    ["반짝!", "좋은 페이스", "오늘 잘 굴러가"],
+    "panting":   ["CPU 바빠", "조금 뜨거워", "작업량 많아"],
+    "drowsy":    ["배터리 낮아", "충전 필요", "절전 모드 느낌"],
+    "lonely":    ["오래 조용했어", "다시 시작할까", "기다리는 중"],
+    "surprised": ["스파이크 감지", "갑자기 바빠졌어", "오?!"],
 }
 
 MOOD_LABELS: dict[str, tuple[str, str]] = {
@@ -170,6 +184,92 @@ def _scale_from_resize_drag(
     return _clamp_window_scale(
         max((start_width + delta_x) / base_width, (start_height + delta_y) / base_height)
     )
+
+
+def _format_percent(value: object) -> str:
+    if isinstance(value, (int, float)):
+        return f"{round(float(value)):d}%"
+    return "--"
+
+
+def _format_short_duration(seconds: object) -> str:
+    if not isinstance(seconds, (int, float)) or seconds < 0:
+        return "대기"
+    seconds_i = int(seconds)
+    if seconds_i < 60:
+        return f"{seconds_i}초"
+    minutes = seconds_i // 60
+    if minutes < 60:
+        return f"{minutes}분"
+    return f"{minutes // 60}시간"
+
+
+def _format_battery(system: dict) -> str:
+    plugged = system.get("battery_plugged")
+    percent = system.get("battery_percent")
+    if isinstance(percent, (int, float)):
+        suffix = "+" if plugged is True else ""
+        return f"{round(float(percent)):d}%{suffix}"
+    return "AC" if plugged is True else "--"
+
+
+def _format_system_hud(system: dict) -> str:
+    return (
+        f"CPU {_format_percent(system.get('cpu_percent'))} · "
+        f"RAM {_format_percent(system.get('ram_percent'))} · "
+        f"BAT {_format_battery(system)}"
+    )
+
+
+def _metric_is_warn(system: dict) -> bool:
+    cpu = system.get("cpu_percent")
+    battery = system.get("battery_percent")
+    plugged = system.get("battery_plugged")
+    cpu_warn = isinstance(cpu, (int, float)) and float(cpu) >= 80
+    battery_warn = isinstance(battery, (int, float)) and float(battery) < 20 and plugged is False
+    return cpu_warn or battery_warn
+
+
+def _format_tool_idle(timing: dict) -> str:
+    idle = timing.get("idle_seconds")
+    if idle is None:
+        return "툴 대기"
+    return f"툴 {_format_short_duration(idle)}"
+
+
+def _mood_reason_for_payload(mood: str, payload: dict) -> str:
+    timing = payload.get("timing") if isinstance(payload, dict) else {}
+    timing = timing if isinstance(timing, dict) else {}
+    idle = timing.get("idle_seconds")
+    if mood == "panting":
+        return "CPU 높음"
+    if mood == "drowsy":
+        return "배터리 낮음"
+    if mood == "happy":
+        return f"최근 tool call {_format_short_duration(idle)}"
+    if mood == "lonely":
+        return f"오래 idle {_format_short_duration(idle)}"
+    if mood == "surprised":
+        return "CPU 스파이크"
+    return "안정적"
+
+
+def _click_reaction_for_payload(mood: str, payload: dict) -> str:
+    system = payload.get("system") if isinstance(payload, dict) else {}
+    system = system if isinstance(system, dict) else {}
+    cpu = system.get("cpu_percent")
+    battery = system.get("battery_percent")
+    plugged = system.get("battery_plugged")
+    if isinstance(cpu, (int, float)) and float(cpu) >= 80:
+        return f"CPU {_format_percent(cpu)} · 잠깐 숨 고르는 중"
+    if isinstance(battery, (int, float)) and float(battery) < 20 and plugged is False:
+        return f"BAT {_format_percent(battery)} · 충전 필요"
+    if mood in {"happy", "lonely", "surprised"}:
+        return _mood_reason_for_payload(mood, payload)
+    pool = CLICK_PHRASES_BY_MOOD.get(mood, CLICK_PHRASES_BY_MOOD["calm"])
+    import random as _r
+
+    return _r.choice(pool)
 
 
 def _load_image_for_mood(image_path: Path, mood: str) -> tuple[Image.Image, bool]:
@@ -724,8 +824,10 @@ class ChibiStatusCard(tk.Canvas):
         self._rarity = rarity
         self._mood = mood
         self._progress = "리듬 준비"
+        self._system_hud = "CPU -- · RAM -- · BAT --"
+        self._system_warn = False
         self._card_width = width
-        self._base_card_height = 66
+        self._base_card_height = 84
         self._scale = 1.0
         self._card_height = self._base_card_height
         super().__init__(
@@ -744,7 +846,7 @@ class ChibiStatusCard(tk.Canvas):
         if abs(scale - self._scale) < 0.01:
             return
         self._scale = scale
-        self._card_height = max(46, round(self._base_card_height * scale))
+        self._card_height = max(60, round(self._base_card_height * scale))
         self.configure(height=self._card_height)
         self._draw()
 
@@ -757,8 +859,18 @@ class ChibiStatusCard(tk.Canvas):
         self._rarity = rarity
         self._draw()
 
-    def set_progress(self, progress: str) -> None:
+    def set_progress(
+        self,
+        progress: str,
+        *,
+        system_hud: str | None = None,
+        system_warn: bool | None = None,
+    ) -> None:
         self._progress = progress or "리듬 준비"
+        if system_hud is not None:
+            self._system_hud = system_hud or "CPU -- · RAM -- · BAT --"
+        if system_warn is not None:
+            self._system_warn = system_warn
         self._draw()
 
     def _rounded_rect(self, x1: int, y1: int, x2: int, y2: int, radius: int, **kwargs) -> int:
@@ -821,7 +933,7 @@ class ChibiStatusCard(tk.Canvas):
         )
         self.create_text(
             self._s(18),
-            self._s(19),
+            self._s(20),
             text=self._display_name,
             anchor="w",
             fill=TEXT_FG,
@@ -829,7 +941,7 @@ class ChibiStatusCard(tk.Canvas):
         )
         self.create_text(
             width - self._s(24),
-            self._s(19),
+            self._s(20),
             text=stars,
             anchor="e",
             fill="#5f4d3f",
@@ -838,9 +950,9 @@ class ChibiStatusCard(tk.Canvas):
 
         self._rounded_rect(
             self._s(16),
-            self._s(36),
+            self._s(38),
             self._s(92),
-            height - self._s(9),
+            self._s(60),
             self._s(10),
             fill=STATUS_CHIP_BG,
             outline=STATUS_CHIP_BORDER,
@@ -848,18 +960,38 @@ class ChibiStatusCard(tk.Canvas):
         )
         self.create_text(
             self._s(54),
-            height - self._s(20),
+            self._s(49),
             text=f"{mood_label} {mood_icon}",
             fill=TEXT_FG,
             font=("Helvetica", max(7, self._s(9)), "bold"),
         )
         self.create_text(
             self._s(104),
-            height - self._s(20),
+            self._s(49),
             text=self._progress,
             anchor="w",
             fill=MUTED_FG,
             font=("Helvetica", max(7, self._s(9))),
+        )
+        metric_bg = STATUS_WARN_BG if self._system_warn else STATUS_METRIC_BG
+        metric_border = STATUS_WARN_BORDER if self._system_warn else STATUS_METRIC_BORDER
+        self._rounded_rect(
+            self._s(16),
+            self._s(63),
+            width - self._s(20),
+            height - self._s(10),
+            self._s(8),
+            fill=metric_bg,
+            outline=metric_border,
+            width=max(1, self._s(1)),
+        )
+        self.create_text(
+            self._s(28),
+            height - self._s(20),
+            text=self._system_hud,
+            anchor="w",
+            fill="#405247" if not self._system_warn else "#77521b",
+            font=("Helvetica", max(6, self._s(8)), "bold"),
         )
 
 
@@ -903,6 +1035,9 @@ class PetWindow:
         self._suspend_resize_events = False
         self._resize_after: str | None = None
         self._resize_start: tuple[int, int, float] | None = None
+        self._drag_start: tuple[int, int, tk.Misc] | None = None
+        self._drag_moved = False
+        self._last_state_payload: dict = {}
         # Cache ((mood, max_side) → rendered RGBA). Variants bypass filter.
         self._mood_image_cache: dict[tuple[str, int], Image.Image] = {}
         self._option_cache: dict[tuple[int, int], list[Image.Image]] = {}
@@ -1062,6 +1197,7 @@ class PetWindow:
         for w in (self.canvas, self.status_card):
             w.bind("<Button-1>", self._start_drag)
             w.bind("<B1-Motion>", self._do_drag)
+            w.bind("<ButtonRelease-1>", self._end_drag)
             w.bind("<Button-3>", lambda _e: self.shutdown())  # right-click close
         self.canvas.bind("<Double-Button-1>", self._squish)
 
@@ -1397,21 +1533,29 @@ class PetWindow:
         self.status_card.set_mood(mood)
 
     def _update_progress_label(self, payload: dict) -> None:
+        self._last_state_payload = payload
         counters = payload.get("counters") or {}
         calls = counters.get("calls_since_slice")
         interval = counters.get("slice_interval")
         slices = counters.get("slices_today")
         gacha = payload.get("gacha") or {}
         tickets = gacha.get("tickets")
+        system = payload.get("system") if isinstance(payload.get("system"), dict) else {}
+        timing = payload.get("timing") if isinstance(payload.get("timing"), dict) else {}
 
         parts: list[str] = []
         if calls is not None and interval:
             parts.append(f"{calls}/{interval}")
+        parts.append(_format_tool_idle(timing))
         if slices is not None:
             parts.append(f"리듬 {slices}")
         if tickets is not None:
             parts.append(f"티켓 {tickets}")
-        self.status_card.set_progress(" · ".join(parts))
+        self.status_card.set_progress(
+            " · ".join(parts),
+            system_hud=_format_system_hud(system),
+            system_warn=_metric_is_warn(system),
+        )
 
     # ── Built-in controls ───────────────────────────────────────────────────
 
@@ -1819,9 +1963,58 @@ class PetWindow:
             return
         _play_sound(p)
 
+    def _poke_character(self) -> str:
+        self._render_image(self.current_mood, scale=(1.08, 0.86))
+        self._spawn_click_sparkle()
+        self._play_safe("squish")
+        self.show_bubble(_click_reaction_for_payload(self.current_mood, self._last_state_payload))
+        self._after(140, lambda: self._render_image(self.current_mood))
+        return "break"
+
+    def _show_status_detail(self) -> str:
+        system = self._last_state_payload.get("system")
+        system = system if isinstance(system, dict) else {}
+        counters = self._last_state_payload.get("counters")
+        counters = counters if isinstance(counters, dict) else {}
+        timing = self._last_state_payload.get("timing")
+        timing = timing if isinstance(timing, dict) else {}
+        calls = counters.get("calls_since_slice", "?")
+        interval = counters.get("slice_interval", "?")
+        reason = _mood_reason_for_payload(self.current_mood, self._last_state_payload)
+        self.show_bubble(
+            f"{_format_system_hud(system)} · {_format_tool_idle(timing)} · {reason} · 리듬 {calls}/{interval}"
+        )
+        return "break"
+
+    def _spawn_click_sparkle(self) -> None:
+        cx = self._canvas_center[0] + self._s(40)
+        cy = self._canvas_center[1] - self._s(52)
+        colors = ("#ff9dbd", "#f4c542", "#55bd83")
+        items: list[int] = []
+        for idx, color in enumerate(colors):
+            x = cx + self._s((idx - 1) * 13)
+            y = cy + self._s((idx % 2) * 9)
+            r = self._s(4)
+            items.append(self.canvas.create_oval(x - r, y - r, x + r, y + r, fill=color, outline=""))
+
+        def tick(step: int = 0) -> None:
+            if step >= 10:
+                with contextlib.suppress(tk.TclError):
+                    for item in items:
+                        self.canvas.delete(item)
+                return
+            with contextlib.suppress(tk.TclError):
+                for idx, item in enumerate(items):
+                    self.canvas.move(item, self._s(idx - 1), -self._s(2))
+            self._after(35, lambda: tick(step + 1))
+
+        tick()
+
     # ── Drag ─────────────────────────────────────────────────────────────────
 
     def _start_drag(self, event: tk.Event) -> None:
+        self._drag_start = (event.x_root, event.y_root, event.widget)
+        self._drag_moved = False
         self._drag_offset = (
             event.x_root - self.root.winfo_x(),
             event.y_root - self.root.winfo_y(),
@@ -1831,8 +2024,25 @@ class PetWindow:
         offset = getattr(self, "_drag_offset", None)
         if offset is None:
             return
+        start = self._drag_start
+        if start is not None and (
+            abs(event.x_root - start[0]) > self._s(4) or abs(event.y_root - start[1]) > self._s(4)
+        ):
+            self._drag_moved = True
         dx, dy = offset
         self.root.geometry(f"+{event.x_root - dx}+{event.y_root - dy}")
+
+    def _end_drag(self, _event: tk.Event) -> str | None:
+        start = self._drag_start
+        self._drag_start = None
+        self._drag_offset = None
+        if start is None or self._drag_moved:
+            return None
+        if start[2] is self.canvas:
+            return self._poke_character()
+        if start[2] is self.status_card:
+            return self._show_status_detail()
+        return None
 
     def _start_resize(self, event: tk.Event) -> str:
         self._resize_start = (event.x_root, event.y_root, self._window_scale)

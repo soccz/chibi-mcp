@@ -6,6 +6,14 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Added a developer HUD to the floating-window status card: CPU/RAM/BAT now
+  render in the window, high CPU and low unplugged battery get warning styling,
+  and the compact tool-idle label shows whether Claude/Codex has called a tool
+  recently.
+- Made character and status-card clicks context-aware: clicking the chibi now
+  gives a mood-specific reaction with a small sparkle/squish effect, while
+  clicking the status card explains CPU/RAM/BAT, tool idle, mood reason, and
+  rhythm counter in one bubble.
 - Fixed floating-window action flicker: inventory/option drawers now refresh
   only when persisted state changes, option/character changes apply live
   through WebSocket state events, and action buttons no longer reopen the

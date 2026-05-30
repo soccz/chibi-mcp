@@ -19,7 +19,7 @@ if (-not $McpName) {
     $McpName = "chibi"
 }
 if (-not $ExpectedVersion) {
-    $ExpectedVersion = "1.4.24"
+    $ExpectedVersion = "1.4.25"
 }
 
 function Require-Command($Name) {
