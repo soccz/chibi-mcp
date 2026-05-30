@@ -224,11 +224,9 @@ run_check_and_repair() {
 install_or_upgrade_server
 run_check_and_repair
 
-if codex mcp get "$MCP_NAME" >/dev/null 2>&1; then
-  echo "Codex MCP '$MCP_NAME' already exists."
-else
-  codex mcp add "$MCP_NAME" -- "$CHIBI_CMD"
-fi
+echo "Refreshing Codex MCP '$MCP_NAME' registration..."
+codex mcp remove "$MCP_NAME" >/dev/null 2>&1 || true
+codex mcp add "$MCP_NAME" -- "$CHIBI_CMD"
 
 codex plugin marketplace add "$MARKETPLACE" || true
 

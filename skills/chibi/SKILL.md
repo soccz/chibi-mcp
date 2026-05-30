@@ -45,7 +45,11 @@ Mood labels:
 | `lonely` | 시무룩 |
 | `surprised` | 깜짝 |
 
-If `opened: false` because nothing's available → run a welcome `pull_gacha` instead (first daily pull is free).
+If `opened: false`, do not say the window opened. Report the returned `reason`
+and the exact `next_step` or `log_path` when present. Tell the user to run
+`chibi-mcp --open` in a terminal for a direct window test. Only run a welcome
+`pull_gacha` if the reason says there are no released characters or no character
+is available.
 
 The window is **live**: mood, milestone flashes, and `pet_say` bubbles update in real time via a local WebSocket. You don't need to refresh it manually.
 
@@ -120,6 +124,6 @@ Avoid:
   `pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"`
   then:
   `claude mcp add chibi -- chibi-mcp`
-- "창이 안 떠요" / "안 보여요" — check that `open_pet_window` returned `opened: true`. If the user has no DISPLAY/quartz (e.g. SSH session without forwarding), explain the window needs a real desktop session.
+- "창이 안 떠요" / "안 보여요" — check that `open_pet_window` returned `opened: true`. If false, surface `reason`, `next_step`, and `log_path`, then ask them to run `chibi-mcp --open`. If the user has no DISPLAY/quartz (e.g. SSH session without forwarding), explain the window needs a real desktop session.
 - "이미지가 안 바뀌어요" — the window only re-tints on mood change. If mood is calm, no visible filter. Suggest `pet_say("hi")` to confirm the bubble works.
 - "뽑기 안 돼요" — read `next_free_in_seconds` from the response; the user just ran their free pull today and has 0 tickets. They get more tickets passively by using Claude (every 100 tool calls).

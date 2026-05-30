@@ -13,7 +13,7 @@ they are packaged as separate clients.
 For the current package metadata, the next release tag is:
 
 ```bash
-v1.4.14
+v1.4.15
 ```
 
 ## Preflight
@@ -21,7 +21,7 @@ v1.4.14
 Run this after committing and pushing `main`, before creating the tag:
 
 ```bash
-make release-check TAG=v1.4.14
+make release-check TAG=v1.4.15
 ```
 
 This checks:
@@ -36,7 +36,7 @@ This checks:
 For a quick version-only check while editing:
 
 ```bash
-./scripts/release_preflight.sh v1.4.14 --allow-dirty --skip-public-beta
+./scripts/release_preflight.sh v1.4.15 --allow-dirty --skip-public-beta
 ```
 
 ## Publish
@@ -44,8 +44,8 @@ For a quick version-only check while editing:
 After preflight passes:
 
 ```bash
-git tag v1.4.14
-git push origin v1.4.14
+git tag v1.4.15
+git push origin v1.4.15
 ```
 
 GitHub Actions will build the wheel, source archive, VS Code `.vsix`, desktop

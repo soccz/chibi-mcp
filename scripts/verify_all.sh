@@ -353,7 +353,9 @@ for rel in ["scripts/install-claude.sh", "scripts/install-codex.sh"]:
     text = (root / rel).read_text(encoding="utf-8")
     missing = [item for item in shared_required if item not in text]
     assert not missing, f"{rel} missing {missing}"
-    forbidden = ["pipx_run reinstall chibi-mcp", "pipx_run upgrade chibi-mcp"]
+    assert "mcp remove \"$MCP_NAME\"" in text, f"{rel} must refresh stale MCP registrations"
+    assert "mcp add \"$MCP_NAME\" -- \"$CHIBI_CMD\"" in text, f"{rel} must re-add MCP registration"
+    forbidden = ["pipx_run reinstall chibi-mcp", "pipx_run upgrade chibi-mcp", "already exists"]
     found = [item for item in forbidden if item in text]
     assert not found, f"{rel} must not use stale pipx source commands: {found}"
 
@@ -380,7 +382,9 @@ for rel in ["scripts/install-claude.ps1", "scripts/install-codex.ps1"]:
     text = (root / rel).read_text(encoding="utf-8")
     missing = [item for item in windows_required if item not in text]
     assert not missing, f"{rel} missing {missing}"
-    forbidden = ["Invoke-Pipx reinstall chibi-mcp", "Invoke-Pipx upgrade chibi-mcp", "pipx reinstall chibi-mcp", "pipx upgrade chibi-mcp"]
+    assert "mcp remove $McpName" in text, f"{rel} must refresh stale MCP registrations"
+    assert "mcp add $McpName -- $chibiCmd" in text, f"{rel} must re-add MCP registration"
+    forbidden = ["Invoke-Pipx reinstall chibi-mcp", "Invoke-Pipx upgrade chibi-mcp", "pipx reinstall chibi-mcp", "pipx upgrade chibi-mcp", "already exists"]
     found = [item for item in forbidden if item in text]
     assert not found, f"{rel} must not use stale pipx source commands: {found}"
 
@@ -412,6 +416,8 @@ doc_forbidden = [
 violations = []
 for rel in public_docs:
     text = (root / rel).read_text(encoding="utf-8")
+    if rel in {"README.md", "INSTALL.md", "docs/TROUBLESHOOTING.md", "server/README.md"}:
+        assert "chibi-mcp --open" in text, f"{rel} must document direct window testing"
     for item in doc_forbidden:
         if item in text:
             violations.append(f"{rel}: {item}")

@@ -252,11 +252,9 @@ sync_claude_plugin() {
 install_or_upgrade_server
 run_check_and_repair
 
-if claude_run mcp get "$MCP_NAME" >/dev/null 2>&1; then
-  echo "Claude MCP '$MCP_NAME' already exists."
-else
-  claude_run mcp add "$MCP_NAME" -- "$CHIBI_CMD"
-fi
+echo "Refreshing Claude MCP '$MCP_NAME' registration..."
+claude_run mcp remove "$MCP_NAME" >/dev/null 2>&1 || true
+claude_run mcp add "$MCP_NAME" -- "$CHIBI_CMD"
 
 sync_claude_plugin
 

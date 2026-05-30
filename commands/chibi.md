@@ -10,7 +10,11 @@ If there are no arguments, or the user typed `보여줘`, `open`, or `show`, def
 1. Call the `chibi` MCP server's `open_pet_window` tool (no args).
 2. Send a one-line confirmation: `<name_ko> ★<rarity> — <mood_ko>`.
 
-If `open_pet_window` returns `opened: false` (no character yet), run a free welcome gacha pull instead.
+If `open_pet_window` returns `opened: false`, do not pretend the pet opened.
+Report the returned `reason` plus `next_step` or `log_path` when present, and
+tell the user to run `chibi-mcp --open` in a terminal for a direct window test.
+Only run a free welcome gacha pull if the reason says there are no released
+characters or no character is available.
 
 If the user passed arguments, route directly:
 

@@ -10,6 +10,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from chibi_mcp import __main__ as main_mod
 from chibi_mcp import __version__
 from chibi_mcp.__main__ import _check, _ws_endpoint
 from chibi_mcp.commercial import (
@@ -25,7 +26,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.14"
+    assert __version__ == "1.4.15"
 
 
 def test_stdio_startup_does_not_write_non_protocol_output():
@@ -92,7 +93,7 @@ def test_stdio_jsonrpc_handles_initialize_list_and_call():
     assert [response["id"] for response in responses] == [1, 2, 3]
     assert responses[0]["result"]["serverInfo"] == {
         "name": "chibi-mcp",
-        "version": "1.4.14",
+        "version": "1.4.15",
     }
     tools = {tool["name"] for tool in responses[1]["result"]["tools"]}
     assert {"get_catalog", "get_pet_state", "pull_gacha"}.issubset(tools)
@@ -108,6 +109,27 @@ def test_check_finds_packaged_assets():
     assert result["option_count"] >= 12
     assert result["free_assets_missing"] == []
     assert result["free_options_missing"] == []
+
+
+def test_open_cli_reports_direct_window_result(monkeypatch, capsys):
+    def fake_open_pet_window(character_id=None):
+        return {
+            "opened": True,
+            "pid": 123,
+            "character": character_id or "mochi",
+            "name_ko": "mochi",
+            "rarity": 2,
+            "mood": "calm",
+            "log_path": "/tmp/window.log",
+        }
+
+    monkeypatch.setattr(main_mod.server_tools, "open_pet_window", fake_open_pet_window)
+
+    assert main_mod.main(["--open", "--character-id", "mochi"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["opened"] is True
+    assert payload["character"] == "mochi"
+    assert payload["log_path"] == "/tmp/window.log"
 
 
 def test_invalid_ws_port_falls_back_to_default(monkeypatch):

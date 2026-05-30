@@ -193,14 +193,11 @@ try {
     Write-Warning "Could not parse chibi-mcp --check output."
 }
 
-& codex mcp get $McpName *> $null
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Codex MCP '$McpName' already exists."
-} else {
-    & codex mcp add $McpName -- $chibiCmd
-    if ($LASTEXITCODE -ne 0) {
-        throw "codex mcp add failed"
-    }
+Write-Host "Refreshing Codex MCP '$McpName' registration..."
+& codex mcp remove $McpName *> $null
+& codex mcp add $McpName -- $chibiCmd
+if ($LASTEXITCODE -ne 0) {
+    throw "codex mcp add failed"
 }
 
 & codex plugin marketplace add $Marketplace

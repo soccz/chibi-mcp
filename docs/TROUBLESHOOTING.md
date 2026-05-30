@@ -119,6 +119,19 @@ Verify the server command exists:
 chibi-mcp --check
 ```
 
+Then test the actual floating window outside Claude/Codex:
+
+```bash
+chibi-mcp --open
+```
+
+If this returns `opened: false`, use the printed `reason`, `next_step`, and
+`log_path` values. The detailed window process log is usually:
+
+```bash
+cat ~/.chibi-mcp/window.log
+```
+
 Register it manually:
 
 ```bash

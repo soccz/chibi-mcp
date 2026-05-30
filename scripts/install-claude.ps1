@@ -217,14 +217,11 @@ try {
     Write-Warning "Could not parse chibi-mcp --check output."
 }
 
-& claude mcp get $McpName *> $null
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Claude MCP '$McpName' already exists."
-} else {
-    & claude mcp add $McpName -- $chibiCmd
-    if ($LASTEXITCODE -ne 0) {
-        throw "claude mcp add failed"
-    }
+Write-Host "Refreshing Claude MCP '$McpName' registration..."
+& claude mcp remove $McpName *> $null
+& claude mcp add $McpName -- $chibiCmd
+if ($LASTEXITCODE -ne 0) {
+    throw "claude mcp add failed"
 }
 
 Sync-ClaudePlugin

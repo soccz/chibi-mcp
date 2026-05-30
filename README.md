@@ -9,7 +9,7 @@
 It is local-first: no telemetry, localhost WebSocket by default, open-source code, and `chibi-mcp --check` for install diagnostics.
 
 <p align="center">
-  <img src="assets/social-preview.png?v=1.4.14-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
+  <img src="assets/social-preview.png?v=1.4.15-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
 </p>
 
 ## Public Beta Status
@@ -25,7 +25,7 @@ xvfb-run -a make public-beta-check
 Release-tag preflight after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.14
+make release-check TAG=v1.4.15
 ```
 
 See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist, [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging, and the remaining manual demo assets.
@@ -227,11 +227,11 @@ Claude Code hooks and the VS Code extension already use this bridge for small re
 ## Visual Assets
 
 <p align="center">
-  <img src="docs/screenshots/starter-lineup.png?v=1.4.14-chibi" alt="chibi-mcp starter character lineup" width="720">
+  <img src="docs/screenshots/starter-lineup.png?v=1.4.15-chibi" alt="chibi-mcp starter character lineup" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/option-showcase.png?v=1.4.14-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
+  <img src="docs/screenshots/option-showcase.png?v=1.4.15-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
 </p>
 
 ## Troubleshooting
@@ -256,6 +256,12 @@ Check:
 chibi-mcp --check
 echo "$DISPLAY"
 echo "$WAYLAND_DISPLAY"
+```
+
+Test the actual floating window outside Claude/Codex:
+
+```bash
+chibi-mcp --open
 ```
 
 Install tkinter on Ubuntu/Debian:
@@ -301,6 +307,10 @@ to an old command, rerun the Claude installer and restart Claude Code:
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.sh)
 ```
+
+If the command replies but no window appears, run `chibi-mcp --open` in a
+terminal. It prints the direct window result and `~/.chibi-mcp/window.log` path
+when Tk or the desktop session fails.
 
 ## Creator Packs
 

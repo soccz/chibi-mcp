@@ -28,6 +28,11 @@ Commercial-readiness polish without enabling paid gates.
 - Tk repair paths and troubleshooting docs now use the same GitHub force
   reinstall command instead of plain pipx reinstall/upgrade, so recovery
   cannot return to an old package source.
+- Added `chibi-mcp --open` for direct floating-window testing outside
+  Claude/Codex, and made slash-command failure guidance surface the exact
+  runtime reason/log path instead of falling through to gacha.
+- Claude/Codex installers now refresh the MCP registration after installing so
+  stale client entries cannot keep pointing at an old or broken command.
 - Expanded built-in local ASMR-style sounds: squish, slice, normal gacha, rare gacha, option brush, and bubble pop are generated as free local wav files with no network or paid sound packs.
 - Expanded installer self-repair beyond macOS: Linux bash installers now try Tk repair across `apt`, `dnf`, `yum`, `pacman`, `zypper`, and `apk`; Windows PowerShell installers can bootstrap Python with `winget` before installing `pipx`.
 - Made the Claude/Codex installers more self-healing: they install `pipx` when it is missing, suppress confusing `pipx ensurepath` noise, attempt macOS Homebrew Tk repair automatically in bash, reinstall the pipx app after Tk repair, and re-run the health check.

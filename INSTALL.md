@@ -81,7 +81,7 @@ VS Code:
 powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-vscode.ps1 | iex"
 ```
 
-The Claude/Codex scripts install `pipx` if needed, install or upgrade the `chibi-mcp` server, run `chibi-mcp --check`, then register the MCP server with the selected client. If Tk is missing, bash installers try platform repair: Homebrew `python-tk@X.Y` on macOS and common Linux package managers (`apt`, `dnf`, `yum`, `pacman`, `zypper`, `apk`). Windows PowerShell installers can bootstrap Python with `winget` before installing `pipx`, then warn if Tk support is still unavailable. The VS Code scripts download the latest `.vsix` from GitHub Releases and install it with `code --install-extension`.
+The Claude/Codex scripts install `pipx` if needed, install or upgrade the `chibi-mcp` server, run `chibi-mcp --check`, then refresh the MCP server registration with the selected client. If Tk is missing, bash installers try platform repair: Homebrew `python-tk@X.Y` on macOS and common Linux package managers (`apt`, `dnf`, `yum`, `pacman`, `zypper`, `apk`). Windows PowerShell installers can bootstrap Python with `winget` before installing `pipx`, then warn if Tk support is still unavailable. The VS Code scripts download the latest `.vsix` from GitHub Releases and install it with `code --install-extension`.
 
 ## Manual server install
 
@@ -104,6 +104,12 @@ Verify the install:
 
 ```bash
 chibi-mcp --check
+```
+
+Open the floating window directly, without Claude/Codex:
+
+```bash
+chibi-mcp --open
 ```
 
 On macOS, if `python3 -m tkinter` fails with `ModuleNotFoundError: No module named '_tkinter'`, install the matching Homebrew Tk package, then reinstall:
@@ -239,7 +245,7 @@ images, and hidden legacy brand-name leaks.
 For maintainer release-tag readiness after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.14
+make release-check TAG=v1.4.15
 ```
 
 See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
@@ -264,14 +270,14 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push `main`, then run:
 
 ```bash
-make release-check TAG=v1.4.14
+make release-check TAG=v1.4.15
 ```
 
 3. Push a tag:
 
 ```bash
-git tag v1.4.14
-git push origin v1.4.14
+git tag v1.4.15
+git push origin v1.4.15
 ```
 
 4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.

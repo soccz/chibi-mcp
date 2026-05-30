@@ -352,7 +352,8 @@ def _kill_existing_window() -> None:
     if pid:
         with contextlib.suppress(OSError, ProcessLookupError):
             os.kill(pid, signal.SIGTERM)
-    _WINDOW_PID_FILE.unlink(missing_ok=True)
+    with contextlib.suppress(OSError):
+        _WINDOW_PID_FILE.unlink(missing_ok=True)
 
 
 def _window_runtime_issue() -> dict | None:
@@ -532,10 +533,16 @@ def open_pet_window(character_id: str | None = None) -> dict:
             ),
         }
 
-    _WINDOW_PID_FILE.parent.mkdir(parents=True, exist_ok=True)
-    _WINDOW_PID_FILE.write_text(str(proc.pid))
+    pid_file_written = True
+    pid_file_warning = None
+    try:
+        _WINDOW_PID_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _WINDOW_PID_FILE.write_text(str(proc.pid))
+    except OSError as exc:
+        pid_file_written = False
+        pid_file_warning = str(exc)
 
-    return {
+    result = {
         "opened": True,
         "pid": proc.pid,
         "character": ch["id"],
@@ -545,7 +552,12 @@ def open_pet_window(character_id: str | None = None) -> dict:
         "image": str(image_path),
         "options": [option_id for option_id, _path in option_images],
         "log_path": str(log_path),
+        "pid_file": str(_WINDOW_PID_FILE),
+        "pid_file_written": pid_file_written,
     }
+    if pid_file_warning:
+        result["pid_file_warning"] = pid_file_warning
+    return result
 
 
 @mcp.tool()
