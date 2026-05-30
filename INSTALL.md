@@ -178,6 +178,12 @@ Try:
 /chibi-mcp:chibi 보관함
 ```
 
+When the Claude plugin is installed, `PostToolUse` hooks also feed chibi's
+rhythm counter. The pet becomes `신남` after recent tool calls, slices every
+configured interval, and grants gacha tickets after 100 captured tool calls or
+10 slices. Restart Claude Code after install so the refreshed hook files are
+loaded.
+
 ## VS Code
 
 Download the latest `.vsix` from GitHub Releases, then run:
@@ -248,7 +254,7 @@ images, and hidden legacy brand-name leaks.
 For maintainer release-tag readiness after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.32
+make release-check TAG=v1.4.33
 ```
 
 See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
@@ -273,14 +279,14 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push `main`, then run:
 
 ```bash
-make release-check TAG=v1.4.32
+make release-check TAG=v1.4.33
 ```
 
 3. Push a tag:
 
 ```bash
-git tag v1.4.32
-git push origin v1.4.32
+git tag v1.4.33
+git push origin v1.4.33
 ```
 
 4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.

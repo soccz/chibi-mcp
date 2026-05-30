@@ -1,3 +1,3 @@
 """chibi-mcp — chibi desktop character MCP server."""
 
-__version__ = "1.4.32"
+__version__ = "1.4.33"

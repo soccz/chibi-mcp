@@ -393,6 +393,7 @@ class ChibiState:
                     "total_pulls": self.total_pulls,
                     "owned_count": len(self.inventory),
                     "last_free_pull_date": self.last_free_pull_date,
+                    "next_free_in_seconds": _seconds_until_midnight(),
                     "last_pull": self.last_pull,
                 },
             }

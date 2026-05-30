@@ -5,6 +5,10 @@ Protocol (JSON messages, server → client):
     {"type": "say", "text": "..."}
     {"type": "slice"}                  # internal event for N-call milestones
 
+Protocol (JSON messages, hook/client → server):
+    {"type": "say", "text": "..."}       # speech only; marks recent activity
+    {"type": "tool_call", "text": "..."} # counts one Claude/Codex tool call
+
 The desktop app connects to ws://localhost:9876 and listens for events.
 
 Uses the websockets >= 14 asyncio API (`websockets.asyncio.server`).
@@ -92,6 +96,12 @@ def set_action_handler(handler: Callable[[dict], dict] | None) -> None:
 _INBOUND_SAY_MAX_LEN = 200
 
 
+def _sanitize_inbound_text(value: object) -> str:
+    if not isinstance(value, str):
+        return ""
+    return value.replace("\n", " ").replace("\r", " ").strip()[:_INBOUND_SAY_MAX_LEN]
+
+
 async def _handle_client(ws: ServerConnection) -> None:
     broadcaster = get_broadcaster()
     await broadcaster.register(ws)
@@ -111,12 +121,21 @@ async def _handle_client(ws: ServerConnection) -> None:
             if not isinstance(msg, dict):
                 continue
             if msg.get("type") == "say" and isinstance(msg.get("text"), str):
-                text = msg["text"].replace("\n", " ").replace("\r", " ").strip()
+                text = _sanitize_inbound_text(msg.get("text"))
                 if text:
                     state = get_state()
                     state.note_activity("say")
                     await broadcaster.broadcast({"type": "state", "payload": state.snapshot()})
-                    await broadcaster.broadcast({"type": "say", "text": text[:_INBOUND_SAY_MAX_LEN]})
+                    await broadcaster.broadcast({"type": "say", "text": text})
+            elif msg.get("type") == "tool_call":
+                text = _sanitize_inbound_text(msg.get("text"))
+                state = get_state()
+                result = state.record_call()
+                if result.get("sliced"):
+                    await broadcaster.broadcast({"type": "slice"})
+                await broadcaster.broadcast({"type": "state", "payload": state.snapshot()})
+                if text:
+                    await broadcaster.broadcast({"type": "say", "text": text})
             elif msg.get("type") == "action" and _ACTION_HANDLER is not None:
                 state = get_state()
                 state.note_activity("window_action")

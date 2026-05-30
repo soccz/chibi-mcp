@@ -59,6 +59,19 @@ async def ws_url():
         await server_task
 
 
+async def _recv_json_until(ws, predicate, timeout: float = 2.0) -> dict:
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    last: dict | None = None
+    while loop.time() < deadline:
+        raw = await asyncio.wait_for(ws.recv(), timeout=max(0.05, deadline - loop.time()))
+        msg = json.loads(raw)
+        last = msg
+        if predicate(msg):
+            return msg
+    raise AssertionError(f"expected websocket message not received; last={last!r}")
+
+
 async def test_initial_state_pushed_on_connect(ws_url):
     async with connect(ws_url) as ws:
         raw = await asyncio.wait_for(ws.recv(), timeout=2.0)
@@ -101,13 +114,84 @@ async def test_inbound_say_marks_recent_activity_and_pushes_state(ws_url, monkey
 
         await actor.send(json.dumps({"type": "say", "text": "hook fired"}))
 
-        state_msg = json.loads(await asyncio.wait_for(listener.recv(), timeout=2.0))
-        say_msg = json.loads(await asyncio.wait_for(listener.recv(), timeout=2.0))
+        state_msg = await _recv_json_until(
+            listener,
+            lambda msg: (
+                msg.get("type") == "state"
+                and msg["payload"]["timing"]["last_activity_source"] == "say"
+            ),
+        )
+        say_msg = await _recv_json_until(
+            listener,
+            lambda msg: msg.get("type") == "say" and msg.get("text") == "hook fired",
+        )
         assert state_msg["type"] == "state"
         assert state_msg["payload"]["mood"] == "happy"
         assert state_msg["payload"]["timing"]["last_activity_source"] == "say"
         assert say_msg["type"] == "say"
         assert say_msg["text"] == "hook fired"
+
+
+async def test_inbound_tool_call_counts_rhythm_and_optional_bubble(ws_url, monkeypatch):
+    monkeypatch.setattr(
+        state_mod,
+        "read_snapshot",
+        lambda interval=0.0: SystemSnapshot(
+            cpu_percent=10.0,
+            ram_percent=40.0,
+            battery_percent=80.0,
+            battery_plugged=False,
+        ),
+    )
+    async with connect(ws_url) as listener, connect(ws_url) as actor:
+        await asyncio.wait_for(listener.recv(), timeout=2.0)
+        await asyncio.wait_for(actor.recv(), timeout=2.0)
+
+        await actor.send(json.dumps({"type": "tool_call", "text": "굳"}))
+
+        state_msg = await _recv_json_until(
+            listener,
+            lambda msg: (
+                msg.get("type") == "state"
+                and msg["payload"]["counters"]["calls_total"] == 1
+            ),
+        )
+        say_msg = await _recv_json_until(
+            listener,
+            lambda msg: msg.get("type") == "say" and msg.get("text") == "굳",
+        )
+        assert state_msg["type"] == "state"
+        assert state_msg["payload"]["mood"] == "happy"
+        assert state_msg["payload"]["counters"]["calls_total"] == 1
+        assert state_msg["payload"]["counters"]["calls_since_slice"] == 1
+        assert state_msg["payload"]["timing"]["last_activity_source"] == "tool_call"
+        assert say_msg["type"] == "say"
+        assert say_msg["text"] == "굳"
+
+
+async def test_inbound_tool_call_broadcasts_slice_on_milestone(ws_url):
+    from chibi_mcp.state import get_state
+
+    get_state().slice_interval = 1
+    async with connect(ws_url) as listener, connect(ws_url) as actor:
+        await asyncio.wait_for(listener.recv(), timeout=2.0)
+        await asyncio.wait_for(actor.recv(), timeout=2.0)
+
+        await actor.send(json.dumps({"type": "tool_call"}))
+
+        slice_msg = await _recv_json_until(listener, lambda msg: msg.get("type") == "slice")
+        state_msg = await _recv_json_until(
+            listener,
+            lambda msg: (
+                msg.get("type") == "state"
+                and msg["payload"]["counters"]["calls_total"] == 1
+            ),
+        )
+        assert slice_msg["type"] == "slice"
+        assert state_msg["type"] == "state"
+        assert state_msg["payload"]["counters"]["calls_total"] == 1
+        assert state_msg["payload"]["counters"]["calls_since_slice"] == 0
+        assert state_msg["payload"]["counters"]["slices_today"] == 1
 
 
 async def test_slice_event_broadcasts_to_client(ws_url):

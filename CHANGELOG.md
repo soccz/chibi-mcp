@@ -6,6 +6,13 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Claude Code hooks now record every `PostToolUse` through
+  `chibi-say --tool-call`, so real coding activity advances rhythm, slice
+  milestones, happy mood, and gacha ticket progress while speech bubbles remain
+  throttled.
+- The floating window now surfaces server connection state, gacha refill
+  context, size controls, and an in-window "작동 방식" guide for CPU, battery,
+  tool-call, idle, and ticket logic.
 - Added committed launch demo assets: `docs/demo.gif`, Claude Code preview,
   Codex terminal preview, and VS Code sidebar preview, all regenerated from
   local project assets.

@@ -159,6 +159,27 @@ On Windows:
 powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.ps1 | iex"
 ```
 
+## Rhythm Or Gacha Tickets Do Not Move
+
+Claude Code must load the refreshed plugin hooks. After installing, fully quit
+and reopen Claude Code, then run:
+
+```text
+/chibi-mcp:chibi
+```
+
+The hook records each `PostToolUse` event through `chibi-say --tool-call`.
+Bubbles are intentionally throttled, but the rhythm counter should still move.
+Tickets refill as follows:
+
+- first pull of the local calendar day is free;
+- +1 ticket per 100 captured tool calls;
+- +1 ticket per 10 rhythm slices.
+
+If the floating window shows `서버 대기` or `오프`, the window is open without a
+live chibi MCP/WebSocket server. Start it from Claude/Codex with the normal
+chibi command instead of opening only the standalone window.
+
 ## Codex Does Not See Chibi
 
 Verify the server command exists:

@@ -12,6 +12,7 @@ from PIL import Image
 
 from chibi_mcp import __main__ as main_mod
 from chibi_mcp import __version__
+from chibi_mcp import cli as cli_mod
 from chibi_mcp.__main__ import _check, _ws_endpoint
 from chibi_mcp.commercial import (
     _missing_project_files,
@@ -26,7 +27,17 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.32"
+    assert __version__ == "1.4.33"
+
+
+def test_chibi_say_message_builder_supports_tool_call_events():
+    assert cli_mod._build_message(["hello", "there"]) == {"type": "say", "text": "hello there"}
+    assert cli_mod._build_message(["--tool-call"]) == {"type": "tool_call"}
+    assert cli_mod._build_message(["--tool-call", "build", "done"]) == {
+        "type": "tool_call",
+        "text": "build done",
+    }
+    assert cli_mod._build_message([]) is None
 
 
 def test_stdio_startup_does_not_write_non_protocol_output():
@@ -93,7 +104,7 @@ def test_stdio_jsonrpc_handles_initialize_list_and_call():
     assert [response["id"] for response in responses] == [1, 2, 3]
     assert responses[0]["result"]["serverInfo"] == {
         "name": "chibi-mcp",
-        "version": "1.4.32",
+        "version": "1.4.33",
     }
     tools = {tool["name"] for tool in responses[1]["result"]["tools"]}
     assert {"get_catalog", "get_pet_state", "pull_gacha"}.issubset(tools)

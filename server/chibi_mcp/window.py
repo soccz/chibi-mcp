@@ -32,6 +32,7 @@ import threading
 import tkinter as tk
 import tkinter.font as tkfont
 import wave
+from datetime import datetime
 from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageTk
@@ -331,12 +332,67 @@ def _format_short_duration(seconds: object) -> str:
     return "99시간+" if hours > 99 else f"{hours}시간"
 
 
+def _seconds_until_midnight_local(now: datetime | None = None) -> int:
+    now = now or datetime.now()
+    seconds_today = now.hour * 3600 + now.minute * 60 + now.second
+    return max(0, 86400 - seconds_today)
+
+
+def _format_refill_duration(seconds: object) -> str:
+    number = _finite_number(seconds)
+    if number is None or number <= 0:
+        return "곧"
+    seconds_i = int(number)
+    hours = seconds_i // 3600
+    minutes = (seconds_i % 3600) // 60
+    if hours:
+        return f"{hours}시간 {minutes:02d}분"
+    if minutes:
+        return f"{minutes}분"
+    return f"{seconds_i}초"
+
+
 def _format_counter(value: object) -> str | None:
     number = _finite_number(value)
     if number is None:
         return None
     count = max(0, int(number))
     return "999+" if count > 999 else str(count)
+
+
+def _free_pull_status(payload: dict, persisted_state: dict) -> str:
+    payload = _as_dict(payload)
+    persisted_state = _as_dict(persisted_state)
+    gacha = _as_dict(payload.get("gacha"))
+    today = datetime.now().date().isoformat()
+    last_free = str(
+        gacha.get("last_free_pull_date") or persisted_state.get("last_free_pull_date") or ""
+    )
+    if last_free != today:
+        return "무료뽑기 가능"
+    refill_seconds = gacha.get("next_free_in_seconds") or _seconds_until_midnight_local()
+    return f"무료뽑기 {_format_refill_duration(refill_seconds)} 후"
+
+
+def _gacha_refill_lines(payload: dict, persisted_state: dict) -> list[str]:
+    payload = _as_dict(payload)
+    persisted_state = _as_dict(persisted_state)
+    gacha = _as_dict(payload.get("gacha"))
+    counters = _as_dict(payload.get("counters"))
+    tickets = _format_counter(gacha.get("tickets"))
+    if tickets is None:
+        tickets = _format_counter(persisted_state.get("tickets")) or "0"
+
+    lines = [f"티켓 {tickets} · {_free_pull_status(payload, persisted_state)}"]
+    calls_total = _finite_number(counters.get("calls_total"))
+    slices_today = _finite_number(counters.get("slices_today"))
+    if calls_total is not None:
+        next_call_ticket = 100 - (int(calls_total) % 100)
+        lines.append(f"call티켓까지 {next_call_ticket} tool call")
+    if slices_today is not None:
+        next_slice_ticket = 10 - (int(slices_today) % 10)
+        lines.append(f"slice티켓까지 {next_slice_ticket} 리듬")
+    return lines
 
 
 def _format_battery(system: dict) -> str:
@@ -718,12 +774,17 @@ def _ws_listener(url: str, event_queue: queue.Queue, stop_event: threading.Event
         from websockets.sync.client import connect as ws_connect
     except ImportError:
         log.warning("websockets sync client unavailable — window won't get live updates")
+        event_queue.put({"type": "connection", "connected": False})
         return
 
     backoff = RECONNECT_BACKOFF_MIN_S
+    connected = False
     while not stop_event.is_set():
         try:
             with ws_connect(url, open_timeout=3) as conn:
+                if not connected:
+                    event_queue.put({"type": "connection", "connected": True})
+                    connected = True
                 backoff = RECONNECT_BACKOFF_MIN_S  # reset on successful connect
                 for raw in conn:
                     if stop_event.is_set():
@@ -734,8 +795,14 @@ def _ws_listener(url: str, event_queue: queue.Queue, stop_event: threading.Event
                         log.debug("ws drop (bad json): %s", e)
                     except queue.Full:
                         log.debug("ws drop (queue full: %d)", event_queue.qsize())
+                if connected:
+                    event_queue.put({"type": "connection", "connected": False})
+                    connected = False
         except Exception as e:
             log.debug("ws reconnect in %.1fs after error: %s", backoff, e)
+            if connected:
+                event_queue.put({"type": "connection", "connected": False})
+                connected = False
         if stop_event.wait(backoff):
             return
         backoff = min(RECONNECT_BACKOFF_MAX_S, backoff * 1.7)
@@ -744,11 +811,13 @@ def _ws_listener(url: str, event_queue: queue.Queue, stop_event: threading.Event
 def _send_ws_action(url: str | None, message: dict, event_queue: queue.Queue) -> None:
     """Send one small desktop action to the MCP WebSocket server."""
     if not url:
+        event_queue.put({"type": "connection", "connected": False})
         event_queue.put({"type": "say", "text": "서버 연결이 필요해"})
         return
     try:
         from websockets.sync.client import connect as ws_connect
     except ImportError:
+        event_queue.put({"type": "connection", "connected": False})
         event_queue.put({"type": "say", "text": "websockets 설치가 필요해"})
         return
 
@@ -757,6 +826,7 @@ def _send_ws_action(url: str | None, message: dict, event_queue: queue.Queue) ->
             conn.send(json.dumps(message, ensure_ascii=False))
     except Exception as exc:
         log.debug("window action send failed: %s", exc)
+        event_queue.put({"type": "connection", "connected": False})
         event_queue.put({"type": "say", "text": "서버에 연결하지 못했어"})
 
 
@@ -1052,6 +1122,7 @@ class ChibiStatusCard(tk.Canvas):
         self._rhythm_fraction = 0.0
         self._metric_values: dict[str, int | None] = {"CPU": None, "RAM": None, "BAT": None}
         self._metric_alerts: set[str] = set()
+        self._connection_ok = False
         self._debug_hud = "상세 준비"
         self._view_mode = "normal"
         self._card_width = width
@@ -1104,6 +1175,12 @@ class ChibiStatusCard(tk.Canvas):
     def set_identity(self, *, name: str, rarity: int) -> None:
         self._display_name = name
         self._rarity = rarity
+        self._draw()
+
+    def set_connection(self, connected: bool) -> None:
+        if self._connection_ok == connected:
+            return
+        self._connection_ok = connected
         self._draw()
 
     def set_progress(
@@ -1179,6 +1256,8 @@ class ChibiStatusCard(tk.Canvas):
         return f"{clipped}…" if clipped else "…"
 
     def _status_chip(self) -> tuple[str, str, str, str]:
+        if not self._connection_ok:
+            return ("오프", "#f6eee6", "#cdbdaa", "#806f62")
         if self._system_warn:
             return ("주의", STATUS_WARN_BG, STATUS_WARN_BORDER, "#77521b")
         return ("정상", STATUS_METRIC_BG, STATUS_METRIC_BORDER, "#4b725d")
@@ -1489,6 +1568,7 @@ class PetWindow:
         self.ws_url: str | None = None
         self.drawer_mode: str | None = None
         self.view_mode = _initial_view_mode(view_mode)
+        self.connection_ok = False
         self._drawer_render_signature: tuple | None = None
         self.frameless = frameless
         self.sounds_enabled = _initial_sounds_enabled(sounds)
@@ -2464,6 +2544,8 @@ class PetWindow:
             self._render_options_drawer()
         elif self.drawer_mode == "settings":
             self._render_settings_drawer()
+        elif self.drawer_mode == "guide":
+            self._render_guide_drawer()
         self._drawer_render_signature = self._current_drawer_signature()
 
     def _current_drawer_signature(self) -> tuple:
@@ -2474,7 +2556,11 @@ class PetWindow:
                 bool(self.sounds_enabled),
                 bool(self.topmost_enabled),
                 self.view_mode,
+                round(self._window_scale, 2),
+                bool(self.connection_ok),
             )
+        if self.drawer_mode == "guide":
+            return ("guide",)
         if self.drawer_mode == "options":
             option_ids = state.get("active_option_ids")
             if not isinstance(option_ids, list):
@@ -2517,6 +2603,17 @@ class PetWindow:
             font=("Helvetica", max(8, self._s(10)), "bold"),
         ).pack(anchor="w", pady=(0, self._s(6)))
 
+    def _drawer_note(self, text: str, *, strong: bool = False) -> None:
+        tk.Label(
+            self.drawer,
+            text=text,
+            bg=PANEL_BG_2,
+            fg=TEXT_FG if strong else MUTED_FG,
+            font=("Helvetica", max(7, self._s(9)), "bold" if strong else "normal"),
+            wraplength=max(self._s(180), int(self.drawer.winfo_width() or self._s(280))),
+            justify="left",
+        ).pack(anchor="w", pady=(0, self._s(4)))
+
     def _render_inventory_drawer(self) -> None:
         state = _load_persisted_state()
         inventory = state.get("inventory") if isinstance(state.get("inventory"), dict) else {}
@@ -2529,6 +2626,8 @@ class PetWindow:
             owned_ids.insert(0, str(active_id))
 
         self._drawer_header(f"보관함 · {len(inventory)}종 · 티켓 {tickets}")
+        for idx, line in enumerate(_gacha_refill_lines(self._last_state_payload, state)):
+            self._drawer_note(line, strong=idx == 0)
         if not owned_ids:
             tk.Label(
                 self.drawer,
@@ -2630,6 +2729,7 @@ class PetWindow:
         grid.pack(fill="x")
         grid.columnconfigure(0, weight=1)
         grid.columnconfigure(1, weight=1)
+        grid.columnconfigure(2, weight=1)
 
         controls = [
             (
@@ -2646,17 +2746,58 @@ class PetWindow:
                 self._toggle_topmost,
                 "↑",
             ),
+            (
+                "connection",
+                "서버",
+                bool(self.connection_ok),
+                lambda: self.show_bubble(
+                    "서버 연결됨" if self.connection_ok else "Claude에서 /chibi-mcp:chibi 실행"
+                ),
+                "●",
+            ),
         ]
         for idx, (_key, label, enabled, command, icon) in enumerate(controls):
+            state_text = "켜짐" if enabled else ("대기" if label == "서버" else "꺼짐")
             self._make_button(
                 grid,
-                f"{label} {'켜짐' if enabled else '꺼짐'}",
+                f"{label} {state_text}",
                 command,
                 kind="selected" if enabled else "secondary",
                 icon=icon if enabled else "·",
-                min_width=132,
+                min_width=106,
                 anchor="w",
-            ).grid(row=0, column=idx, sticky="ew", padx=(0, self._s(6)), pady=self._s(2))
+            ).grid(
+                row=0,
+                column=idx,
+                sticky="ew",
+                padx=(0, self._s(6)),
+                pady=self._s(2),
+            )
+
+        size_row = tk.Frame(self.drawer, bg=PANEL_BG_2)
+        size_row.pack(fill="x", pady=(self._s(8), 0))
+        self._make_button(
+            size_row,
+            "작게",
+            lambda: self._nudge_window_scale(-0.1),
+            icon="-",
+            min_width=70,
+        ).pack(side="left", padx=(0, self._s(6)))
+        self._make_button(
+            size_row,
+            f"{round(self._window_scale * 100)}%",
+            self._reset_window_scale,
+            kind="selected" if abs(self._window_scale - 1.0) < 0.03 else "secondary",
+            icon="↺",
+            min_width=78,
+        ).pack(side="left", padx=(0, self._s(6)))
+        self._make_button(
+            size_row,
+            "크게",
+            lambda: self._nudge_window_scale(0.1),
+            icon="+",
+            min_width=70,
+        ).pack(side="left", padx=(0, self._s(6)))
 
         mode_row = tk.Frame(self.drawer, bg=PANEL_BG_2)
         mode_row.pack(fill="x", pady=(self._s(8), 0))
@@ -2670,6 +2811,32 @@ class PetWindow:
                 icon=icon,
                 min_width=70,
             ).pack(side="left", padx=(0, self._s(6)))
+        self._make_button(
+            self.drawer,
+            "작동 방식",
+            lambda: self._toggle_drawer("guide"),
+            icon="?",
+            min_width=116,
+            anchor="w",
+        ).pack(anchor="w", pady=(self._s(8), 0))
+
+    def _render_guide_drawer(self) -> None:
+        self._drawer_header("작동 방식 · 실제로 하는 일")
+        for line in (
+            "CPU 80% 이상 → 헐떡",
+            "배터리 20% 미만 → 졸림",
+            "Claude/Codex tool call → 신남 + 리듬 진행",
+            "30분 이상 조용함 → 시무룩",
+            "뽑기: 하루 1회 무료 · 100 tool call 또는 10리듬마다 티켓 +1",
+        ):
+            self._drawer_note(line, strong="→" in line)
+        self._make_button(
+            self.drawer,
+            "설정으로",
+            lambda: self._toggle_drawer("settings"),
+            icon="←",
+            min_width=96,
+        ).pack(anchor="w", pady=(self._s(6), 0))
 
     def _toggle_sounds(self) -> None:
         if self.sounds_enabled:
@@ -3117,6 +3284,10 @@ class PetWindow:
                 self._last_pull_signature = pull_signature
             if had_state and is_new_pull:
                 self._spawn_pull_reveal(_as_dict(_as_dict(payload.get("gacha")).get("last_pull")))
+            self._refresh_drawer_if_state_changed()
+        elif kind == "connection":
+            self.connection_ok = bool(evt.get("connected"))
+            self.status_card.set_connection(self.connection_ok)
             self._refresh_drawer_if_state_changed()
         elif kind == "slice":
             self._slice_flash()

@@ -9,11 +9,11 @@
 It is local-first: no telemetry, localhost WebSocket by default, open-source code, and `chibi-mcp --check` for install diagnostics.
 
 <p align="center">
-  <img src="assets/social-preview.png?v=1.4.32-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
+  <img src="assets/social-preview.png?v=1.4.33-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif?v=1.4.32-chibi" alt="animated chibi-mcp demo showing install commands, local status, and the floating pet window" width="720">
+  <img src="docs/demo.gif?v=1.4.33-chibi" alt="animated chibi-mcp demo showing install commands, local status, and the floating pet window" width="720">
 </p>
 
 ## Public Beta Status
@@ -29,7 +29,7 @@ xvfb-run -a make public-beta-check
 Release-tag preflight after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.32
+make release-check TAG=v1.4.33
 ```
 
 See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist and [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging.
@@ -42,9 +42,10 @@ See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no
 - 8 starter characters and 12 free option layers.
 - Gacha, inventory, rename, active character, and option selection tools.
 - Floating-window controls for inventory, option customization, gacha pulls,
-  and close actions.
+  settings, size, connection status, and close actions.
 - Mood based on CPU, RAM, battery, and idle time.
-- Session cadence: every N tool calls, chibi plays a small milestone animation.
+- Session cadence: Claude/Codex tool calls move the rhythm meter; every N calls,
+  chibi plays a small milestone animation.
 - `chibi-say`, a tiny CLI for making the pet show speech bubbles from scripts.
 - Built-in local ASMR-style sounds for squish, milestone events, gacha pulls,
   rare pulls, option changes, and speech bubbles.
@@ -55,18 +56,33 @@ Sounds are also part of the free base product. The app generates short local
 `.wav` files in `~/.chibi-mcp/sounds/`; no sound assets are downloaded at
 runtime and no sound gacha is enabled.
 
+## What It Does While Running
+
+| Local signal | chibi reaction |
+|---|---|
+| CPU 80%+ | `헐떡` mood, warmer stage, panting accents |
+| Battery under 20% while unplugged | `졸림` mood, slower bob, drowsy marks |
+| Recent Claude/Codex tool call | `신남` mood, rhythm progress, optional bubble |
+| 30 minutes idle | `시무룩` mood, quieter idle bubble |
+| Every N tool calls | slice/milestone animation |
+
+Gacha refill is free and local: the first pull each calendar day is free, then
+you get +1 ticket per 100 captured tool calls and +1 ticket per 10 rhythm
+slices. Claude Code plugin hooks record every `PostToolUse` event; bubbles are
+still throttled so the pet does not talk on every command.
+
 ## Client Previews
 
 <p align="center">
-  <img src="docs/screenshots/claude-code.png?v=1.4.32-chibi" alt="chibi-mcp Claude Code preview with local floating pet window" width="720">
+  <img src="docs/screenshots/claude-code.png?v=1.4.33-chibi" alt="chibi-mcp Claude Code preview with local floating pet window" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/codex-terminal.png?v=1.4.32-chibi" alt="chibi-mcp Codex terminal preview with local diagnostics and floating pet" width="720">
+  <img src="docs/screenshots/codex-terminal.png?v=1.4.33-chibi" alt="chibi-mcp Codex terminal preview with local diagnostics and floating pet" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/vscode-sidebar.png?v=1.4.32-chibi" alt="chibi-mcp VS Code sidebar preview with status meters and floating pet" width="720">
+  <img src="docs/screenshots/vscode-sidebar.png?v=1.4.33-chibi" alt="chibi-mcp VS Code sidebar preview with status meters and floating pet" width="720">
 </p>
 
 ## Who It Is For
@@ -222,9 +238,12 @@ The Python package also installs `chibi-say`:
 ```bash
 chibi-say "build done"
 chibi-say "tests failed"
+chibi-say --tool-call "tests green"
 ```
 
-It sends a local WebSocket message to the running chibi server. If nothing is running, it exits quietly, so it is safe inside scripts.
+It sends a local WebSocket message to the running chibi server. Plain
+`chibi-say` only shows a bubble; `--tool-call` also advances rhythm/tickets.
+If nothing is running, it exits quietly, so it is safe inside scripts.
 
 Examples:
 
@@ -240,16 +259,18 @@ build:
 ./run_tests.sh && chibi-say "tests green" || chibi-say "tests red"
 ```
 
-Claude Code hooks and the VS Code extension already use this bridge for small reaction bubbles.
+Claude Code hooks use `chibi-say --tool-call` on `PostToolUse` so real tool
+calls feed mood, rhythm, slices, and tickets. VS Code uses the same local
+bridge for save/task/debug reactions.
 
 ## Visual Assets
 
 <p align="center">
-  <img src="docs/screenshots/starter-lineup.png?v=1.4.32-chibi" alt="chibi-mcp starter character lineup" width="720">
+  <img src="docs/screenshots/starter-lineup.png?v=1.4.33-chibi" alt="chibi-mcp starter character lineup" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/option-showcase.png?v=1.4.32-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
+  <img src="docs/screenshots/option-showcase.png?v=1.4.33-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
 </p>
 
 ## Troubleshooting

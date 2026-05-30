@@ -146,6 +146,32 @@ def test_tool_idle_and_mood_reason_labels_are_compact():
     assert window._mood_reason_for_payload("lonely", {"timing": {"idle_seconds": 3700}}) == "오래 idle 1시간"
 
 
+def test_gacha_refill_lines_explain_free_pull_and_ticket_sources():
+    lines = window._gacha_refill_lines(
+        {
+            "gacha": {
+                "tickets": 2,
+                "last_free_pull_date": "2099-01-01",
+                "next_free_in_seconds": 3720,
+            },
+            "counters": {"calls_total": 123, "slices_today": 12},
+        },
+        {},
+    )
+    assert lines == [
+        "티켓 2 · 무료뽑기 가능",
+        "call티켓까지 77 tool call",
+        "slice티켓까지 8 리듬",
+    ]
+
+
+def test_refill_duration_is_human_sized():
+    assert window._format_refill_duration(30) == "30초"
+    assert window._format_refill_duration(180) == "3분"
+    assert window._format_refill_duration(3660) == "1시간 01분"
+    assert window._format_refill_duration(None) == "곧"
+
+
 def test_click_reaction_prioritizes_system_context():
     assert (
         window._click_reaction_for_payload("calm", {"system": {"cpu_percent": 91}})
