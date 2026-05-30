@@ -154,10 +154,10 @@ with TemporaryDirectory() as home, TemporaryDirectory() as generated:
     reset_state_for_tests()
     generated_root = Path(generated)
     outputs = {
-        "assets/social-preview.png": ["--preset", "social-preview"],
-        "docs/screenshots/share-card.png": [],
-        "docs/screenshots/starter-lineup.png": ["--preset", "lineup"],
-        "docs/screenshots/option-showcase.png": ["--preset", "options"],
+        "assets/social-preview.png": ["--static-demo", "--preset", "social-preview"],
+        "docs/screenshots/share-card.png": ["--static-demo"],
+        "docs/screenshots/starter-lineup.png": ["--static-demo", "--preset", "lineup"],
+        "docs/screenshots/option-showcase.png": ["--static-demo", "--preset", "options"],
     }
     for rel, args in outputs.items():
         expected = generated_root / Path(rel).name
@@ -355,6 +355,8 @@ for rel in ["scripts/install-claude.sh", "scripts/install-codex.sh"]:
 claude_shell_required = [
     "claude_run",
     "plugin marketplace update chibi-mcp",
+    "plugin uninstall --keep-data chibi",
+    "plugin install \"chibi@chibi-mcp\"",
     "plugin update chibi",
     "Restart Claude Code",
 ]
@@ -376,6 +378,8 @@ for rel in ["scripts/install-claude.ps1", "scripts/install-codex.ps1"]:
 claude_windows_required = [
     "Sync-ClaudePlugin",
     "plugin marketplace update",
+    "plugin uninstall --keep-data chibi",
+    "plugin install \"chibi@chibi-mcp\"",
     "plugin update chibi",
     "Restart Claude Code",
 ]

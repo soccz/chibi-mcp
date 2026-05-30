@@ -84,7 +84,7 @@ Ship a free public beta when all are true:
 After `main` is pushed and before creating a GitHub Release tag, run:
 
 ```bash
-make release-check TAG=v1.4.10
+make release-check TAG=v1.4.11
 ```
 
 This verifies version alignment, upstream state, tag availability, and the full

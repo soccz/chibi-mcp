@@ -48,7 +48,7 @@ See [PUBLIC_BETA_READINESS.md](PUBLIC_BETA_READINESS.md).
 After `main` is pushed and before creating a tag:
 
 ```bash
-make release-check TAG=v1.4.10
+make release-check TAG=v1.4.11
 ```
 
 See [RELEASE_PROCESS.md](RELEASE_PROCESS.md).
@@ -62,6 +62,10 @@ Already generated:
 - `docs/screenshots/starter-lineup.png` — 1600×900 starter lineup
 - `docs/screenshots/option-showcase.png` — 1600×900 option showcase
 
+Regenerate committed launch images with `chibi-share --static-demo` so release
+asset verification is not affected by the maintainer machine's live CPU/RAM
+mood.
+
 Still needed before broad launch:
 
 - `docs/demo.gif` — pet opens, option toggles, milestone event, share card
@@ -74,7 +78,7 @@ Still needed before broad launch:
 1. Run `xvfb-run -a make public-beta-check`.
 2. Generate or refresh release assets with `chibi-share` if visuals changed.
 3. Package VS Code extension with `./scripts/package-vscode.sh` if you need a local `.vsix`.
-4. Push `main`, then run `make release-check TAG=v1.4.10`.
+4. Push `main`, then run `make release-check TAG=v1.4.11`.
 5. Validate sample packs:
    - `chibi-pack validate examples/packs/spring-hwajeon`
    - `chibi-pack validate examples/packs/team-sprint`

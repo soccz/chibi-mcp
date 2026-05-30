@@ -112,17 +112,19 @@ function Sync-ClaudePlugin {
         & claude plugin marketplace update *> $null
     }
 
-    & claude plugin update chibi *> $null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Claude plugin 'chibi' updated."
-        return
-    }
+    & claude plugin uninstall --keep-data chibi *> $null
 
     & claude plugin install "chibi@chibi-mcp" *> $null
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "Claude plugin 'chibi' installed."
+        Write-Host "Claude plugin 'chibi' installed/refreshed."
+        return
+    }
+
+    & claude plugin update chibi *> $null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Claude plugin 'chibi' updated."
     } else {
-        Write-Warning "Claude plugin install/update failed; MCP registration is still complete."
+        Write-Warning "Claude plugin refresh failed; MCP registration is still complete."
     }
 }
 

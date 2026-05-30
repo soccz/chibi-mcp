@@ -143,6 +143,11 @@ def share_main(argv: list[str] | None = None) -> int:
         "--subtitle",
         default="local MCP pet for Claude Code, Codex, and VS Code",
     )
+    parser.add_argument(
+        "--static-demo",
+        action="store_true",
+        help="Render deterministic zero-state metrics for release/demo assets.",
+    )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     args = parser.parse_args(argv)
 
@@ -161,6 +166,7 @@ def share_main(argv: list[str] | None = None) -> int:
         title=args.title,
         subtitle=args.subtitle,
         preset=args.preset,
+        static_demo=args.static_demo,
     )
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -644,6 +650,7 @@ def write_share_card(
     title: str,
     subtitle: str,
     preset: str = "square",
+    static_demo: bool = False,
 ) -> dict[str, Any]:
     out.parent.mkdir(parents=True, exist_ok=True)
     asset_dir = _resolve_asset_dir()
@@ -654,7 +661,7 @@ def write_share_card(
     if asset_path is None:
         return {"ok": False, "path": str(out), "reason": "no PNG asset found"}
 
-    state = get_state().snapshot()
+    state = _static_share_state() if static_demo else get_state().snapshot()
     counters = state["counters"]
     gacha = state["gacha"]
     mood = state["mood"]
@@ -742,6 +749,19 @@ def write_share_card(
         "mood": mood,
         "calls": counters["calls_total"],
         "slices": counters["slices_today"],
+    }
+
+
+def _static_share_state() -> dict[str, Any]:
+    return {
+        "mood": "calm",
+        "counters": {
+            "calls_total": 0,
+            "slices_today": 0,
+        },
+        "gacha": {
+            "tickets": 0,
+        },
     }
 
 

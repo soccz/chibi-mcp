@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_version_matches_release():
-    assert __version__ == "1.4.10"
+    assert __version__ == "1.4.11"
 
 
 def test_check_finds_packaged_assets():

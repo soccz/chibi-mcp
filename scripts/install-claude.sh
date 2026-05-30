@@ -230,12 +230,14 @@ sync_claude_plugin() {
     claude_run plugin marketplace update >/dev/null 2>&1 || true
   fi
 
-  if claude_run plugin update chibi >/dev/null 2>&1; then
+  claude_run plugin uninstall --keep-data chibi >/dev/null 2>&1 || true
+
+  if claude_run plugin install "chibi@chibi-mcp" >/dev/null 2>&1; then
+    echo "Claude plugin 'chibi' installed/refreshed."
+  elif claude_run plugin update chibi >/dev/null 2>&1; then
     echo "Claude plugin 'chibi' updated."
-  elif claude_run plugin install "chibi@chibi-mcp" >/dev/null 2>&1; then
-    echo "Claude plugin 'chibi' installed."
   else
-    echo "warning: Claude plugin install/update failed; MCP registration is still complete." >&2
+    echo "warning: Claude plugin refresh failed; MCP registration is still complete." >&2
   fi
 }
 
