@@ -136,6 +136,9 @@ required = {
     "docs/screenshots/share-card.png": (1080, 1080),
     "docs/screenshots/starter-lineup.png": (1600, 900),
     "docs/screenshots/option-showcase.png": (1600, 900),
+    "docs/screenshots/claude-code.png": (1600, 900),
+    "docs/screenshots/codex-terminal.png": (1600, 900),
+    "docs/screenshots/vscode-sidebar.png": (1600, 900),
 }
 for rel, expected in required.items():
     path = Path(rel)
@@ -165,6 +168,24 @@ with TemporaryDirectory() as home, TemporaryDirectory() as generated:
         with Image.open(root / rel).convert("RGB") as actual, Image.open(expected).convert("RGB") as fresh:
             diff = ImageChops.difference(actual, fresh)
             assert diff.getbbox() is None, f"{rel} is stale; regenerate with chibi-share"
+
+    demo_root = generated_root / "demo"
+    env_out = os.environ.copy()
+    env_out["CHIBI_DEMO_OUT_ROOT"] = str(demo_root)
+    import subprocess
+
+    subprocess.run([sys.executable, str(root / "scripts" / "generate_demo_assets.py")], env=env_out, check=True)
+    for rel in (
+        "docs/screenshots/claude-code.png",
+        "docs/screenshots/codex-terminal.png",
+        "docs/screenshots/vscode-sidebar.png",
+    ):
+        with Image.open(root / rel).convert("RGB") as actual, Image.open(demo_root / rel).convert("RGB") as fresh:
+            diff = ImageChops.difference(actual, fresh)
+            assert diff.getbbox() is None, f"{rel} is stale; regenerate with scripts/generate_demo_assets.py"
+    with Image.open(root / "docs/demo.gif") as demo:
+        assert demo.size == (960, 540), demo.size
+        assert getattr(demo, "n_frames", 1) >= 12, getattr(demo, "n_frames", 1)
 print("launch image assets ok")
 PY
 

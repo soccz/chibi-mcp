@@ -63,9 +63,12 @@ Verify:
 - README install commands still point to GitHub source/release paths.
 - No paid gates or telemetry were introduced.
 
-Manual launch assets still recommended before broad public launch:
+Generated launch assets included in public beta:
 
 - `docs/demo.gif`
 - `docs/screenshots/vscode-sidebar.png`
 - `docs/screenshots/claude-code.png`
 - `docs/screenshots/codex-terminal.png`
+
+Before a larger external launch, replace at least one generated preview with a
+real user-captured desktop screenshot.

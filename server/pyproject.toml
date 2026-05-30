@@ -1,6 +1,6 @@
 [project]
 name = "chibi-mcp"
-version = "1.4.31"
+version = "1.4.32"
 description = "MCP server for chibi — a local desktop pet that pops up a floating tk window (mood-tinted, live-updating, gacha-driven) in your Claude Code session"
 readme = "README.md"
 requires-python = ">=3.12"

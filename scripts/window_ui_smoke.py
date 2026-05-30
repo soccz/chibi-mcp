@@ -69,6 +69,21 @@ def main() -> int:
             pet.root.update_idletasks()
             assert "3" in str(pet.bubble.cget("text"))
 
+            pet._toggle_drawer("settings")
+            pet.root.update_idletasks()
+            assert pet.drawer_mode == "settings"
+            assert pet.drawer.winfo_ismapped()
+            assert pet.settings_button.winfo_ismapped()
+            pet._toggle_topmost()
+            pet.root.update_idletasks()
+            assert window_mod._load_window_prefs()["topmost_enabled"] is False
+            pet._toggle_sounds()
+            pet.root.update_idletasks()
+            assert window_mod._load_window_prefs()["sounds_enabled"] is True
+            pet._toggle_sounds()
+            pet.root.update_idletasks()
+            assert window_mod._load_window_prefs()["sounds_enabled"] is False
+
             before_character = pet.character_id
             pet._handle_event(
                 {

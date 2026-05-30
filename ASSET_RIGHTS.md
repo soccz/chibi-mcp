@@ -30,7 +30,7 @@ the repository, not legal advice.
 | `assets/` | Project-generated starter characters, option layers, and launch images | Keep mirrored with packaged assets; no third-party brands or characters |
 | `server/chibi_mcp/assets/` | Packaged copy of the project starter asset catalog | Same catalog and rights metadata as `assets/` |
 | `vscode-ext/resources/` | VS Code extension copy of the project starter asset catalog | Same catalog and rights metadata as `assets/` |
-| `docs/screenshots/` | Generated share-card and showcase assets from the local project catalog | Regenerate from project assets only |
+| `docs/demo.gif`, `docs/screenshots/` | Generated demo, share-card, and showcase assets from the local project catalog | Regenerate from project assets only |
 | `examples/packs/` | Sample-only creator/team packs generated for this repository | Must pass `chibi-pack validate --submission` |
 
 ## Pack Metadata Required For Public Submission

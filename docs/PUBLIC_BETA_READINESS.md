@@ -51,19 +51,18 @@ This checks:
 - hidden-file brand identity scan so old names do not leak into `.github`,
   plugin metadata, or templates.
 
-## Manual Assets Still Recommended
+## Demo Assets
 
-These are still manual because they should show real usage, not fake product
-proof:
+The public beta surface includes generated preview assets:
 
-- `docs/demo.gif` — open pet, apply option, milestone event, share card.
+- `docs/demo.gif` — install/open/reaction loop preview.
 - `docs/screenshots/vscode-sidebar.png`
 - `docs/screenshots/claude-code.png`
 - `docs/screenshots/codex-terminal.png`
 
-The project can be used as a free public beta without them, but broad launch
-posts should wait until at least the demo GIF and one real client screenshot
-exist.
+These are generated from local project assets and verified by preflight. Before
+a larger external launch, replace at least one generated preview with a real
+user-captured desktop screenshot.
 
 ## Public Beta Acceptance Criteria
 

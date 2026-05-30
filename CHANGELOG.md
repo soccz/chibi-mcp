@@ -6,6 +6,13 @@ All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condens
 
 Commercial-readiness polish without enabling paid gates.
 
+- Added committed launch demo assets: `docs/demo.gif`, Claude Code preview,
+  Codex terminal preview, and VS Code sidebar preview, all regenerated from
+  local project assets.
+- Added a settings drawer in the floating window with persisted sound and
+  always-on-top toggles plus quick view-mode controls.
+- Public beta preflight now requires the demo/client preview assets instead of
+  leaving them as recommended-but-missing broad-launch work.
 - Reworked the floating status card layout so mood/progress, status, rhythm,
   and CPU/RAM/BAT meters occupy separate rows with bounded text instead of
   visually colliding at smaller window sizes.

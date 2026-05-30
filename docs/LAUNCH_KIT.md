@@ -61,17 +61,18 @@ Already generated:
 - `docs/screenshots/share-card.png` — 1080×1080 share card
 - `docs/screenshots/starter-lineup.png` — 1600×900 starter lineup
 - `docs/screenshots/option-showcase.png` — 1600×900 option showcase
+- `docs/demo.gif` — generated install/open/reaction loop preview
+- `docs/screenshots/vscode-sidebar.png` — generated VS Code preview
+- `docs/screenshots/claude-code.png` — generated Claude Code preview
+- `docs/screenshots/codex-terminal.png` — generated Codex terminal preview
 
 Regenerate committed launch images with `chibi-share --static-demo` so release
 asset verification is not affected by the maintainer machine's live CPU/RAM
 mood.
 
-Still needed before broad launch:
-
-- `docs/demo.gif` — pet opens, option toggles, milestone event, share card
-- `docs/screenshots/vscode-sidebar.png`
-- `docs/screenshots/claude-code.png`
-- `docs/screenshots/codex-terminal.png`
+Regenerate client preview assets with `scripts/generate_demo_assets.py`.
+Before a larger external launch, replace at least one generated preview with a
+real user-captured desktop screenshot.
 
 ## Launch Checklist
 

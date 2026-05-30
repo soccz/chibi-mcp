@@ -52,6 +52,10 @@ required = [
     "docs/screenshots/share-card.png",
     "docs/screenshots/starter-lineup.png",
     "docs/screenshots/option-showcase.png",
+    "docs/demo.gif",
+    "docs/screenshots/vscode-sidebar.png",
+    "docs/screenshots/claude-code.png",
+    "docs/screenshots/codex-terminal.png",
 ]
 missing = [rel for rel in required if not (root / rel).exists()]
 if missing:
@@ -68,18 +72,6 @@ for phrase in [
 ]:
     if phrase not in readme:
         raise SystemExit(f"README.md is missing required public signal: {phrase!r}")
-
-optional = [
-    "docs/demo.gif",
-    "docs/screenshots/vscode-sidebar.png",
-    "docs/screenshots/claude-code.png",
-    "docs/screenshots/codex-terminal.png",
-]
-optional_missing = [rel for rel in optional if not (root / rel).exists()]
-if optional_missing:
-    print("manual demo assets still recommended before broad launch:")
-    for rel in optional_missing:
-        print(f"- {rel}")
 
 print("public beta surface ok")
 PY

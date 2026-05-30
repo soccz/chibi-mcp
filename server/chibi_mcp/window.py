@@ -254,6 +254,19 @@ def _initial_window_scale() -> float:
     return _clamp_window_scale(_finite_number(prefs.get("window_scale")) or 1.0)
 
 
+def _initial_bool_pref(key: str, default: bool) -> bool:
+    value = _load_window_prefs().get(key)
+    return value if isinstance(value, bool) else default
+
+
+def _initial_sounds_enabled(default: bool = True) -> bool:
+    return bool(default and _initial_bool_pref("sounds_enabled", True))
+
+
+def _initial_topmost_enabled() -> bool:
+    return _initial_bool_pref("topmost_enabled", True)
+
+
 def _window_position_from_prefs(
     *,
     screen_w: int,
@@ -1478,7 +1491,8 @@ class PetWindow:
         self.view_mode = _initial_view_mode(view_mode)
         self._drawer_render_signature: tuple | None = None
         self.frameless = frameless
-        self.sounds_enabled = sounds
+        self.sounds_enabled = _initial_sounds_enabled(sounds)
+        self.topmost_enabled = _initial_topmost_enabled()
 
         self._initial_window_scale_value = _initial_window_scale()
         self._window_scale = 1.0
@@ -1516,7 +1530,7 @@ class PetWindow:
 
         self.root = tk.Tk()
         self.root.title(f"chibi — {name}")
-        self.root.attributes("-topmost", True)
+        self._set_topmost_attribute(self.topmost_enabled)
 
         # Use a light panel by default. macOS PyObjC clear-window hacks are
         # disabled completely because incompatible Python/Tk/PyObjC builds can
@@ -1532,7 +1546,7 @@ class PetWindow:
                 self.root.overrideredirect(True)
             # macOS workaround: re-assert topmost after overrideredirect
             self.root.update_idletasks()
-            self.root.attributes("-topmost", True)
+            self._set_topmost_attribute(self.topmost_enabled)
 
         # Keep the attribute for diagnostics/backward compatibility, but never
         # enter PyObjC from the shipped runtime.
@@ -1613,6 +1627,14 @@ class PetWindow:
             min_width=68,
         )
         self.options_button.pack(side="left", padx=3)
+        self.settings_button = self._make_button(
+            self.toolbar,
+            "설정",
+            lambda: self._toggle_drawer("settings"),
+            icon="⚙",
+            min_width=62,
+        )
+        self.settings_button.pack(side="left", padx=3)
         mode_text, mode_icon = VIEW_MODE_BUTTONS[self.view_mode]
         self.mode_button = self._make_button(
             self.toolbar,
@@ -1694,6 +1716,9 @@ class PetWindow:
         self.root.bind("<Control-0>", lambda _e: self._reset_window_scale())
         self.root.bind("<Command-m>", lambda _e: self._cycle_view_mode())
         self.root.bind("<Control-m>", lambda _e: self._cycle_view_mode())
+        with contextlib.suppress(tk.TclError):
+            self.root.bind("<Command-comma>", lambda _e: self._toggle_drawer("settings"))
+            self.root.bind("<Control-comma>", lambda _e: self._toggle_drawer("settings"))
         self.root.bind("<Configure>", self._on_root_configure)
         self.root.protocol("WM_DELETE_WINDOW", self.shutdown)
 
@@ -1737,9 +1762,13 @@ class PetWindow:
                 x, y = restored
             self.root.geometry(f"+{x}+{y}")
             self.root.lift()
-            self.root.attributes("-topmost", True)
+            self._set_topmost_attribute(self.topmost_enabled)
             self.root.focus_force()
             self._after(250, self.root.lift)
+
+    def _set_topmost_attribute(self, enabled: bool) -> None:
+        with contextlib.suppress(tk.TclError):
+            self.root.attributes("-topmost", bool(enabled))
 
     def _save_window_layout(self, **extra: object) -> None:
         data: dict[str, object] = {"window_scale": round(self._window_scale, 2)}
@@ -1991,6 +2020,7 @@ class PetWindow:
         for button in (
             self.inventory_button,
             self.options_button,
+            self.settings_button,
             self.mode_button,
             self.pull_button,
             self.close_button,
@@ -2041,6 +2071,7 @@ class PetWindow:
         for button in (
             self.inventory_button,
             self.options_button,
+            self.settings_button,
             self.mode_button,
             self.pull_button,
             self.close_button,
@@ -2052,6 +2083,7 @@ class PetWindow:
             buttons = (
                 self.inventory_button,
                 self.options_button,
+                self.settings_button,
                 self.mode_button,
                 self.pull_button,
                 self.close_button,
@@ -2430,10 +2462,19 @@ class PetWindow:
             self._render_inventory_drawer()
         elif self.drawer_mode == "options":
             self._render_options_drawer()
+        elif self.drawer_mode == "settings":
+            self._render_settings_drawer()
         self._drawer_render_signature = self._current_drawer_signature()
 
     def _current_drawer_signature(self) -> tuple:
         state = _load_persisted_state()
+        if self.drawer_mode == "settings":
+            return (
+                "settings",
+                bool(self.sounds_enabled),
+                bool(self.topmost_enabled),
+                self.view_mode,
+            )
         if self.drawer_mode == "options":
             option_ids = state.get("active_option_ids")
             if not isinstance(option_ids, list):
@@ -2582,6 +2623,82 @@ class PetWindow:
             icon="x",
             min_width=74,
         ).pack(side="left")
+
+    def _render_settings_drawer(self) -> None:
+        self._drawer_header("설정 · 작업 중 방해 줄이기")
+        grid = tk.Frame(self.drawer, bg=PANEL_BG_2)
+        grid.pack(fill="x")
+        grid.columnconfigure(0, weight=1)
+        grid.columnconfigure(1, weight=1)
+
+        controls = [
+            (
+                "sounds",
+                "사운드",
+                bool(self.sounds_enabled),
+                self._toggle_sounds,
+                "♪",
+            ),
+            (
+                "topmost",
+                "항상 위",
+                bool(self.topmost_enabled),
+                self._toggle_topmost,
+                "↑",
+            ),
+        ]
+        for idx, (_key, label, enabled, command, icon) in enumerate(controls):
+            self._make_button(
+                grid,
+                f"{label} {'켜짐' if enabled else '꺼짐'}",
+                command,
+                kind="selected" if enabled else "secondary",
+                icon=icon if enabled else "·",
+                min_width=132,
+                anchor="w",
+            ).grid(row=0, column=idx, sticky="ew", padx=(0, self._s(6)), pady=self._s(2))
+
+        mode_row = tk.Frame(self.drawer, bg=PANEL_BG_2)
+        mode_row.pack(fill="x", pady=(self._s(8), 0))
+        for mode in VIEW_MODES:
+            text, icon = VIEW_MODE_BUTTONS[mode]
+            self._make_button(
+                mode_row,
+                text,
+                lambda next_mode=mode: self._apply_view_mode(next_mode),
+                kind="selected" if self.view_mode == mode else "secondary",
+                icon=icon,
+                min_width=70,
+            ).pack(side="left", padx=(0, self._s(6)))
+
+    def _toggle_sounds(self) -> None:
+        if self.sounds_enabled:
+            self.sounds_enabled = False
+            self._save_window_layout(sounds_enabled=False)
+            self.show_bubble("사운드 꺼짐")
+        else:
+            try:
+                self._sound_paths = _ensure_sounds()
+            except (OSError, wave.Error) as exc:
+                log.warning("sound generation failed: %s", exc)
+                self.show_bubble("사운드 준비 실패")
+                return
+            self.sounds_enabled = True
+            self._save_window_layout(sounds_enabled=True)
+            self.show_bubble("사운드 켜짐")
+            self._play_safe("bubble")
+        if self.drawer_mode == "settings" and self.drawer.winfo_ismapped():
+            self._render_drawer()
+            self._fit_root_to_content()
+
+    def _toggle_topmost(self) -> None:
+        self.topmost_enabled = not self.topmost_enabled
+        self._set_topmost_attribute(self.topmost_enabled)
+        self._save_window_layout(topmost_enabled=self.topmost_enabled)
+        self.show_bubble("항상 위 켜짐" if self.topmost_enabled else "항상 위 꺼짐")
+        if self.drawer_mode == "settings" and self.drawer.winfo_ismapped():
+            self._render_drawer()
+            self._fit_root_to_content()
 
     def _toggle_option_chip(self, option_id: str) -> None:
         var = self._option_vars.get(option_id)

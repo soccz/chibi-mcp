@@ -58,10 +58,16 @@ def test_window_view_mode_prefs_round_trip(tmp_path, monkeypatch):
     assert window._initial_view_mode() == "debug"
     assert window._initial_view_mode("compact") == "compact"
     assert window._initial_window_scale() == 1.42
+    assert window._initial_sounds_enabled() is True
+    assert window._initial_topmost_enabled() is True
     assert window._window_position_from_prefs(screen_w=1000, screen_h=800, win_w=200, win_h=160) == (
         776,
         24,
     )
+    window._save_window_prefs({"sounds_enabled": False, "topmost_enabled": False})
+    assert window._initial_sounds_enabled() is False
+    assert window._initial_sounds_enabled(default=False) is False
+    assert window._initial_topmost_enabled() is False
 
 
 def test_resize_drag_scale_uses_larger_axis():
