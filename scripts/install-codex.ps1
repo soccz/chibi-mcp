@@ -187,7 +187,7 @@ if ($LASTEXITCODE -ne 0) {
 try {
     $check = ($checkJson | ConvertFrom-Json)
     if (-not $check.tkinter) {
-        Write-Warning "Python tkinter is unavailable. MCP tools work, but the floating pet window cannot open. Install Python with Tcl/Tk support, then run: pipx reinstall chibi-mcp"
+        Write-Warning "Python tkinter is unavailable. MCP tools work, but the floating pet window cannot open. Install Python with Tcl/Tk support, then run: pipx install --force `"$RepoUrl`""
     }
 } catch {
     Write-Warning "Could not parse chibi-mcp --check output."

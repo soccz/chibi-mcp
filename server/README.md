@@ -12,10 +12,10 @@ The server has two jobs running together in one process:
 pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 ```
 
-PyPI install, once published:
+Upgrade or refresh an existing install:
 
 ```bash
-pipx install chibi-mcp
+pipx install --force "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 ```
 
 (For local development from this repo, see "Develop" below.)

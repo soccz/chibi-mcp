@@ -268,7 +268,7 @@ On macOS Homebrew Python 3.14, if `python3 -m tkinter` says `_tkinter` is missin
 
 ```bash
 brew install python-tk@3.14
-pipx reinstall chibi-mcp
+pipx install --force "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 chibi-mcp --check
 ```
 

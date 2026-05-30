@@ -25,6 +25,9 @@ Commercial-readiness polish without enabling paid gates.
 - Claude/Codex installers now force `pipx` to reinstall from the GitHub server
   subdirectory, avoiding stale installs that report old versions such as 1.1.0
   as already latest.
+- Tk repair paths and troubleshooting docs now use the same GitHub force
+  reinstall command instead of plain pipx reinstall/upgrade, so recovery
+  cannot return to an old package source.
 - Expanded built-in local ASMR-style sounds: squish, slice, normal gacha, rare gacha, option brush, and bubble pop are generated as free local wav files with no network or paid sound packs.
 - Expanded installer self-repair beyond macOS: Linux bash installers now try Tk repair across `apt`, `dnf`, `yum`, `pacman`, `zypper`, and `apk`; Windows PowerShell installers can bootstrap Python with `winget` before installing `pipx`.
 - Made the Claude/Codex installers more self-healing: they install `pipx` when it is missing, suppress confusing `pipx ensurepath` noise, attempt macOS Homebrew Tk repair automatically in bash, reinstall the pipx app after Tk repair, and re-run the health check.

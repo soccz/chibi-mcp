@@ -341,6 +341,7 @@ root = Path(os.environ["ROOT"])
 shared_required = [
     "setup_pipx",
     "pipx_run install --force \"$REPO_URL\"",
+    "install_server_from_github",
     "repair_linux_tkinter",
     "python3-tkinter",
     "pacman -Sy --noconfirm tk",
@@ -352,6 +353,9 @@ for rel in ["scripts/install-claude.sh", "scripts/install-codex.sh"]:
     text = (root / rel).read_text(encoding="utf-8")
     missing = [item for item in shared_required if item not in text]
     assert not missing, f"{rel} missing {missing}"
+    forbidden = ["pipx_run reinstall chibi-mcp", "pipx_run upgrade chibi-mcp"]
+    found = [item for item in forbidden if item in text]
+    assert not found, f"{rel} must not use stale pipx source commands: {found}"
 
 claude_shell_required = [
     "claude_run",
@@ -376,6 +380,9 @@ for rel in ["scripts/install-claude.ps1", "scripts/install-codex.ps1"]:
     text = (root / rel).read_text(encoding="utf-8")
     missing = [item for item in windows_required if item not in text]
     assert not missing, f"{rel} missing {missing}"
+    forbidden = ["Invoke-Pipx reinstall chibi-mcp", "Invoke-Pipx upgrade chibi-mcp", "pipx reinstall chibi-mcp", "pipx upgrade chibi-mcp"]
+    found = [item for item in forbidden if item in text]
+    assert not found, f"{rel} must not use stale pipx source commands: {found}"
 
 claude_windows_required = [
     "Sync-ClaudePlugin",
@@ -388,6 +395,27 @@ claude_windows_required = [
 text = (root / "scripts/install-claude.ps1").read_text(encoding="utf-8")
 missing = [item for item in claude_windows_required if item not in text]
 assert not missing, f"scripts/install-claude.ps1 missing {missing}"
+
+public_docs = [
+    "README.md",
+    "INSTALL.md",
+    "docs/TROUBLESHOOTING.md",
+    "server/README.md",
+    "CONTRIBUTING.md",
+    "skills/chibi/SKILL.md",
+]
+doc_forbidden = [
+    "pipx reinstall chibi-mcp",
+    "pipx upgrade chibi-mcp",
+    "pipx install chibi-mcp",
+]
+violations = []
+for rel in public_docs:
+    text = (root / rel).read_text(encoding="utf-8")
+    for item in doc_forbidden:
+        if item in text:
+            violations.append(f"{rel}: {item}")
+assert not violations, "docs must not suggest stale pipx source commands: " + ", ".join(violations)
 
 print("installer self-healing ok")
 PY

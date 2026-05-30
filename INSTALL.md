@@ -94,8 +94,11 @@ pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 For upgrades from GitHub:
 
 ```bash
-pipx upgrade chibi-mcp
+pipx install --force "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 ```
+
+If an older install was created from a stale package source, uninstall once and
+install from GitHub again instead of using a plain `pipx upgrade`.
 
 Verify the install:
 
@@ -107,7 +110,7 @@ On macOS, if `python3 -m tkinter` fails with `ModuleNotFoundError: No module nam
 
 ```bash
 brew install python-tk@3.14
-pipx reinstall chibi-mcp
+pipx install --force "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
 chibi-mcp --check
 ```
 

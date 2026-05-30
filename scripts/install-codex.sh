@@ -124,7 +124,7 @@ print_tkinter_help() {
   echo "Fedora/RHEL: sudo dnf install -y python3-tkinter" >&2
   echo "Arch: sudo pacman -S --noconfirm tk" >&2
   echo "openSUSE: sudo zypper --non-interactive install python3-tk" >&2
-  echo "After installing Tk, run: pipx reinstall chibi-mcp" >&2
+  echo "After installing Tk, rerun this installer or run: pipx install --force \"$REPO_URL\"" >&2
 }
 
 repair_linux_tkinter() {
@@ -149,6 +149,13 @@ repair_linux_tkinter() {
   fi
 }
 
+install_server_from_github() {
+  pipx_run install --force "$REPO_URL" || {
+    pipx_run uninstall chibi-mcp || true
+    pipx_run install "$REPO_URL"
+  }
+}
+
 repair_tkinter_if_possible() {
   local brew_formula
 
@@ -161,8 +168,8 @@ repair_tkinter_if_possible() {
     brew_formula="$(homebrew_tk_formula)"
     echo "Attempting macOS Tk repair: brew install $brew_formula" >&2
     if brew install "$brew_formula" || { [ "$brew_formula" != "python-tk" ] && brew install python-tk; }; then
-      echo "Reinstalling chibi-mcp so the pipx venv picks up tkinter..." >&2
-      pipx_run reinstall chibi-mcp || pipx_run install --force "$REPO_URL"
+      echo "Reinstalling chibi-mcp from GitHub so the pipx venv picks up tkinter..." >&2
+      install_server_from_github
       return 0
     fi
   fi
@@ -170,7 +177,7 @@ repair_tkinter_if_possible() {
   if [ "$(uname -s)" = "Linux" ]; then
     echo "Attempting Linux Tk repair with the detected package manager" >&2
     if repair_linux_tkinter; then
-      pipx_run reinstall chibi-mcp || pipx_run install --force "$REPO_URL"
+      install_server_from_github
       return 0
     fi
   fi
@@ -179,7 +186,7 @@ repair_tkinter_if_possible() {
     echo "Attempting fallback Linux Tk repair: apt-get install -y python3-tk" >&2
     run_privileged apt-get update
     run_privileged apt-get install -y python3-tk
-    pipx_run reinstall chibi-mcp || pipx_run install --force "$REPO_URL"
+    install_server_from_github
     return 0
   fi
 
@@ -189,10 +196,7 @@ repair_tkinter_if_possible() {
 install_or_upgrade_server() {
   echo "Installing/upgrading chibi-mcp from GitHub..."
   if pipx_run list --short 2>/dev/null | awk '{print $1}' | grep -qx "chibi-mcp"; then
-    pipx_run install --force "$REPO_URL" || {
-      pipx_run uninstall chibi-mcp || true
-      pipx_run install "$REPO_URL"
-    }
+    install_server_from_github
   else
     pipx_run install "$REPO_URL"
   fi
