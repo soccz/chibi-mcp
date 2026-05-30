@@ -247,7 +247,7 @@ images, and hidden legacy brand-name leaks.
 For maintainer release-tag readiness after pushing `main`:
 
 ```bash
-make release-check TAG=v1.4.25
+make release-check TAG=v1.4.26
 ```
 
 See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md).
@@ -272,14 +272,14 @@ For pyenv Python, install `tk-dev` first, then rebuild the Python version used b
 2. Push `main`, then run:
 
 ```bash
-make release-check TAG=v1.4.25
+make release-check TAG=v1.4.26
 ```
 
 3. Push a tag:
 
 ```bash
-git tag v1.4.25
-git push origin v1.4.25
+git tag v1.4.26
+git push origin v1.4.26
 ```
 
 4. GitHub Actions runs Python checks on Linux, macOS, and Windows; packages the VS Code `.vsix`; and builds desktop artifacts on Linux, macOS, and Windows.
