@@ -1,4 +1,4 @@
-"""FastMCP server — tools Claude Code calls to interact with chibi."""
+"""MCP tool definitions — tools Claude Code calls to interact with chibi."""
 
 from __future__ import annotations
 
@@ -14,8 +14,6 @@ import sys
 import time
 import uuid
 from pathlib import Path
-
-from fastmcp import FastMCP
 
 from .runtime import runtime_file
 from .state import _seconds_until_midnight, get_state
@@ -35,7 +33,25 @@ _DEFAULT_WINDOW_PID_FILE = _WINDOW_PID_FILE
 _WINDOW_READY_TIMEOUT_SECONDS = 5.0
 _WINDOW_VIEW_MODES = {"normal", "debug", "compact"}
 
-mcp = FastMCP("chibi-mcp")
+class _ToolRegistry:
+    """Identity stand-in for FastMCP.
+
+    The runtime MCP transport is the hand-rolled JSON-RPC loop in
+    `__main__.py` (`_TOOL_FUNCTIONS`), so the FastMCP instance was never run —
+    it only hosted the `@mcp.tool()` decorators. An identity decorator
+    preserves every tool function (name, signature, docstring) while avoiding
+    fastmcp's ~600ms import on every entry point. The `@mcp.tool()` markers
+    stay as the documented server.py + __main__.py dual-registration contract.
+    """
+
+    def tool(self, *args, **kwargs):
+        def decorator(fn):
+            return fn
+
+        return decorator
+
+
+mcp = _ToolRegistry()
 
 
 # Limits for incoming MCP tool inputs. Claude may emit large strings — we

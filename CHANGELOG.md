@@ -2,6 +2,17 @@
 
 All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condensed.
 
+## Unreleased
+
+Performance (measured, behavior-preserving):
+- The floating-window status card no longer repaints on identical state pushes
+  (the server pushes state every 2s; idle redraws are now skipped via a render
+  signature). Cuts the largest per-wakeup work item while the pet is idle.
+- Removed the unused `fastmcp` runtime import. Every entry point (CLI,
+  `--check`, `--doctor`, window spawn, MCP server) now starts ~0.5s faster —
+  the hand-rolled JSON-RPC loop already drives the MCP transport, so the
+  FastMCP instance was dead weight.
+
 ## 1.4.40 — 2026-05-31
 
 Hardening, optimizations, commercial readiness, and anti-copycat foundations — all free, no paid gates.

@@ -1525,6 +1525,7 @@ class ChibiStatusCard(tk.Canvas):
         self._connection_state = "connecting"
         self._debug_hud = "상세 준비"
         self._view_mode = "normal"
+        self._last_progress_sig: tuple | None = None
         self._card_width = width
         self._normal_card_height = 122
         self._debug_card_height = 158
@@ -1611,6 +1612,25 @@ class ChibiStatusCard(tk.Canvas):
             self._metric_values = {key: metric_values.get(key) for key in ("CPU", "RAM", "BAT")}
         if metric_alerts is not None:
             self._metric_alerts = set(metric_alerts)
+        # Skip the full canvas redraw when nothing rendered actually changed —
+        # the server pushes state every 2s even at idle. Mirrors ChibiButton's
+        # set_style early-out. _debug_hud is included so debug-view HUD updates
+        # are never wrongly suppressed.
+        sig = (
+            self._progress,
+            self._system_hud,
+            self._system_warn,
+            self._debug_hud,
+            self._rhythm_fraction,
+            tuple(self._metric_values.items()),
+            frozenset(self._metric_alerts),
+            self._mood,
+            self._view_mode,
+            self._card_width,
+        )
+        if sig == self._last_progress_sig:
+            return
+        self._last_progress_sig = sig
         self._draw()
 
     def _rounded_rect(self, x1: int, y1: int, x2: int, y2: int, radius: int, **kwargs) -> int:
