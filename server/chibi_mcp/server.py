@@ -198,6 +198,31 @@ def get_license_status() -> dict:
     }
 
 
+# Memoize the resolved asset dir keyed on its resolution inputs (the env value
+# plus the mtimes of the plugin-cache base dirs). Any change to those inputs —
+# e.g. a test swapping CHIBI_ASSET_DIR, or a plugin install touching the cache —
+# changes the key and re-resolves, so this never serves a stale answer. The win
+# is skipping the recursive `**/assets/meta.json` glob (and the source-tree walk
+# fallback) on repeated tool calls (measured ~318us → ~150us/call on a machine
+# with no plugin cache present).
+_ASSET_DIR_CACHE: tuple[tuple, str | None] | None = None
+
+
+def _asset_dir_cache_key() -> tuple:
+    env = os.environ.get("CHIBI_ASSET_DIR", "")
+    cache_bases = (
+        Path.home() / ".claude" / "plugins" / "cache",
+        Path.home() / ".config" / "claude" / "plugins" / "cache",
+    )
+    base_mtimes = []
+    for base in cache_bases:
+        try:
+            base_mtimes.append(base.stat().st_mtime)
+        except OSError:
+            base_mtimes.append(None)
+    return (env, tuple(base_mtimes))
+
+
 def _resolve_asset_dir() -> str | None:
     """Find the chibi plugin's assets/ directory robustly.
 
@@ -209,7 +234,19 @@ def _resolve_asset_dir() -> str | None:
            most-recently-modified match (latest installed plugin version).
         3. Walk up from this source file to find a sibling assets/meta.json
            (works for source installs and packaged wheel assets).
+
+    Memoized by its resolution inputs; see `_ASSET_DIR_CACHE`.
     """
+    global _ASSET_DIR_CACHE
+    key = _asset_dir_cache_key()
+    if _ASSET_DIR_CACHE is not None and _ASSET_DIR_CACHE[0] == key:
+        return _ASSET_DIR_CACHE[1]
+    resolved = _resolve_asset_dir_uncached()
+    _ASSET_DIR_CACHE = (key, resolved)
+    return resolved
+
+
+def _resolve_asset_dir_uncached() -> str | None:
     env = os.environ.get("CHIBI_ASSET_DIR", "")
     if env and "$" not in env and "{" not in env:
         p = Path(env).expanduser() / "meta.json"

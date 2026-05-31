@@ -16,9 +16,11 @@ def runtime(tmp_path, monkeypatch):
     monkeypatch.delenv("CHIBI_PACK_DIRS", raising=False)
     state.reset_state_for_tests()
     server._CATALOG_PARSE_CACHE.clear()
+    server._ASSET_DIR_CACHE = None
     yield tmp_path
     state.reset_state_for_tests()
     server._CATALOG_PARSE_CACHE.clear()
+    server._ASSET_DIR_CACHE = None
 
 
 def _make_pack(pack_dir: Path, char_id: str = "cloud_chibi") -> Path:

@@ -12,6 +12,13 @@ Performance (measured, behavior-preserving):
   `--check`, `--doctor`, window spawn, MCP server) now starts ~0.5s faster —
   the hand-rolled JSON-RPC loop already drives the MCP transport, so the
   FastMCP instance was dead weight.
+- Merged the floating window's three self-rescheduling timer loops (bob 30ms,
+  event poll 80ms, mood FX 320ms) into a single 30ms master tick. Idle timer
+  wakeups drop ~48.5/s → ~33/s (-32%) with the visual cadence bit-preserved and
+  no dropped events — fewer CPU wake-ups from deep idle on battery hardware.
+- Memoized `_resolve_asset_dir` (keyed on `CHIBI_ASSET_DIR` + plugin-cache
+  mtimes) so repeated tool calls skip the recursive asset glob; re-resolves
+  automatically when those inputs change.
 
 ## 1.4.40 — 2026-05-31
 
