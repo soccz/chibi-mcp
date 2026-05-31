@@ -194,9 +194,7 @@ def _resolve_asset_dir() -> str | None:
         3. Walk up from this source file to find a sibling assets/meta.json
            (works for source installs and packaged wheel assets).
     """
-    import os as _os
-
-    env = _os.environ.get("CHIBI_ASSET_DIR", "")
+    env = os.environ.get("CHIBI_ASSET_DIR", "")
     if env and "$" not in env and "{" not in env:
         p = Path(env).expanduser() / "meta.json"
         if p.exists():
@@ -223,6 +221,74 @@ def _resolve_asset_dir() -> str | None:
     return None
 
 
+_CATALOG_PARSE_CACHE: dict[str, tuple[float, dict]] = {}
+
+
+def _load_meta_cached(meta_path: Path) -> dict:
+    """Parse meta.json, memoized by (path, mtime) so repeated catalog/options
+    tool calls skip re-reading and re-parsing. Re-reads when the file changes."""
+    key = str(meta_path)
+    mtime = meta_path.stat().st_mtime
+    cached = _CATALOG_PARSE_CACHE.get(key)
+    if cached is not None and cached[0] == mtime:
+        return cached[1]
+    data = json.loads(meta_path.read_text(encoding="utf-8"))
+    _CATALOG_PARSE_CACHE[key] = (mtime, data)
+    return data
+
+
+def _pack_roots() -> list[Path]:
+    """Directories holding installed/registered creator packs (each has meta.json).
+
+    Sources: the `CHIBI_PACK_DIRS` env (os.pathsep-separated) plus every
+    subdirectory of `~/.chibi-mcp/packs/` that `chibi-pack install` populated.
+    """
+    roots: list[Path] = []
+    for part in os.environ.get("CHIBI_PACK_DIRS", "").split(os.pathsep):
+        part = part.strip()
+        if part:
+            candidate = Path(part).expanduser()
+            if (candidate / "meta.json").exists():
+                roots.append(candidate)
+    packs_home = runtime_file("packs")
+    if packs_home.is_dir():
+        for child in sorted(packs_home.iterdir()):
+            if child.is_dir() and (child / "meta.json").exists():
+                roots.append(child)
+    return roots
+
+
+def _load_pack_catalog() -> dict:
+    """Merge free characters/options from installed creator packs.
+
+    Each item is tagged with its own `pack_dir` (used as the trusted image root
+    by `_resolve_catalog_image`) and `source: "creator"`. Malformed packs are
+    skipped; official ids win over pack ids (handled by the caller).
+    """
+    characters: list[dict] = []
+    options: list[dict] = []
+    for root in _pack_roots():
+        try:
+            meta = json.loads((root / "meta.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            continue
+        if not isinstance(meta, dict):
+            continue
+        for ch in meta.get("characters", []):
+            # Local pack content is visible regardless of label; only hidden
+            # "upcoming" placeholders are skipped. No tier gates anything paid.
+            if isinstance(ch, dict) and ch.get("tier") != "upcoming" and _CHAR_ID_RE.match(
+                str(ch.get("id", ""))
+            ):
+                characters.append({**ch, "pack_dir": str(root), "source": "creator"})
+        for opt in meta.get("options", []):
+            if isinstance(opt, dict) and opt.get("tier") != "upcoming" and _CHAR_ID_RE.match(
+                str(opt.get("id", ""))
+            ):
+                options.append({**opt, "pack_dir": str(root), "source": "creator"})
+    return {"characters": characters, "options": options}
+
+
 @mcp.tool()
 def get_catalog() -> dict:
     """Return the released character catalog.
@@ -231,8 +297,6 @@ def get_catalog() -> dict:
     Resolves the assets/ directory via `$CHIBI_ASSET_DIR`, the Claude Code
     plugin cache glob, then a source-tree walk — in that order.
     """
-    import json
-
     from .license import filter_catalog_by_tier, verify_license
 
     asset_dir = _resolve_asset_dir()
@@ -251,7 +315,7 @@ def get_catalog() -> dict:
 
     meta_path = Path(asset_dir) / "meta.json"
     try:
-        catalog = json.loads(meta_path.read_text(encoding="utf-8"))
+        catalog = _load_meta_cached(meta_path)
     except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
         return {
             "error": f"meta.json unreadable at {meta_path}: {type(e).__name__}: {e}",
@@ -260,13 +324,23 @@ def get_catalog() -> dict:
         }
     status = verify_license()
     filtered = filter_catalog_by_tier(catalog, status)
+    chars = list(filtered.get("characters", []))
+    opts = list(filtered.get("options", []))
+    official_char_ids = {c.get("id") for c in chars}
+    official_opt_ids = {o.get("id") for o in opts}
+    packs = _load_pack_catalog()
+    pack_chars = [c for c in packs["characters"] if c.get("id") not in official_char_ids]
+    pack_opts = [o for o in packs["options"] if o.get("id") not in official_opt_ids]
+    chars.extend(pack_chars)
+    opts.extend(pack_opts)
     return {
         "tier": status.tier,
         "total_in_tier": len(filtered.get("characters", [])),
         "total_full": len(catalog.get("characters", [])),
-        "total_options": len(filtered.get("options", [])),
-        "characters": filtered.get("characters", []),
-        "options": filtered.get("options", []),
+        "total_options": len(opts),
+        "creator_characters": len(pack_chars),
+        "characters": chars,
+        "options": opts,
         "asset_dir": asset_dir,
     }
 
@@ -332,7 +406,10 @@ def clear_active_options() -> dict:
 
 
 def _resolve_catalog_image(asset_dir: str, item: dict, subdir: str) -> Path | None:
-    asset_root = Path(asset_dir).resolve()
+    # Creator-pack items carry their own trusted root via `pack_dir`; official
+    # items resolve against the shared asset_dir. Either way the image must stay
+    # inside that root (path-traversal guard below).
+    asset_root = Path(item.get("pack_dir") or asset_dir).resolve()
     item_id = str(item.get("id", "")).strip()
     candidates: list[Path] = []
     image_value = item.get("image")
@@ -378,8 +455,16 @@ def _window_log_file() -> Path:
 
 
 def _window_ws_url() -> str:
-    host = os.environ.get("CHIBI_WS_HOST", "127.0.0.1")
-    port = os.environ.get("CHIBI_WS_PORT", "9876")
+    # Validate the port so a bad CHIBI_WS_PORT falls back to 9876 — the same
+    # value the WS server binds — keeping the window URL and the server in sync.
+    host = os.environ.get("CHIBI_WS_HOST", "127.0.0.1") or "127.0.0.1"
+    raw_port = os.environ.get("CHIBI_WS_PORT", "9876")
+    try:
+        port = int(raw_port)
+        if not (1 <= port <= 65535):
+            raise ValueError
+    except (TypeError, ValueError):
+        port = 9876
     return f"ws://{host}:{port}"
 
 
@@ -610,10 +695,12 @@ def open_pet_window(character_id: str | None = None, view_mode: str | None = Non
     startup_failure = _window_startup_failure(proc, ready_path, log_path)
     with contextlib.suppress(OSError):
         log_fh.close()
-    if startup_failure is not None:
-        return startup_failure
+    # Clean up the unique ready-file on every path (success or failure) so
+    # timed-out / crashed launches don't leave window-ready-*.json behind.
     with contextlib.suppress(OSError):
         ready_path.unlink(missing_ok=True)
+    if startup_failure is not None:
+        return startup_failure
 
     pid_file_written = True
     pid_file_warning = None
@@ -682,8 +769,10 @@ def pull_gacha() -> dict:
     Tickets are auto-granted: +1 per 100 Claude tool calls and +1 per 10
     slices. Use `add_ticket` for manual grants (debug / promo).
 
-    Rarity weights: ★★★★★ 1%, ★★★★ 5%, ★★★ 24%, ★★ 70%. Newly pulled
-    character becomes your active chibi if you didn't have one.
+    Rarity weights: ★★★★★ 1%, ★★★★ 5%, ★★★ 24%, ★★ 70%. Only rarities that
+    have released characters can be drawn — the current starter roster is all
+    ★★, so the higher-rarity odds apply as more of the 29 chibis are released.
+    Newly pulled character becomes your active chibi if you didn't have one.
     """
     catalog = get_catalog()
     chars = catalog.get("characters", [])
@@ -695,14 +784,17 @@ def pull_gacha() -> dict:
     # Broadcast the fresh state immediately so the window shows the pulled
     # character/inventory without waiting for the periodic state tick.
     broadcaster = get_broadcaster()
-    sound_name = "rare" if int(result["drawn"].get("rarity", 0)) >= 4 else "gacha"
+    drawn = result["drawn"]
+    rarity = drawn.get("rarity") or 0
+    sound_name = "rare" if int(rarity) >= 4 else "gacha"
     _broadcast_sound(sound_name)
     result["broadcasted"] = _broadcast_state()
+    name_ko = drawn.get("name_ko") or drawn.get("id") or "???"
     _fire_and_forget(
         broadcaster.broadcast(
             {
                 "type": "say",
-                "text": f"✨ {result['drawn']['name_ko']} ★{result['drawn']['rarity']} 등장!",
+                "text": f"✨ {name_ko} ★{int(rarity)} 등장!",
             }
         )
     )

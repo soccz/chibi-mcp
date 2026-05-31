@@ -51,6 +51,42 @@ git push origin v1.4.19
 GitHub Actions will build the wheel, source archive, VS Code `.vsix`, desktop
 artifacts, and `SHA256SUMS.txt`, then create the GitHub Release.
 
+## Enabling PyPI publishing (one-time, optional)
+
+The `chibi-mcp` PyPI project **already exists and is owned by the maintainer**
+(published through `1.1.0` on 2026-05-28). It is currently **stale**: the repo
+is at a newer version and the latest PyPI release still shows the old
+food-themed description. Automated publishing via CI is **off by default**
+(`vars.PUBLISH_PYPI` unset). The release CI ships a `pypi-publish` job using PyPI
+**Trusted Publishing** (OIDC, no API token, PEP 740 attestations automatic).
+
+> Publishing the current (clean-branding) version also **refreshes the public
+> PyPI description**, replacing the stale food-themed text shown on the project
+> page. The actual publish is an account action only the maintainer can perform.
+
+To enable automated CI publishing:
+
+1. **PyPI — add a Trusted Publisher to the existing `chibi-mcp` project**
+   (pypi.org → *Your projects* → `chibi-mcp` → *Manage* → *Publishing* → *Add*).
+   For a brand-new project name use *Add a pending publisher* instead. Values:
+   - PyPI Project Name: `chibi-mcp`
+   - Owner: `soccz`
+   - Repository name: `chibi-mcp`
+   - Workflow name: `build.yml`
+   - Environment name: *(leave blank — the job uses no GitHub Environment)*
+2. **GitHub — flip the variable**: repo *Settings → Secrets and variables →
+   Actions → Variables → New repository variable*: `PUBLISH_PYPI` = `true`.
+3. **Push a version tag** (`git tag v1.4.39 && git push origin v1.4.39`). The
+   `pypi-publish` job builds `chibi-mcp` (sdist + wheel) and uploads it with
+   build-provenance attestations attached automatically.
+
+Verify after the first publish: `pipx install chibi-mcp` works, and the PyPI
+project page shows the release with provenance. Adding `pipx install chibi-mcp`
+to the README as a shorter install path is then an optional maintainer choice.
+
+This is an additional public release channel; per SPEC.md it is a maintainer
+decision, currently recorded as pending.
+
 ## After Publish
 
 Verify:

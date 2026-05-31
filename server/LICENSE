@@ -19,3 +19,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+This MIT license applies to the source code. Official artwork, character
+images, option-layer PNGs, social-preview/launch images, and brand
+presentation under `assets/`, `server/chibi_mcp/assets/`, and
+`vscode-ext/resources/` are NOT licensed under MIT; see OFFICIAL_ASSET_TERMS.md
+for their usage terms.

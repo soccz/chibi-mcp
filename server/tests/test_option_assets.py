@@ -62,3 +62,44 @@ def test_free_option_assets_match_across_install_surfaces():
                 assert image.mode == "RGBA", image_path
                 alpha = image.getchannel("A")
                 assert alpha.getbbox() is not None, image_path
+
+
+EXPECTED_CHARACTERS = {
+    "white_tteok",
+    "garaetteok_short",
+    "baekseolgi",
+    "green_grape",
+    "mochi",
+    "melon",
+    "cheddar",
+    "toast",
+}
+
+
+def test_free_character_assets_match_across_install_surfaces():
+    """Free character art must be identical and resolvable across all three
+    install surfaces. Guards against the meta `image` field drifting away from
+    the actual on-disk PNG location (regression gate for the flat-path fix)."""
+    expected_ids: list[str] | None = None
+
+    for asset_root in ASSET_ROOTS:
+        catalog = json.loads((asset_root / "meta.json").read_text(encoding="utf-8"))
+        characters = [c for c in catalog["characters"] if c.get("tier") == "free"]
+        ids = [c["id"] for c in characters]
+
+        assert set(ids) >= EXPECTED_CHARACTERS, asset_root
+        assert len(ids) >= 8, asset_root
+        if expected_ids is None:
+            expected_ids = ids
+        else:
+            assert ids == expected_ids, asset_root
+
+        for character in characters:
+            image = character.get("image") or f"{character['id']}.png"
+            image_path = asset_root / image
+            assert image_path.exists(), image_path
+            with Image.open(image_path) as img:
+                assert img.size == (512, 512), image_path
+                assert img.mode == "RGBA", image_path
+                alpha = img.getchannel("A")
+                assert alpha.getbbox() is not None, image_path

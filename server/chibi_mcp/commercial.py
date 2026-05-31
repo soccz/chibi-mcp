@@ -19,6 +19,7 @@ from typing import Any
 from PIL import Image, ImageDraw, ImageFont
 
 from . import __version__
+from .runtime import runtime_file
 from .server import _resolve_asset_dir
 from .state import STATE_FILE, get_state
 from .ws_server import DEFAULT_WS_HOST, DEFAULT_WS_PORT
@@ -75,6 +76,13 @@ def pack_main(argv: list[str] | None = None) -> int:
     preview.add_argument("--out", type=Path, help="Output HTML path; defaults to <pack_dir>/preview.html")
     preview.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
 
+    install = sub.add_parser(
+        "install",
+        help="Validate a pack, copy it into ~/.chibi-mcp/packs/, and own its characters",
+    )
+    install.add_argument("pack_dir", type=Path)
+    install.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+
     args = parser.parse_args(argv)
     if args.command == "init":
         result = init_pack(
@@ -122,7 +130,56 @@ def pack_main(argv: list[str] | None = None) -> int:
             print(f"preview: {out}")
         return 0
 
+    if args.command == "install":
+        result = install_pack(args.pack_dir)
+        if args.json:
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        elif result["ok"]:
+            print(f"installed: {result['installed']}")
+            if result.get("owned"):
+                print("now own: " + ", ".join(result["owned"]))
+            print("open it: set_active_character <id> then chibi-mcp --open")
+        else:
+            print(result.get("error", "install failed"), file=sys.stderr)
+        return 0 if result["ok"] else 1
+
     return 2
+
+
+def install_pack(pack_dir: Path) -> dict:
+    """Validate a pack, copy it into ~/.chibi-mcp/packs/<id>/, and own its
+    (non-upcoming) characters with no ticket cost. Refuses an invalid pack."""
+    pack_dir = Path(pack_dir).expanduser()
+    result = validate_pack(pack_dir)
+    if not result.get("ok"):
+        return {
+            "ok": False,
+            "error": "pack failed validation; run `chibi-pack validate` and fix it first",
+            "validation": result,
+        }
+    pack_id = re.sub(r"[^a-z0-9_-]", "-", pack_dir.resolve().name.lower()).strip("-") or "pack"
+    dest = runtime_file("packs") / pack_id
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(pack_dir, dest)
+    state = get_state()
+    owned: list[str] = []
+    for ch in result.get("characters", []):
+        cid = str(ch.get("id", ""))
+        if not CHARACTER_ID_RE.match(cid):
+            continue
+        if (ch.get("tier") or "free") == "upcoming":
+            continue
+        state.grant_character(cid, ch.get("name_ko"))
+        owned.append(cid)
+    return {
+        "ok": True,
+        "installed": str(dest),
+        "pack_id": pack_id,
+        "owned": owned,
+        "characters": [c.get("id") for c in result.get("characters", [])],
+    }
 
 
 def share_main(argv: list[str] | None = None) -> int:

@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![No telemetry](https://img.shields.io/badge/telemetry-none-blue.svg)](SECURITY.md)
 
-`chibi-mcp` adds a local desktop pet, **chibi**, to Claude Code, Codex, and VS Code. It reacts to CPU/RAM/battery/idle state, tracks coding-session rhythm, collects characters, applies free visual option layers, and can be opened from an MCP client.
+`chibi-mcp` adds a local desktop pet, **chibi**, to Claude Code, Codex, and VS Code that turns your machine's own state — CPU, RAM, battery, idle — into a character's mood. Other coding pets animate what your *agent* is doing; **chibi shows how your *machine* is doing** — then lets you collect characters and apply free visual layers across a coding session.
 
 It is local-first: no telemetry, localhost WebSocket by default, open-source code, and `chibi-mcp --check` for install diagnostics.
 
@@ -16,30 +16,30 @@ It is local-first: no telemetry, localhost WebSocket by default, open-source cod
   <img src="docs/demo.gif?v=1.4.39-chibi" alt="animated chibi-mcp demo showing install commands, local status, and the floating pet window" width="720">
 </p>
 
-## Public Beta Status
+> **Public beta** — free installs and permissioned pilots. Maintainer release steps live in [For maintainers](#for-maintainers); the go/no-go checklist is in [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md).
 
-`chibi-mcp` is ready for free public beta installs and permissioned pilots. It is not a paid character store: no paid packs, no paid random pulls, no Sponsors tiers, no license keys, and no team pricing are enabled.
+## Why chibi is different
 
-Maintainer preflight before a release tag:
+Most desktop pets just animate a character, and agent overlays mirror what your AI is typing. chibi reflects **your own machine** — CPU, RAM, battery, idle — and your **coding-session rhythm**, as a collectible character with local ASMR-style sounds and a Korean dessert / artisan-keycap aesthetic.
 
-```bash
-xvfb-run -a make public-beta-check
-```
+| | chibi | Typical desktop pets (e.g. Shimeji) | Agent-activity overlays |
+|---|---|---|---|
+| Mood driven by your machine (CPU/RAM/battery/idle) | ✅ | ❌ | ❌ |
+| Reacts to Claude/Codex tool-call rhythm | ✅ | ❌ | ⚠️ partial |
+| Collect characters + free option layers | ✅ | ⚠️ skins only | ❌ |
+| Local ASMR-style sounds (generated, no download) | ✅ | ❌ | ❌ |
+| MCP-native across Claude Code / Codex / VS Code | ✅ | ❌ | ⚠️ varies |
+| No telemetry · localhost-only · open source | ✅ | ⚠️ varies | ⚠️ varies |
+| One-command install across three clients | ✅ | ❌ | ⚠️ varies |
 
-Release-tag preflight after pushing `main`:
-
-```bash
-make release-check TAG=v1.4.39
-```
-
-See [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist and [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging.
+The trends chibi builds on — slime ASMR, Korean artisan keycaps, chibi style — are cited with sources in [SPEC.md](SPEC.md).
 
 ## What You Get
 
 - A local MCP server for Claude Code and Codex.
 - A floating desktop pet window for Linux, macOS, and Windows desktop sessions.
 - A VS Code sidebar extension packaged as a `.vsix`.
-- 8 starter characters and 12 free option layers.
+- 8 starter characters available now — 29 total, more dropping soon — plus 12 free option layers.
 - Gacha, inventory, rename, active character, and option selection tools.
 - Floating-window controls for inventory, option customization, gacha pulls,
   settings, size, connection status, and close actions.
@@ -295,7 +295,7 @@ bridge for save/task/debug reactions.
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/option-showcase.png?v=1.4.39-chibi" alt="chibi-mcp free option layers including syrup, glaze, powder, seeds, petals, resin stars, and sauce" width="720">
+  <img src="docs/screenshots/option-showcase.png?v=1.4.39-chibi" alt="chibi-mcp free option layers including amber glaze, honey glaze, powder, seeds, petals, resin stars, and sauce" width="720">
 </p>
 
 ## Troubleshooting
@@ -462,12 +462,30 @@ Useful docs:
 - [GITHUB_STAR_STRATEGY.md](GITHUB_STAR_STRATEGY.md) — launch and repository growth plan
 - [docs/LAUNCH_KIT.md](docs/LAUNCH_KIT.md) — launch/distribution copy
 
+## For maintainers
+
+Preflight before a release tag (under a virtual display if headless):
+
+```bash
+xvfb-run -a make public-beta-check
+```
+
+Release-tag preflight after pushing `main`:
+
+```bash
+make release-check TAG=v1.4.39
+```
+
+See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for tagging and [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md) for the go/no-go checklist.
+
 ## Not Affiliated With Anthropic
 
-`chibi-mcp` is an independent open-source project. The `claude` CLI and MCP are Anthropic technologies; this project is not endorsed by Anthropic.
+`chibi-mcp` is an independent open-source project. The `claude` CLI and MCP are Anthropic technologies; this project is not endorsed by Anthropic. **chibi** is an independent original character series and is not Anthropic's Claude mascot.
 
 ## License
 
 Code is MIT. Official artwork and project presentation have separate usage terms
 in [OFFICIAL_ASSET_TERMS.md](OFFICIAL_ASSET_TERMS.md). Asset provenance and pack
 submission rules are documented in [ASSET_RIGHTS.md](ASSET_RIGHTS.md).
+
+`chibi` and `chibi-mcp` are unregistered (common-law) trademarks of this project; see [TRADEMARK.md](TRADEMARK.md) for brand and fork-naming guidance.

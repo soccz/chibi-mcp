@@ -2,6 +2,8 @@
 
 MCP server for **chibi** — a local desktop character that visualizes Claude Code or Codex session state.
 
+> Code is MIT; bundled official artwork has separate terms (see `OFFICIAL_ASSET_TERMS.md`). `chibi` and `chibi-mcp` are unregistered trademarks of the project.
+
 The server has two jobs running together in one process:
 1. **MCP server (stdio)** — Claude Code / Codex calls these tools to interact with chibi.
 2. **WebSocket server (`ws://127.0.0.1:9876`)** — pushes state snapshots and events to the desktop app.

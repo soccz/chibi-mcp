@@ -45,6 +45,10 @@ characters/img*_nobg.png
 # server-rs Rust build artifacts
 server-rs/target/
 
+# Harness intermediate artifacts (chibi-dev orchestrator scratch)
+_workspace/
+_workspace_prev/
+
 # Pro tier source assets — local only, not part of the public repo.
 # Move/symlink here to test the full 29-character set locally.
 characters/

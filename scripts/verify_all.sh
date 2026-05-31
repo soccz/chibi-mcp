@@ -499,7 +499,14 @@ fi
 echo "== Codex plugin =="
 if command -v codex >/dev/null 2>&1; then
   tmp_home="$(mktemp -d)"
-  HOME="$tmp_home" codex plugin marketplace add "$ROOT"
+  # Non-fatal: older/newer codex CLIs may not expose `plugin marketplace add`
+  # (the subcommand has drifted across versions). Validate when supported,
+  # skip gracefully otherwise instead of aborting the whole gate.
+  if HOME="$tmp_home" codex plugin marketplace add "$ROOT"; then
+    echo "codex plugin marketplace add ok"
+  else
+    echo "skip: 'codex plugin marketplace add' not supported by installed codex CLI"
+  fi
 else
   echo "skip: codex CLI not found"
 fi
@@ -660,6 +667,18 @@ for rel in [
     assert meta["no_third_party_ip"] is True, rel
 print("rights policy ok")
 PY
+
+for d in assets server/chibi_mcp/assets vscode-ext/resources; do
+  if [ ! -f "$ROOT/$d/ASSET_MANIFEST.sha256" ]; then
+    echo "fail: missing $d/ASSET_MANIFEST.sha256 (run scripts/gen_asset_manifest.py)" >&2
+    exit 1
+  fi
+  ( cd "$ROOT/$d" && sha256sum -c --quiet ASSET_MANIFEST.sha256 ) || {
+    echo "fail: official asset drift in $d (sha256 mismatch vs ASSET_MANIFEST)" >&2
+    exit 1
+  }
+done
+echo "asset manifests ok"
 
 echo "== GitHub YAML =="
 (

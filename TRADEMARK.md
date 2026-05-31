@@ -13,6 +13,16 @@ The following identify the official project:
 
 The MIT code license does not grant permission to imply official endorsement, sponsorship, or ownership of these brand signals.
 
+## Trademark Status
+
+`chibi` and `chibi-mcp` are currently **unregistered (common-law) trademarks** used in commerce by this project. In practice:
+
+- The project may use the **™** symbol, but **not ®** — ® is reserved for marks registered with a trademark office (USPTO in the US, KIPO in Korea), and no such registration exists yet.
+- Common-law rights arise from actual use and are limited to the goods/services and regions of that use; the burden of proof is on the project.
+- Unfair-competition / user-confusion claims (e.g. US Lanham Act §43(a)) can rest on common-law use. Trademark rights are per-country, so US and Korea would require separate filings.
+
+This is an honest statement of the current position — not a claim of registered rights, and not legal advice.
+
 ## Allowed Uses
 
 You may use the names `chibi-mcp` and `chibi` to:
@@ -21,6 +31,8 @@ You may use the names `chibi-mcp` and `chibi` to:
 - describe compatibility, such as "pack for chibi-mcp";
 - make tutorials, bug reports, screenshots, reviews, or integration notes;
 - identify an obvious fork when the fork is clearly labeled as unofficial.
+
+These are examples of **nominative fair use**: use the name only as much as needed to identify the project, take no more of the mark than necessary, and do nothing that implies sponsorship or endorsement.
 
 ## Uses That Need Permission
 

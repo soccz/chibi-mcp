@@ -25,6 +25,7 @@ import logging
 import math
 import os
 import queue
+import random
 import struct
 import subprocess
 import sys
@@ -715,9 +716,7 @@ def _click_reaction_for_payload(mood: str, payload: dict) -> str:
     if mood in {"happy", "lonely", "surprised"}:
         return _mood_reason_for_payload(mood, payload)
     pool = CLICK_PHRASES_BY_MOOD.get(mood, CLICK_PHRASES_BY_MOOD["calm"])
-    import random as _r
-
-    return _r.choice(pool)
+    return random.choice(pool)
 
 
 def _pull_signature(payload: dict) -> str | None:
@@ -2012,13 +2011,19 @@ class PetWindow:
         self.event_queue: queue.Queue = queue.Queue(maxsize=64)
         self.stop_event = threading.Event()
 
-        # Generate sounds on demand
+        # Generate sounds in the background so cold synth (~180ms) doesn't
+        # block the window from appearing. _play_safe() no-ops until paths
+        # arrive; dict reassignment is atomic under the GIL.
         self._sound_paths: dict[str, Path] = {}
         if self.sounds_enabled:
-            try:
-                self._sound_paths = _ensure_sounds()
-            except (OSError, wave.Error) as e:
-                log.warning("sound generation failed: %s", e)
+
+            def _load_sounds() -> None:
+                try:
+                    self._sound_paths = _ensure_sounds()
+                except (OSError, wave.Error) as e:
+                    log.warning("sound generation failed: %s", e)
+
+            threading.Thread(target=_load_sounds, daemon=True).start()
 
         self.root = tk.Tk()
         self.root.title(f"chibi — {name}")
@@ -3405,10 +3410,10 @@ class PetWindow:
         self._bob_phase += BOB_TICK_MS / 1000.0
         amplitude, hz = MOOD_BOB_PROFILES.get(self.current_mood, (BOB_AMPLITUDE_PX, BOB_HZ))
         offset = int(self._s(amplitude) * math.sin(2 * math.pi * hz * self._bob_phase))
-        self.canvas.coords(
-            self._image_id, self._canvas_center[0], self._canvas_center[1] + offset
-        )
         if offset != self._last_bob_offset:
+            self.canvas.coords(
+                self._image_id, self._canvas_center[0], self._canvas_center[1] + offset
+            )
             with contextlib.suppress(tk.TclError):
                 self.canvas.move("mood_fx_bob", 0, offset - self._last_bob_offset)
             self._last_bob_offset = offset
@@ -3498,20 +3503,16 @@ class PetWindow:
     def _schedule_idle_bubble(self) -> None:
         if self.stop_event.is_set():
             return
-        import random as _r
-
-        delay = _r.randint(IDLE_BUBBLE_MIN_MS, IDLE_BUBBLE_MAX_MS)
+        delay = random.randint(IDLE_BUBBLE_MIN_MS, IDLE_BUBBLE_MAX_MS)
         self._after(delay, self._idle_bubble_tick)
 
     def _idle_bubble_tick(self) -> None:
         if self.stop_event.is_set():
             return
-        import random as _r
-
         # Skip if a bubble is already showing — don't stack.
         if self._bubble_hide_after is None:
             pool = IDLE_PHRASES_BY_MOOD.get(self.current_mood, ["..."])
-            self.show_bubble(_r.choice(pool))
+            self.show_bubble(random.choice(pool))
         self._schedule_idle_bubble()
 
     def _play_safe(self, key: str) -> None:

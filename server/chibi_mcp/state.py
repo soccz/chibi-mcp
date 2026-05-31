@@ -37,6 +37,7 @@ class Mood(StrEnum):
 DEFAULT_SLICE_INTERVAL = 10
 LONELY_IDLE_SECONDS = 30 * 60  # 30 minutes
 HAPPY_WINDOW_SECONDS = 30
+JOYFUL_WINDOW_SECONDS = 8  # celebratory burst right after a milestone slice
 SURPRISE_DELTA = 30.0
 
 # Gacha config
@@ -67,6 +68,7 @@ class ChibiState:
     slices_today: int = 0
     started_at: float = field(default_factory=time.time)
     last_call_at: float | None = None
+    last_slice_at: float | None = None
     last_activity_source: str | None = None
     last_cpu: float = 0.0
 
@@ -108,10 +110,12 @@ class ChibiState:
     def _save_data(data: dict) -> None:
         """Write a pre-snapshotted dict. Caller must NOT hold the instance lock.
 
-        Serialized via _SAVE_LOCK so concurrent callers (e.g. record_call
-        granting a ticket while pull_gacha persists an inventory change) don't
-        race on tmp file write + rename, which would silently lose one of
-        the snapshots (last-write-wins).
+        Serialized via _SAVE_LOCK so concurrent writers don't corrupt the file
+        by interleaving tmp-write + rename. NOTE: this does NOT prevent a stale
+        snapshot from overwriting a newer one (last-write-wins) — each snapshot
+        is taken before _SAVE_LOCK is acquired. Harmless today because the
+        single asyncio loop + synchronous tools serialize all mutations;
+        revisit if the server ever becomes multi-threaded.
         """
         with _SAVE_LOCK:
             try:
@@ -172,6 +176,7 @@ class ChibiState:
                 self.calls_since_slice = 0
                 self.slices_today += 1
                 sliced = True
+                self.last_slice_at = self.last_call_at
                 if self.slices_today % 10 == 0:
                     self.tickets += TICKETS_PER_10_SLICES
                     ticket_grants += TICKETS_PER_10_SLICES
@@ -215,7 +220,7 @@ class ChibiState:
         """Weighted pull from given catalog list. Mutates inventory & saves.
 
         Returns:
-            { "drawn": {id, name_ko, rarity}, "was_free": bool, "tickets": N, "owned_count": M }
+            { "drawn": {id, name_ko, rarity, category}, "was_free": bool, "tickets": N, "owned_count": M }
             or { "drawn": None, "reason": "..." } if no tickets and no free pull
         """
         if not characters:
@@ -234,7 +239,10 @@ class ChibiState:
                     "next_free_in_seconds": _seconds_until_midnight(),
                 }
 
-            # Build weighted pool — weight = RARITY_WEIGHTS[rarity] / N_in_bucket
+            # Two-stage draw: pick a rarity weighted by RARITY_WEIGHTS (only
+            # among rarities present in the catalog), then a uniform character
+            # within that bucket → effective per-character odds =
+            # RARITY_WEIGHTS[r] / N_in_bucket.
             buckets: dict[int, list[dict]] = {}
             for c in characters:
                 buckets.setdefault(int(c.get("rarity", 2)), []).append(c)
@@ -381,12 +389,39 @@ class ChibiState:
         self._save_data(save_data)
         return result
 
+    def grant_character(self, character_id: str, nickname: str | None = None) -> dict:
+        """Own a character without spending a ticket — used when installing a
+        local creator pack. No-op if already owned; becomes active if none set."""
+        save_data = None
+        with self._lock:
+            entry = self.inventory.get(character_id)
+            if entry is None:
+                entry = {
+                    "count": 1,
+                    "nickname": nickname or character_id,
+                    "first_rolled_at": datetime.now().isoformat(),
+                }
+                self.inventory[character_id] = entry
+                if self.active_character_id is None:
+                    self.active_character_id = character_id
+                save_data = self._persisted_dict()
+            result = {
+                "ok": True,
+                "character_id": character_id,
+                "count": entry["count"],
+                "active_character_id": self.active_character_id,
+            }
+        if save_data is not None:
+            self._save_data(save_data)
+        return result
+
     # ── Mood derivation ──────────────────────────────────────────────────────
 
     def compute_mood(self, snap: SystemSnapshot) -> Mood:
         now = time.time()
         with self._lock:
             last_call = self.last_call_at
+            last_slice = self.last_slice_at
             last_cpu = self.last_cpu
             self.last_cpu = snap.cpu_percent
 
@@ -396,6 +431,8 @@ class ChibiState:
             and snap.battery_plugged is False
         ):
             return Mood.DROWSY
+        if last_slice is not None and (now - last_slice) <= JOYFUL_WINDOW_SECONDS:
+            return Mood.JOYFUL
         if snap.cpu_percent - last_cpu >= SURPRISE_DELTA and snap.cpu_percent > 50:
             return Mood.SURPRISED
         if snap.cpu_percent >= 80:

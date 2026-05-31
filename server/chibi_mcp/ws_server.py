@@ -25,12 +25,13 @@ from collections.abc import Callable
 from websockets.asyncio.server import ServerConnection, serve
 from websockets.exceptions import ConnectionClosed
 
+from .runtime import DEFAULT_WS_HOST, DEFAULT_WS_PORT
 from .state import get_state
 
 log = logging.getLogger(__name__)
 
-DEFAULT_WS_HOST = "127.0.0.1"
-DEFAULT_WS_PORT = 9876
+# DEFAULT_WS_HOST / DEFAULT_WS_PORT are re-exported from .runtime so existing
+# `from .ws_server import DEFAULT_WS_HOST, DEFAULT_WS_PORT` callers keep working.
 STATE_PUSH_INTERVAL_SECONDS = 2.0  # snapshot push cadence
 
 
@@ -114,11 +115,11 @@ async def _handle_client(ws: ServerConnection) -> None:
     broadcaster = get_broadcaster()
     await broadcaster.register(ws)
 
-    # Send current state immediately on connect
-    state = get_state()
-    await ws.send(json.dumps({"type": "state", "payload": state.snapshot()}))
-
     try:
+        # Send current state immediately on connect
+        state = get_state()
+        await ws.send(json.dumps({"type": "state", "payload": state.snapshot()}))
+
         async for raw in ws:
             # Inbound: a non-window client (chibi-say CLI, claude-code hooks)
             # publishes a say event that we forward to all windows.
@@ -170,7 +171,9 @@ async def _state_push_loop() -> None:
     state = get_state()
     while True:
         try:
-            await broadcaster.broadcast({"type": "state", "payload": state.snapshot()})
+            # Skip building a psutil snapshot when nobody is listening.
+            if broadcaster._clients:
+                await broadcaster.broadcast({"type": "state", "payload": state.snapshot()})
         except Exception:
             log.exception("state push failed")
         await asyncio.sleep(STATE_PUSH_INTERVAL_SECONDS)
@@ -178,6 +181,13 @@ async def _state_push_loop() -> None:
 
 async def run_ws_server(host: str = DEFAULT_WS_HOST, port: int = DEFAULT_WS_PORT) -> None:
     """Run WebSocket server + periodic state push concurrently."""
+    if host not in ("127.0.0.1", "localhost", "::1"):
+        log.warning(
+            "chibi WS bound to non-loopback host %r — window actions are "
+            "unauthenticated, so anyone who can reach this port could drive the "
+            "pet. Use the default 127.0.0.1 unless you intend remote access.",
+            host,
+        )
     push_task = asyncio.create_task(_state_push_loop())
     async with serve(_handle_client, host, port):
         log.info("ws server listening on ws://%s:%d", host, port)

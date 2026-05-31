@@ -337,7 +337,8 @@ def _check() -> dict:
             catalog_count = len(chars)
             option_count = len(options)
             for ch in chars:
-                if ch.get("tier") == "free" and not (Path(asset_dir) / f"{ch['id']}.png").exists():
+                expected = ch.get("image") or f"{ch['id']}.png"
+                if ch.get("tier") == "free" and not (Path(asset_dir) / str(expected)).exists():
                     free_assets_missing.append(ch["id"])
             for option in options:
                 image = option.get("image") or f"options/{option.get('id')}.png"

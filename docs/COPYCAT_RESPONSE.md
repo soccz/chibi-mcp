@@ -72,6 +72,48 @@ Potential public platform paths:
 - GitHub impersonation policy for accounts/projects pretending to be the official project.
 - Marketplace-specific abuse/report forms for VS Code/Open VSX or other registries.
 
+## Escalation Routing
+
+Match the situation to the correct path — sending the wrong kind of notice (e.g. a DMCA against a legitimate fork) creates real risk (see below):
+
+| What happened | Correct path | NOT this |
+|---|---|---|
+| Code copied, attribution kept, clearly unofficial | Allowed under MIT — no action | not DMCA |
+| Code copied **and** claims to be official | GitHub impersonation / trademark report | not a copyright DMCA |
+| Official PNG / screenshot / social preview copied bit-for-bit | DMCA takedown (template below) | — |
+| Package/social-preview name causes user confusion | trademark + unfair-competition (Lanham §43(a)) report | not DMCA |
+| Submitted pack contains third-party IP | reject via `chibi-pack validate --submission` + request provenance | not DMCA against the submitter's repo |
+
+Always try **Friendly First Contact** before any platform report.
+
+## DMCA Takedown Notice Template
+
+Use this **only** for direct copying of official copyrighted assets (artwork, screenshots, social preview, exact text) — not for code reuse, which the MIT license permits. A valid 17 U.S.C. §512(c)(3) notice must include all six elements:
+
+```text
+1. Identification of the copyrighted work:
+   chibi-mcp official asset at <repo path> (commit <SHA>, see ASSET_MANIFEST).
+2. Identification and exact URL of the allegedly infringing material:
+   <copied URL>
+3. Contact information (name, email, address) of the reporter.
+4. A statement that I have a good-faith belief that the use is not authorized
+   by the copyright owner, its agent, or the law.
+5. A statement that the information in this notice is accurate, and — under
+   penalty of perjury — that I am the copyright owner or authorized to act
+   on the owner's behalf.
+6. Physical or electronic signature of the owner or authorized agent.
+```
+
+Submit via GitHub's DMCA process (copyright@github.com / the GitHub copyright claims form). Do **not** add "all rights reserved" boilerplate or claim ownership of broad ideas.
+
+## Risks Of Sending A Notice
+
+A takedown is not free of risk — read this before sending one:
+
+- **Consider fair use first.** *Lenz v. Universal* (9th Cir. 2015) requires a good-faith fair-use evaluation before sending a DMCA notice. Forks, tutorials, reviews, and commentary may be fair use.
+- **§512(f) liability.** Knowingly misrepresenting that material is infringing exposes the sender to damages and attorney's fees. Do not DMCA a legitimate fork or code reuse.
+- **Counter-notice reality.** If the other party files a counter-notice, GitHub restores the content in ~10–14 business days unless the rights holder files a federal lawsuit. For a solo maintainer, litigation is usually impractical — so reserve DMCA for clear, direct asset copying and prefer Friendly First Contact everywhere else.
+
 ## What Not To Claim
 
 Do not claim exclusive ownership over:

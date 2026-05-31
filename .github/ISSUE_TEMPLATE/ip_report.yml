@@ -29,11 +29,11 @@ body:
   - type: input
     id: official_source
     attributes:
-      label: Official source
-      description: chibi-mcp file path, commit SHA, release, or doc that appears copied.
-      placeholder: "assets/social-preview.png at commit <sha>"
+      label: Official source (if applicable)
+      description: If a chibi-mcp official asset was copied, give its file path/commit. If you are reporting a submitted pack that copies someone else's work (third-party IP), leave this blank and describe the original work in Comparison notes.
+      placeholder: "assets/social-preview.png at commit <sha> — or leave blank for third-party IP reports"
     validations:
-      required: true
+      required: false
   - type: textarea
     id: comparison
     attributes:

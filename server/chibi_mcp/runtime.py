@@ -5,6 +5,12 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+# Default localhost WebSocket endpoint, shared by the WS server, the window
+# client, and the chibi-say CLI. Defined here (dependency-free) so the CLI can
+# import it without pulling in the `websockets` dependency through ws_server.
+DEFAULT_WS_HOST = "127.0.0.1"
+DEFAULT_WS_PORT = 9876
+
 
 def runtime_dir() -> Path:
     """Return the per-user chibi runtime directory.

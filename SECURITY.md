@@ -25,6 +25,17 @@ chibi-pack validate ./my-pack
 
 Character and option pack images are expected to stay inside the pack directory; explicit image paths that escape the pack are rejected by `chibi-pack validate`.
 
+## Verifying release authenticity
+
+Release artifacts (the Python wheel/sdist and the VS Code `.vsix`) carry [SLSA build provenance](https://slsa.dev/) published as GitHub Artifact Attestations (signed via Sigstore). After downloading a release asset you can confirm it was built by this repository's CI — not a copycat or tampered re-upload — with the GitHub CLI:
+
+```bash
+gh attestation verify chibi_mcp-<version>-py3-none-any.whl --repo soccz/chibi-mcp
+gh attestation verify chibi-mcp-<version>.vsix --repo soccz/chibi-mcp
+```
+
+`SHA256SUMS.txt` proves a download was not corrupted in transit (integrity); the attestation additionally proves *where it came from* (authenticity / provenance). Use both.
+
 ## Reporting a Vulnerability
 
 Use GitHub private vulnerability reporting if it is enabled for this repository.

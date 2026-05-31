@@ -75,6 +75,12 @@
 | 브랜드 콜라보·물리 굿즈 | `[미정 — 파트너/수요 확인 후 결정]` |
 | GitHub topics 실제 설정 | `[GitHub repo settings에서 수동 설정 필요]` |
 | social preview 이미지 업로드 | `assets/social-preview.png` 생성됨. GitHub repo settings 업로드는 수동 필요 |
+| **공식 에셋 라이선스 선택** (카피캣/IP 방어, 2026-05-31 감사) | `[미정 — 코드 MIT 유지. 공식 아트는 all-rights-reserved 현행 / CC-BY / CC-BY-NC / CC-BY-ND / CC-BY-NC-ND 중 선택. 포크·2차창작 자유 vs 보호강도 트레이드오프. LICENSE/약관엔 "Not MIT, 별도 약관"으로 안전하게 표기 완료]` |
+| **PyPI 배포 갱신** (이미 배포됨, 낡음) | `[chibi-mcp 이미 배포·소유 — 1.1.0(2026-05-28)까지 15릴리스. 그러나 PyPI 최신이 1.1.0이라 공개 설명에 옛 음식 브랜딩("Korean rice cake")이 라이브 노출 중. 레포는 1.4.39로 정화 완료. 현재 깨끗한 버전을 발행하면 공개 설명도 갱신됨(브랜드 위반 해소). CI Trusted Publishing 경로 완비, 실제 발행은 계정 작업]` |
+| **Sigstore cosign 서명 라벨** | `[미정 — 위조불가 공식 vs 카피캣 구분. 서명 키·릴리스 정책 소유 부담. IP_AND_RIGHTS.md가 명시 승인 전 구현 금지로 표기]` |
+| **USPTO/KIPO 상표 등록** (chibi/chibi-mcp/로고) | `[미정 — ® 권리·강한 집행력. 비용·시점·대리인 결정. 현재는 ™ common-law 태세 유지]` |
+| **미국 저작권청 에셋 등록** | `[미정 — 법정손배·연방소송 자격 부여. 비용·대상(대표작만 vs 전체) 결정]` |
+| **패키지 license 필드 SPDX 변경** | `[미정 — 'MIT' 유지+README 설명(권장·호환 안전) vs 'MIT AND LicenseRef-chibi-assets'(기계정확하나 마켓 배지/검증 깨질 위험)]` |
 
 ---
 

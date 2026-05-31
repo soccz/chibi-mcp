@@ -117,6 +117,19 @@ def test_recent_call_triggers_happy():
     assert state.compute_mood(_snap()) == Mood.HAPPY
 
 
+def test_milestone_slice_triggers_joyful():
+    state = ChibiState()
+    state.record_call(force_slice=True)  # milestone slice → celebratory burst
+    assert state.compute_mood(_snap()) == Mood.JOYFUL
+
+
+def test_joyful_decays_to_happy_after_window():
+    state = ChibiState()
+    state.record_call(force_slice=True)
+    state.last_slice_at = time.time() - 100  # past the joyful window
+    assert state.compute_mood(_snap()) == Mood.HAPPY
+
+
 def test_note_activity_triggers_happy_without_counting_ticket_calls():
     state = ChibiState()
     state.note_activity("say")

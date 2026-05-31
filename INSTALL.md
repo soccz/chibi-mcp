@@ -309,6 +309,16 @@ sudo apt-get install -y python3-tk
 
 For pyenv Python, install `tk-dev` first, then rebuild the Python version used by `pipx`/the venv.
 
+### Verify a downloaded release
+
+Release assets (wheel, sdist, `.vsix`, and desktop installers) ship with SLSA build provenance. After downloading from GitHub Releases, confirm the file was built by this repo's CI — not a copycat or tampered re-upload:
+
+```bash
+gh attestation verify <downloaded-file> --repo soccz/chibi-mcp
+```
+
+`SHA256SUMS.txt` confirms a download is not corrupted (integrity); the attestation additionally confirms where it came from (authenticity). See [SECURITY.md](SECURITY.md).
+
 ## Maintainer Release Checklist
 
 1. Update versions in `server/pyproject.toml`, `.claude-plugin/plugin.json`, `.codex-plugin/plugin.json`, and `vscode-ext/package.json`.

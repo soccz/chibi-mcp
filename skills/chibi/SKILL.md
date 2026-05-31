@@ -21,7 +21,7 @@ Claude is the primary client. Treat this skill as a small companion workflow, no
 ## Source of truth (read these — never guess)
 
 - `get_pet_state` — mood (calm/happy/joyful/panting/drowsy/lonely/surprised) + system metrics + counters + active character id + ticket count.
-- `get_catalog` — released character list (8 starter characters now; upcoming placeholders hidden).
+- `get_catalog` — released character list (8 of 29 chibis released now; the rest are upcoming/coming soon and stay hidden). Returns `total_in_tier` (released) and `total_full` (29).
 - `get_options` — released free option layers (honey/beads/sprinkles/powder/sesame/petals/resin/matcha/sauce).
 - `get_inventory` — owned characters, ticket balance, total pulls, seconds until next free pull.
 - `get_license_status` — current open-source catalog access status.

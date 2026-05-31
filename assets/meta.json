@@ -11,7 +11,7 @@
       "name_ko": "White Chibi",
       "category": "chibi",
       "rarity": 2,
-      "image": "characters/white_tteok.png",
+      "image": "white_tteok.png",
       "tier": "free"
     },
     {
@@ -19,7 +19,7 @@
       "name_ko": "Classic Chibi",
       "category": "chibi",
       "rarity": 2,
-      "image": "characters/garaetteok_short.png",
+      "image": "garaetteok_short.png",
       "tier": "free"
     },
     {
@@ -51,7 +51,7 @@
       "name_ko": "Cloud Chibi",
       "category": "chibi",
       "rarity": 2,
-      "image": "characters/baekseolgi.png",
+      "image": "baekseolgi.png",
       "tier": "free"
     },
     {
@@ -67,7 +67,7 @@
       "name_ko": "Grape Chibi",
       "category": "chibi",
       "rarity": 2,
-      "image": "characters/green_grape.png",
+      "image": "green_grape.png",
       "tier": "free"
     },
     {
@@ -75,7 +75,7 @@
       "name_ko": "Round Chibi",
       "category": "chibi",
       "rarity": 2,
-      "image": "characters/mochi.png",
+      "image": "mochi.png",
       "tier": "free"
     },
     {
@@ -115,7 +115,7 @@
       "name_ko": "Melon Chibi",
       "category": "chibi",
       "rarity": 2,
-      "image": "characters/melon.png",
+      "image": "melon.png",
       "tier": "free"
     },
     {
@@ -187,7 +187,7 @@
       "name_ko": "Cheese Chibi",
       "category": "chibi",
       "rarity": 2,
-      "image": "characters/cheddar.png",
+      "image": "cheddar.png",
       "tier": "free"
     },
     {
@@ -227,7 +227,7 @@
       "name_ko": "Toast Chibi",
       "category": "chibi",
       "rarity": 2,
-      "image": "characters/toast.png",
+      "image": "toast.png",
       "tier": "free"
     },
     {

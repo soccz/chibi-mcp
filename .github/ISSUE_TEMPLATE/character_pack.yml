@@ -7,7 +7,7 @@ body:
     id: name
     attributes:
       label: Character or option name
-      placeholder: "e.g. injeolmi, honey-garaetteok, jocheong-drip, sugar-beads"
+      placeholder: "e.g. cloud-chibi, star-chibi, amber-glaze, sugar-beads"
     validations:
       required: true
   - type: dropdown
@@ -15,12 +15,9 @@ body:
     attributes:
       label: Category
       options:
-        - Korean rice cake
-        - Fruit
-        - Cheese
-        - Bread/toast
-        - Mandu
+        - Chibi character
         - Option layer
+        - Seasonal
         - Collaboration
         - Other
     validations:

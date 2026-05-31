@@ -32,6 +32,7 @@ only as compatibility details and must not leak into generated README assets.
 - `scripts/install-*.sh`, `scripts/install-*.ps1` — Linux/macOS bash and Windows PowerShell install paths for Claude Code, Codex, and VS Code.
 - `vscode-ext/` — VS Code extension packaging path. As of 0.5.0 also calls `chibi-say` on save / task / debug events.
 - `desktop/` — legacy Tauri client; archival only.
+- `server-rs/` — Rust MCP prototype (alternative to the Python server). Implements only 4 of the 16 tools (`get_pet_state`, `pet_say`, `slice_now`, `set_slice_interval`); gacha/inventory/window/catalog tools are a parity gap, and it shares the same `ws://127.0.0.1:9876` protocol. `verify_all.sh` lints it (`cargo fmt`/`clippy`). Not on the install path. Porting more tools is a separate decision.
 - `assets/` and `server/chibi_mcp/assets/` — starter PNG characters, free option layer PNGs, and metadata.
 
 Core commands:
@@ -124,6 +125,20 @@ Tauri or Electron — jointly decided. Linux/macOS/Windows must all work. Avoid 
 | Milestone trigger | Every **N Claude tool calls** (default 10, user-configurable). chibi plays a small milestone reaction. |
 
 **Do not insert deadlines.** The user chose free pacing.
+
+## 하네스: chibi-mcp 개발
+
+**목표:** 다중 표면 중복(버전·도구·카탈로그·가챠·문구·WS상수)과 엄격한 결정 영역 가드레일을 가진 이 레포에서, 변경이 모든 표면·문서로 일관되게 번지고 사용자 결정 영역을 임의로 건드리지 않도록 5인 에이전트 팀으로 조율한다.
+
+**트리거:** chibi-mcp 코드·문서·배포 변경(기능 추가/버그/리팩터/버전 범프/캐릭터·옵션 추가/표면 동기화/문서 갱신/배포 준비, 그리고 재실행·업데이트·보완) 요청 시 `chibi-dev` 스킬을 사용하라. 단순 질문(코드 위치·동작 설명)은 직접 응답 가능. 런타임 펫 제어(펫 띄워줘/뽑기)는 shipped `skills/chibi` 소관이며 이 하네스 아님.
+
+**구성:** 에이전트 정의는 `.claude/agents/`(guardian·core-dev·surface-sync·docs-keeper·verifier), 스킬은 `.claude/skills/`(chibi-dev 오케스트레이터 + 5개 도메인 스킬). 상세 목록은 그 디렉토리에서 확인.
+
+**변경 이력:**
+| 날짜 | 변경 내용 | 대상 | 사유 |
+|------|----------|------|------|
+| 2026-05-31 | 초기 구성 (5인 팀 + 6스킬 + 오케스트레이터) | 전체 | 다중 표면 중복·결정 영역 가드레일 대응 |
+| 2026-05-31 | 검증 후 보정: verify_all.sh 단계 번호를 실제 16개 배너 섹션으로 재정렬(권리정책 15단계), meta.json byte-identity는 테스트 아닌 diff로 확인하도록 문구 보정, verifier general-purpose 스폰 근거·의미론 명시, docs-keeper 입력 파일명 명시 | chibi-verify, chibi-surface-sync, chibi-verifier, chibi-dev, chibi-docs-keeper | 다차원 적대적 검증 워크플로우(pass_with_minor)가 확정한 문서 정합성 갭 3건 보정 |
 
 ## When to update this file
 
