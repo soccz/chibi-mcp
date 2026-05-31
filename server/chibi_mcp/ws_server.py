@@ -21,12 +21,20 @@ import contextlib
 import json
 import logging
 from collections.abc import Callable
-
-from websockets.asyncio.server import ServerConnection, serve
-from websockets.exceptions import ConnectionClosed
+from typing import TYPE_CHECKING
 
 from .runtime import DEFAULT_WS_HOST, DEFAULT_WS_PORT
 from .state import get_state
+
+if TYPE_CHECKING:
+    from websockets.asyncio.server import ServerConnection
+
+# The real websockets.exceptions.ConnectionClosed is imported lazily by
+# run_ws_server() so that merely importing this module (e.g. through the CLI
+# entry points that pull in server.py) does not load the ~60ms websockets
+# package. _send_safe / _handle_client only run under a started server, where
+# run_ws_server() has populated this.
+_ConnectionClosed: type[BaseException] = ConnectionError
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +75,7 @@ class ChibiBroadcaster:
 
     @staticmethod
     async def _send_safe(ws: ServerConnection, payload: str) -> None:
-        with contextlib.suppress(ConnectionClosed):
+        with contextlib.suppress(_ConnectionClosed):
             await ws.send(payload)
 
 
@@ -159,7 +167,7 @@ async def _handle_client(ws: ServerConnection) -> None:
                     await broadcaster.broadcast({"type": "say", "text": _action_failure_text(result)})
                 else:
                     await broadcaster.broadcast({"type": "state", "payload": get_state().snapshot()})
-    except ConnectionClosed:
+    except _ConnectionClosed:
         pass
     finally:
         await broadcaster.unregister(ws)
@@ -181,6 +189,11 @@ async def _state_push_loop() -> None:
 
 async def run_ws_server(host: str = DEFAULT_WS_HOST, port: int = DEFAULT_WS_PORT) -> None:
     """Run WebSocket server + periodic state push concurrently."""
+    global _ConnectionClosed
+    from websockets.asyncio.server import serve
+    from websockets.exceptions import ConnectionClosed
+
+    _ConnectionClosed = ConnectionClosed
     if host not in ("127.0.0.1", "localhost", "::1"):
         log.warning(
             "chibi WS bound to non-loopback host %r — window actions are "

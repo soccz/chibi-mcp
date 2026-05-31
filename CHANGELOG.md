@@ -2,6 +2,15 @@
 
 All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condensed.
 
+## Unreleased
+
+Performance:
+- Lazy-import `websockets` inside `ws_server` (and `ConnectionClosed`/`serve`
+  only at server start), so the CLI entry points that pull in `server.py`
+  (`chibi-check`, `chibi-audit`, `chibi-pack`, `chibi-share`) no longer load the
+  websockets stack: `import chibi_mcp.server` ~109ms → ~66ms. The WebSocket
+  server still imports it on start, fully functional.
+
 ## 1.4.41 — 2026-05-31
 
 Performance (measured, behavior-preserving):
