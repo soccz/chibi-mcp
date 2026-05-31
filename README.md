@@ -113,6 +113,8 @@ If you use pyenv Python, install `tk-dev` first, then rebuild that Python versio
 
 ## Install
 
+The one-command installers below set up the MCP server and register it with your client. The server is also published on PyPI — `pipx install chibi-mcp` — for manual or CI setups (see [INSTALL.md](INSTALL.md)).
+
 ### Claude Code
 
 Linux/macOS:

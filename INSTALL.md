@@ -98,7 +98,13 @@ that MCP registration failed, log in to that client and rerun
 
 ## Manual server install
 
-Install the MCP server directly from GitHub:
+Install the MCP server from PyPI (shortest):
+
+```bash
+pipx install chibi-mcp
+```
+
+Or install directly from GitHub (e.g. to track `main` ahead of a published release):
 
 ```bash
 pipx install "git+https://github.com/soccz/chibi-mcp.git#subdirectory=server"
