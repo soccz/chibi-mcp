@@ -2,7 +2,7 @@
 
 All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condensed.
 
-## Unreleased
+## 1.4.41 — 2026-05-31
 
 Performance (measured, behavior-preserving):
 - The floating-window status card no longer repaints on identical state pushes
