@@ -16,7 +16,23 @@ It is local-first: no telemetry, localhost WebSocket by default, open-source cod
   <img src="docs/demo.gif?v=1.4.39-chibi" alt="animated chibi-mcp demo showing install commands, local status, and the floating pet window" width="720">
 </p>
 
-> **Public beta** — free installs and permissioned pilots. Maintainer release steps live in [For maintainers](#for-maintainers); the go/no-go checklist is in [docs/PUBLIC_BETA_READINESS.md](docs/PUBLIC_BETA_READINESS.md).
+> **Public beta** — free, local-first, and open source. No paid packs, license keys, or team pricing.
+
+## Quick start (30 seconds)
+
+**Claude Code** (Linux/macOS) — install, then summon the pet:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/soccz/chibi-mcp/main/scripts/install-claude.sh)
+```
+
+In Claude Code, type `/chibi-mcp:chibi`. Confirm the install with:
+
+```bash
+chibi-mcp --check
+```
+
+Using **Codex**, **VS Code**, Windows, or PyPI instead? Jump to [Install](#install).
 
 ## Why chibi is different
 
@@ -137,16 +153,7 @@ Then in Claude Code:
 /chibi-mcp:chibi 보관함
 ```
 
-If Claude replies `Please run /login` or `API Error: 401 Invalid authentication
-credentials`, Claude Code failed authentication before the chibi command could
-run. Run `/login` in Claude Code, then retry `/chibi-mcp:chibi`. To verify the
-local pet without Claude authentication, run `chibi-mcp --check` and
-`chibi-mcp --open` in a terminal. `--open` starts the local WebSocket helper
-when needed, so toolbar actions like pull/options can work outside Claude too.
-To check Claude, Codex, VS Code, MCP registration, and the local runtime
-together, run `chibi-mcp --doctor`. The diagnostic separates `usable_clients`
-from optional missing clients, so a working Claude install does not look broken
-just because Codex or VS Code is not configured.
+If Claude replies with a login/auth error (`/login` or a `401`), authenticate with `/login` in Claude Code and retry `/chibi-mcp:chibi`. To test the pet without Claude, see [Verify install](#verify-install); for anything else, see [Troubleshooting](#troubleshooting).
 
 ### Codex
 
