@@ -2,10 +2,22 @@
 
 All notable changes to chibi-mcp. Format: keep-a-changelog inspired, but condensed.
 
-## Unreleased
+## 1.4.40 — 2026-05-31
 
-Commercial-readiness polish without enabling paid gates.
+Hardening, optimizations, commercial readiness, and anti-copycat foundations — all free, no paid gates.
 
+- Revived the `joyful` milestone-celebration mood (defined/rendered but
+  previously unreachable); fixed a WebSocket client leak, a `pull_gacha`
+  rarity crash guard, ready-file cleanup, and window startup latency.
+- Creator-pack runtime loader + `chibi-pack install`, so an installed pack's
+  characters are usable (path-traversal-safe per-pack image roots).
+- SLSA build provenance attestation on release artifacts, with consumer
+  `gh attestation verify` docs.
+- Official asset SHA256 manifests + a `chibi-check` integrity check to detect
+  tampered/copycat assets offline.
+- Explicit code-vs-asset license split (LICENSE carve-out + OFFICIAL_ASSET_TERMS),
+  a DMCA/trademark response playbook, honest trademark status, and a
+  30-second README quick start.
 - `chibi-mcp --doctor` now separates usable clients from optional missing
   clients, so a working Claude install no longer looks broken just because
   Codex or VS Code is not configured.

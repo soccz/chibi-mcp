@@ -9,7 +9,7 @@
 It is local-first: no telemetry, localhost WebSocket by default, open-source code, and `chibi-mcp --check` for install diagnostics.
 
 <p align="center">
-  <img src="assets/social-preview.png?v=1.4.39-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
+  <img src="assets/social-preview.png?v=1.4.40-chibi" alt="chibi-mcp social preview showing the local MCP pet for Claude Code, Codex, and VS Code" width="720">
 </p>
 
 <p align="center">
@@ -300,11 +300,11 @@ bridge for save/task/debug reactions.
 ## Visual Assets
 
 <p align="center">
-  <img src="docs/screenshots/starter-lineup.png?v=1.4.39-chibi" alt="chibi-mcp starter character lineup" width="720">
+  <img src="docs/screenshots/starter-lineup.png?v=1.4.40-chibi" alt="chibi-mcp starter character lineup" width="720">
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/option-showcase.png?v=1.4.39-chibi" alt="chibi-mcp free option layers including amber glaze, honey glaze, powder, seeds, petals, resin stars, and sauce" width="720">
+  <img src="docs/screenshots/option-showcase.png?v=1.4.40-chibi" alt="chibi-mcp free option layers including amber glaze, honey glaze, powder, seeds, petals, resin stars, and sauce" width="720">
 </p>
 
 ## Troubleshooting
