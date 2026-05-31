@@ -467,9 +467,12 @@ public_docs = [
     "skills/chibi/SKILL.md",
 ]
 doc_forbidden = [
+    # `pipx reinstall`/`upgrade` don't reliably refresh from the moving git
+    # source, so docs must use uninstall+install for the git path. A bare
+    # `pipx install chibi-mcp` is now allowed: chibi-mcp is published on PyPI
+    # (the published release is a valid, current install source).
     "pipx reinstall chibi-mcp",
     "pipx upgrade chibi-mcp",
-    "pipx install chibi-mcp",
 ]
 violations = []
 for rel in public_docs:
